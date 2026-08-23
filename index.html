@@ -212,8 +212,9 @@
       <div class="input-group">
         <label>Live Model</label>
         <select id="modelSelect">
-          <option value="models/gemini-2.0-flash-exp">gemini-2.0-flash-exp (Default)</option>
-          <option value="models/gemini-2.0-flash">gemini-2.0-flash (Stable)</option>
+          <option value="models/gemini-2.0-flash-exp">gemini-2.0-flash-exp (Recommended)</option>
+          <option value="models/gemini-2.0-flash">gemini-2.0-flash (General)</option>
+          <option value="models/gemini-2.5-flash">gemini-2.5-flash</option>
         </select>
       </div>
       <div class="input-group">
@@ -256,6 +257,7 @@ RULES:
     let inputAudioStream = null;
     let scriptProcessor = null;
     let isCalling = false;
+    let isHandshakeComplete = false;
     let nextAudioStartTime = 0;
     let activeAudioNodes = [];
 
@@ -317,6 +319,7 @@ RULES:
       callStatus.innerText = "Connecting...";
       callBtn.style.display = "none";
       hangupBtn.style.display = "flex";
+      isHandshakeComplete = false;
 
       try {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
@@ -327,7 +330,6 @@ RULES:
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
         });
 
-        // Use v1alpha for experimental Live WebSocket support
         const host = "generativelanguage.googleapis.com";
         const path = "ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
         const url = `wss://${host}/${path}?key=${config.apiKey}`;
@@ -335,11 +337,8 @@ RULES:
         ws = new WebSocket(url);
 
         ws.onopen = () => {
-          callStatus.innerText = "Connected";
-          callCard.classList.add('active');
-          isCalling = true;
+          callStatus.innerText = "Handshaking...";
           sendSetupMessage();
-          startAudioStreaming();
         };
 
         ws.onmessage = async (event) => {
@@ -347,30 +346,41 @@ RULES:
           if (data instanceof Blob) data = await data.text();
           try {
             const response = JSON.parse(data);
+            
+            // Wait for setupComplete before sending mic audio!
+            if (response.setupComplete) {
+              callStatus.innerText = "Connected";
+              callCard.classList.add('active');
+              isCalling = true;
+              isHandshakeComplete = true;
+              startAudioStreaming();
+              return;
+            }
+
             handleServerMessage(response);
           } catch (e) {
-            console.error("JSON Error:", e);
+            console.error("Parse error:", e);
           }
         };
 
         ws.onclose = (e) => {
           console.warn("WebSocket Closed:", e);
           if (e.code === 1008) {
-            showError("Error 1008: Policy Violation. Check if your API key is Unrestricted or try selecting a different Model in settings.");
+            showError("Error 1008: Check that your API key has no restrictions in AI Studio or switch the model in settings.");
           } else if (e.code !== 1000 && isCalling) {
-            showError(`Connection closed (Code ${e.code}).`);
+            showError(`Disconnected (Code ${e.code}).`);
           }
           endCall();
         };
 
         ws.onerror = (err) => {
           console.error("WebSocket Error:", err);
-          showError("WebSocket failed. Check API key & network.");
+          showError("WebSocket connection failed.");
           endCall();
         };
 
       } catch (err) {
-        console.error("Call init error:", err);
+        console.error("Call error:", err);
         showError(`Microphone Error: ${err.message || err.name}`);
         endCall();
       }
@@ -407,7 +417,7 @@ RULES:
       scriptProcessor.connect(audioCtx.destination);
 
       scriptProcessor.onaudioprocess = (e) => {
-        if (!isCalling || ws.readyState !== WebSocket.OPEN) return;
+        if (!isCalling || !isHandshakeComplete || ws.readyState !== WebSocket.OPEN) return;
         const inputData = e.inputBuffer.getChannelData(0);
         const downsampledPCM = downsampleTo16kPCM(inputData, audioCtx.sampleRate);
         if (downsampledPCM.byteLength === 0) return;
@@ -506,6 +516,7 @@ RULES:
 
     function endCall() {
       isCalling = false;
+      isHandshakeComplete = false;
       callCard.classList.remove('active');
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex";
