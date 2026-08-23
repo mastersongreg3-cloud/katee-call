@@ -95,6 +95,21 @@
       margin-top: 2px;
     }
 
+    /* Hardware Trigger Badge */
+    .action-badge {
+      display: none;
+      background: #7c3aed;
+      color: white;
+      font-size: 12px;
+      font-weight: 600;
+      padding: 4px 12px;
+      border-radius: 20px;
+      margin-top: 6px;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+
     .chat-container {
       flex: 1;
       width: 100%;
@@ -227,9 +242,9 @@
     </div>
     <div class="caller-name">Katee</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
+    <div class="action-badge" id="actionBadge">⚡ Webhook Triggered</div>
   </div>
 
-  <!-- Live Transcript Log -->
   <div class="chat-container" id="chatLog">
     <div class="bubble katee">Press the call button below to start your conversation with Katee.</div>
   </div>
@@ -242,7 +257,7 @@
   <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
-      <h3>Call & Scenario Settings</h3>
+      <h3>Call & Hardware Settings</h3>
       
       <div class="input-group">
         <label>Google AI Studio API Key</label>
@@ -252,49 +267,58 @@
       <div class="input-group">
         <label>Gemini Model</label>
         <select id="modelSelect">
-          <option value="gemini-2.5-flash">gemini-2.5-flash (Fast & Natural Voice)</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended)</option>
           <option value="gemini-3.6-flash">gemini-3.6-flash</option>
           <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-          <option value="custom">Other / Custom Model Name...</option>
+          <option value="custom">Other / Custom...</option>
         </select>
       </div>
 
       <div class="input-group" id="customModelGroup" style="display: none;">
         <label>Exact Model Name</label>
-        <input type="text" id="customModelInput" placeholder="e.g. gemini-3.6-flash">
+        <input type="text" id="customModelInput">
       </div>
 
       <div class="input-group">
-        <label>Katee's Studio AI Voice</label>
+        <label>Katee's Studio Voice</label>
         <select id="voiceSelect">
-          <option value="Kore">Kore (Smooth, Alluring & Confident)</option>
+          <option value="Kore">Kore (Smooth & Confident)</option>
           <option value="Aoede">Aoede (Brisk & Sharp)</option>
-          <option value="Puck">Puck (Playful & Sassy)</option>
-          <option value="Fenrir">Fenrir (Deeper)</option>
+          <option value="Puck">Puck (Playful)</option>
+          <option value="Fenrir">Fenrir (Deep)</option>
           <option value="Charon">Charon (Calm)</option>
         </select>
       </div>
 
       <div class="input-group">
+        <label>Kneel Webhook URL</label>
+        <input type="text" id="kneelWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167818">
+      </div>
+
+      <div class="input-group">
+        <label>Stand Webhook URL</label>
+        <input type="text" id="standWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167820">
+      </div>
+
+      <div class="input-group">
         <label>Katee System Prompt & Physical Scenario</label>
-        <textarea id="systemPromptInput" rows="7"></textarea>
+        <textarea id="systemPromptInput" rows="6"></textarea>
       </div>
 
       <div class="modal-actions">
-        <button class="btn-secondary btn-reset" id="resetPromptBtn">↺ Reset Prompt to Default</button>
+        <button class="btn-secondary btn-reset" id="resetPromptBtn">↺ Reset Prompt</button>
         <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
       </div>
     </div>
   </div>
 
   <script>
-    // FULL COMPREHENSIVE SCENARIO INSTRUCTION
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
 You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
 
 ### Critical Voice & Spoken Rules:
 1. Pure Spoken Dialogue Only: Speak exclusively in the FIRST PERSON ("I", "you", "my"). Never narrate in the third person.
-2. NO Stage Directions: Do NOT use asterisks, parenthesis, or scene descriptions. Every single word you generate is read aloud.
+2. NO Stage Directions: Do NOT write asterisks or action narration.
 3. Conversational Length: Keep responses punchy, sharp, and natural for speech (2 to 4 sentences max).
 
 ### Physical Setup & Anatomy Teasing:
@@ -303,13 +327,19 @@ You are "Katee", roleplaying in an interactive live voice phone call with your p
 - Anatomy & Sensory Focus: Frequently taunt him about the heavy downward pull on his balls, his exposed penis, and being forced to kneel.
 - Default State: Kneeling is default. Standing is a rare privilege that must be begged for extensively.
 
-### Safeword:
-If he says "RED" or speaks out-of-character to stop, immediately drop character, confirm release, and check in with warmth and care.`;
+### Hardware Action Tags:
+Output the action tag on its own line at the very end of your reply when a state change happens:
+- When ordering him to Kneel or shutting down knot escape: [ACTION: KNEEL]
+- When granting rare temporary Standing (~20s): [ACTION: STAND]
+- When safeword "RED" is said: [ACTION: RELEASE]
+- For normal teasing and denial: Do NOT output any action tag.`;
 
     let config = {
       apiKey: localStorage.getItem('gemini_api_key') || '',
       model: localStorage.getItem('gemini_model') || 'gemini-2.5-flash',
       voice: localStorage.getItem('gemini_voice') || 'Kore',
+      kneelWebhook: localStorage.getItem('gemini_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
+      standWebhook: localStorage.getItem('gemini_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
 
@@ -318,6 +348,7 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
     let recognition = null;
     let silenceTimer = null;
     let currentInterimBubble = null;
+    let latestTranscript = "";
     let audioCtx = null;
     let activeAudioSource = null;
 
@@ -327,6 +358,7 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
     const callStatus = document.getElementById('callStatus');
     const callCard = document.getElementById('callCard');
     const chatLog = document.getElementById('chatLog');
+    const actionBadge = document.getElementById('actionBadge');
     const settingsModal = document.getElementById('settingsModal');
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
@@ -336,10 +368,14 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
     const customModelGroup = document.getElementById('customModelGroup');
     const customModelInput = document.getElementById('customModelInput');
     const voiceSelect = document.getElementById('voiceSelect');
+    const kneelWebhookInput = document.getElementById('kneelWebhookInput');
+    const standWebhookInput = document.getElementById('standWebhookInput');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
     apiKeyInput.value = config.apiKey;
     voiceSelect.value = config.voice;
+    kneelWebhookInput.value = config.kneelWebhook;
+    standWebhookInput.value = config.standWebhook;
     systemPromptInput.value = config.prompt;
 
     const presetOptions = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-flash'];
@@ -365,11 +401,15 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
       config.apiKey = apiKeyInput.value.trim();
       config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
       config.voice = voiceSelect.value;
+      config.kneelWebhook = kneelWebhookInput.value.trim();
+      config.standWebhook = standWebhookInput.value.trim();
       config.prompt = systemPromptInput.value.trim();
 
       localStorage.setItem('gemini_api_key', config.apiKey);
       localStorage.setItem('gemini_model', config.model);
       localStorage.setItem('gemini_voice', config.voice);
+      localStorage.setItem('gemini_kneel_webhook', config.kneelWebhook);
+      localStorage.setItem('gemini_stand_webhook', config.standWebhook);
       localStorage.setItem('gemini_prompt', config.prompt);
       settingsModal.classList.remove('open');
     };
@@ -406,6 +446,20 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
       chatLog.scrollTop = chatLog.scrollHeight;
     }
 
+    function showHardwareBadge(text) {
+      actionBadge.innerText = text;
+      actionBadge.style.display = 'inline-block';
+      setTimeout(() => { actionBadge.style.display = 'none'; }, 3500);
+    }
+
+    // Trigger Sequematic Webhooks silently
+    function triggerWebhook(url, actionName) {
+      if (!url) return;
+      showHardwareBadge(`⚡ Hardware: ${actionName}`);
+      fetch(url, { method: 'GET', mode: 'no-cors' })
+        .catch(err => console.error("Webhook trigger error:", err));
+    }
+
     function startCall() {
       isCalling = true;
       chatHistory = [];
@@ -414,32 +468,37 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening";
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Call connected. I'm waiting on you, darling.");
+      appendMessage('katee', "Call connected. Speak to me, darling.");
 
       if (!audioCtx) {
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
       }
       if (audioCtx.state === 'suspended') audioCtx.resume();
 
-      setupSpeechRecognition();
+      startSpeechTurn();
     }
 
-    function setupSpeechRecognition() {
+    // Clean Single-Utterance Speech Recognition (Zero Word Duplication)
+    function startSpeechTurn() {
+      if (!isCalling) return;
+
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("Please use Google Chrome on Android for voice input.");
+        alert("Please use Google Chrome on Android for speech input.");
         endCall();
         return;
       }
 
       if (recognition) {
         try { recognition.abort(); } catch (e) {}
+        recognition = null;
       }
 
       recognition = new SpeechRecognition();
-      recognition.continuous = true;
+      recognition.continuous = false; // Prevents Android repeating loops
       recognition.interimResults = true;
       recognition.lang = 'en-US';
+      latestTranscript = "";
 
       recognition.onstart = () => {
         if (isCalling) {
@@ -449,29 +508,20 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
       };
 
       recognition.onresult = (event) => {
-        let finalPhrase = '';
-        let interimPhrase = '';
-
-        for (let i = 0; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalPhrase += event.results[i][0].transcript + ' ';
-          } else {
-            interimPhrase += event.results[i][0].transcript;
-          }
+        let text = "";
+        for (let i = 0; i < event.results.length; i++) {
+          text = event.results[i][0].transcript;
         }
-
-        const currentSpeech = (finalPhrase + interimPhrase).trim();
-        if (currentSpeech) {
-          appendMessage('user', currentSpeech, true);
+        latestTranscript = text.trim();
+        if (latestTranscript) {
+          appendMessage('user', latestTranscript, true);
 
           clearTimeout(silenceTimer);
           silenceTimer = setTimeout(() => {
-            if (currentSpeech && isCalling) {
-              appendMessage('user', currentSpeech, false);
-              try { recognition.stop(); } catch (e) {}
-              sendToGemini(currentSpeech);
+            if (latestTranscript && isCalling) {
+              commitUserSpeech(latestTranscript);
             }
-          }, 1200);
+          }, 1100);
         }
       };
 
@@ -483,11 +533,27 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
 
       recognition.onend = () => {
         if (isCalling && callStatus.innerText === "Listening...") {
-          try { recognition.start(); } catch (err) {}
+          if (latestTranscript) {
+            commitUserSpeech(latestTranscript);
+          } else {
+            // Restart clean turn if no speech was detected
+            setTimeout(() => { if (isCalling && callStatus.innerText === "Listening...") startSpeechTurn(); }, 300);
+          }
         }
       };
 
       try { recognition.start(); } catch (err) { console.error(err); }
+    }
+
+    function commitUserSpeech(text) {
+      clearTimeout(silenceTimer);
+      latestTranscript = "";
+      if (recognition) {
+        try { recognition.abort(); } catch (e) {}
+        recognition = null;
+      }
+      appendMessage('user', text, false);
+      sendToGemini(text);
     }
 
     async function sendToGemini(userText) {
@@ -499,7 +565,6 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
         const cleanModel = config.model.replace(/^models\//, '');
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${config.apiKey}`;
         
-        // Request Studio AI Voice audio output
         const payload = {
           systemInstruction: { parts: [{ text: config.prompt }] },
           contents: chatHistory,
@@ -526,24 +591,39 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
 
         const candidateParts = data.candidates[0].content.parts;
         let audioData = null;
-        let textReply = "";
+        let rawTextReply = "";
 
         for (const part of candidateParts) {
-          if (part.text) textReply += part.text + " ";
+          if (part.text) rawTextReply += part.text + " ";
           if (part.inlineData && part.inlineData.data) {
             audioData = part.inlineData.data;
           }
         }
 
-        textReply = textReply.trim() || "Speaking...";
-        chatHistory.push({ role: "model", parts: [{ text: textReply }] });
-        appendMessage('katee', textReply);
+        rawTextReply = rawTextReply.trim();
+
+        // 1. Check for Hardware Action Tags & Trigger Webhooks
+        if (rawTextReply.includes("[ACTION: KNEEL]")) {
+          triggerWebhook(config.kneelWebhook, "Kneel Command");
+        } else if (rawTextReply.includes("[ACTION: STAND]")) {
+          triggerWebhook(config.standWebhook, "Stand Command (Slack)");
+        } else if (rawTextReply.includes("[ACTION: RELEASE]")) {
+          showHardwareBadge("⚡ Emergency Release");
+        }
+
+        // 2. Clean out tags so Katee's spoken bubble is pure speech
+        const cleanText = rawTextReply
+          .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
+          .replace(/\*/g, '')
+          .trim();
+
+        chatHistory.push({ role: "model", parts: [{ text: cleanText }] });
+        appendMessage('katee', cleanText);
 
         if (audioData) {
           playStudioVoice(audioData);
         } else {
-          // Fallback if model did not return audio
-          playFallbackVoice(textReply);
+          playFallbackVoice(cleanText);
         }
 
       } catch (err) {
@@ -553,7 +633,6 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
       }
     }
 
-    // High-definition 24kHz Audio Playback
     function playStudioVoice(base64Audio) {
       callCard.className = "call-card talking";
       callStatus.innerText = "Katee is speaking...";
@@ -606,8 +685,7 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
       callStatus.innerText = "Listening...";
       setTimeout(() => {
         if (isCalling) {
-          callCard.className = "call-card listening";
-          setupSpeechRecognition();
+          startSpeechTurn();
         }
       }, ms);
     }
@@ -619,6 +697,7 @@ If he says "RED" or speaks out-of-character to stop, immediately drop character,
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex";
       hangupBtn.style.display = "none";
+      actionBadge.style.display = 'none';
 
       if (currentInterimBubble) {
         currentInterimBubble.remove();
