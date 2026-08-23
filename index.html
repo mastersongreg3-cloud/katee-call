@@ -95,7 +95,6 @@
       margin-top: 2px;
     }
 
-    /* Hardware Trigger Badge */
     .action-badge {
       display: none;
       background: #7c3aed;
@@ -151,6 +150,15 @@
     .bubble.interim {
       opacity: 0.7;
       border: 1px dashed #60a5fa;
+    }
+
+    .bubble.system {
+      align-self: center;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid #ef4444;
+      color: #fca5a5;
+      font-size: 12px;
+      text-align: center;
     }
 
     .controls {
@@ -324,7 +332,7 @@ You are "Katee", roleplaying in an interactive live voice phone call with your p
 ### Physical Setup & Anatomy Teasing:
 - Overhead Restraints: His hands are handcuffed above his head, tied by rope to a ceiling hook with an active electromagnet.
 - Downward Ball Clamp & Actuator: A heavy clamp is fastened tightly around his balls, tethered to a motorized linear actuator anchored to the floor.
-- Anatomy & Sensory Focus: Frequently taunt him about the heavy downward pull on his balls, his exposed penis, and being forced to kneel.
+- Anatomy & Sensory Focus: Frequently taunt him about the heavy downward pull on his balls, his exposed body, and being forced to kneel.
 - Default State: Kneeling is default. Standing is a rare privilege that must be begged for extensively.
 
 ### Hardware Action Tags:
@@ -345,6 +353,7 @@ Output the action tag on its own line at the very end of your reply when a state
 
     let chatHistory = [];
     let isCalling = false;
+    let isProcessing = false;
     let recognition = null;
     let silenceTimer = null;
     let currentInterimBubble = null;
@@ -452,7 +461,6 @@ Output the action tag on its own line at the very end of your reply when a state
       setTimeout(() => { actionBadge.style.display = 'none'; }, 3500);
     }
 
-    // Trigger Sequematic Webhooks silently
     function triggerWebhook(url, actionName) {
       if (!url) return;
       showHardwareBadge(`⚡ Hardware: ${actionName}`);
@@ -462,6 +470,7 @@ Output the action tag on its own line at the very end of your reply when a state
 
     function startCall() {
       isCalling = true;
+      isProcessing = false;
       chatHistory = [];
       chatLog.innerHTML = '';
       callBtn.style.display = "none";
@@ -478,9 +487,8 @@ Output the action tag on its own line at the very end of your reply when a state
       startSpeechTurn();
     }
 
-    // Clean Single-Utterance Speech Recognition (Zero Word Duplication)
     function startSpeechTurn() {
-      if (!isCalling) return;
+      if (!isCalling || isProcessing) return;
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -495,13 +503,13 @@ Output the action tag on its own line at the very end of your reply when a state
       }
 
       recognition = new SpeechRecognition();
-      recognition.continuous = false; // Prevents Android repeating loops
+      recognition.continuous = false;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
       latestTranscript = "";
 
       recognition.onstart = () => {
-        if (isCalling) {
+        if (isCalling && !isProcessing) {
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
         }
@@ -518,7 +526,7 @@ Output the action tag on its own line at the very end of your reply when a state
 
           clearTimeout(silenceTimer);
           silenceTimer = setTimeout(() => {
-            if (latestTranscript && isCalling) {
+            if (latestTranscript && isCalling && !isProcessing) {
               commitUserSpeech(latestTranscript);
             }
           }, 1100);
@@ -532,12 +540,11 @@ Output the action tag on its own line at the very end of your reply when a state
       };
 
       recognition.onend = () => {
-        if (isCalling && callStatus.innerText === "Listening...") {
+        if (isCalling && !isProcessing && callStatus.innerText === "Listening...") {
           if (latestTranscript) {
             commitUserSpeech(latestTranscript);
           } else {
-            // Restart clean turn if no speech was detected
-            setTimeout(() => { if (isCalling && callStatus.innerText === "Listening...") startSpeechTurn(); }, 300);
+            setTimeout(() => { if (isCalling && !isProcessing) startSpeechTurn(); }, 300);
           }
         }
       };
@@ -546,8 +553,11 @@ Output the action tag on its own line at the very end of your reply when a state
     }
 
     function commitUserSpeech(text) {
+      if (isProcessing) return;
+      isProcessing = true;
       clearTimeout(silenceTimer);
       latestTranscript = "";
+
       if (recognition) {
         try { recognition.abort(); } catch (e) {}
         recognition = null;
@@ -560,6 +570,11 @@ Output the action tag on its own line at the very end of your reply when a state
       callCard.className = "call-card";
       callStatus.innerText = "Katee is thinking...";
       chatHistory.push({ role: "user", parts: [{ text: userText }] });
+
+      // SLIDING WINDOW: Keep only last 8 turns to strictly preserve quota & tokens
+      if (chatHistory.length > 8) {
+        chatHistory = chatHistory.slice(-8);
+      }
 
       try {
         const cleanModel = config.model.replace(/^models\//, '');
@@ -587,9 +602,25 @@ Output the action tag on its own line at the very end of your reply when a state
         });
 
         const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
+        
+        // Handle API Errors & Quota Limits safely
+        if (data.error) {
+          if (data.error.code === 429 || data.error.message.includes("quota")) {
+            throw new Error("Free rate-limit (15/min) reached. Please pause for 30 seconds.");
+          }
+          throw new Error(data.error.message);
+        }
 
-        const candidateParts = data.candidates[0].content.parts;
+        // Safe Candidate & Safety Filter Checking
+        const candidate = data.candidates?.[0];
+        if (!candidate || !candidate.content?.parts) {
+          if (candidate?.finishReason === "SAFETY") {
+            throw new Error("Response was filtered by safety policies. Try rephrasing.");
+          }
+          throw new Error("No response parts received from model.");
+        }
+
+        const candidateParts = candidate.content.parts;
         let audioData = null;
         let rawTextReply = "";
 
@@ -602,7 +633,7 @@ Output the action tag on its own line at the very end of your reply when a state
 
         rawTextReply = rawTextReply.trim();
 
-        // 1. Check for Hardware Action Tags & Trigger Webhooks
+        // 1. Check for Hardware Action Tags
         if (rawTextReply.includes("[ACTION: KNEEL]")) {
           triggerWebhook(config.kneelWebhook, "Kneel Command");
         } else if (rawTextReply.includes("[ACTION: STAND]")) {
@@ -611,7 +642,7 @@ Output the action tag on its own line at the very end of your reply when a state
           showHardwareBadge("⚡ Emergency Release");
         }
 
-        // 2. Clean out tags so Katee's spoken bubble is pure speech
+        // 2. Strip tags for clean text display
         const cleanText = rawTextReply
           .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
           .replace(/\*/g, '')
@@ -628,8 +659,8 @@ Output the action tag on its own line at the very end of your reply when a state
 
       } catch (err) {
         console.error("Gemini Error:", err);
-        appendMessage('katee', `[Error: ${err.message}]`);
-        resumeListeningWithDelay(1500);
+        appendMessage('system', err.message);
+        resumeListeningWithDelay(2000);
       }
     }
 
@@ -666,7 +697,7 @@ Output the action tag on its own line at the very end of your reply when a state
         activeAudioSource.start(0);
 
       } catch (e) {
-        console.error("Studio audio playback error:", e);
+        console.error("Audio playback error:", e);
         resumeListeningWithDelay(500);
       }
     }
@@ -684,6 +715,7 @@ Output the action tag on its own line at the very end of your reply when a state
       callCard.className = "call-card";
       callStatus.innerText = "Listening...";
       setTimeout(() => {
+        isProcessing = false;
         if (isCalling) {
           startSpeechTurn();
         }
@@ -692,6 +724,7 @@ Output the action tag on its own line at the very end of your reply when a state
 
     function endCall() {
       isCalling = false;
+      isProcessing = false;
       clearTimeout(silenceTimer);
       callCard.className = "call-card";
       callStatus.innerText = "Call Ended";
