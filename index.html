@@ -167,7 +167,7 @@
     .modal-content h3 { margin-bottom: 12px; }
     .input-group { margin-bottom: 14px; }
     .input-group label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
-    .input-group input, .input-group textarea {
+    .input-group input, .input-group textarea, .input-group select {
       width: 100%;
       padding: 10px;
       border-radius: 8px;
@@ -218,6 +218,20 @@
         <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
       </div>
       <div class="input-group">
+        <label>Gemini Model</label>
+        <select id="modelSelect">
+          <option value="gemini-2.5-flash">gemini-2.5-flash (Fast & Recommended)</option>
+          <option value="gemini-3.6-flash">gemini-3.6-flash</option>
+          <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+          <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+          <option value="custom">Other / Custom Model Name...</option>
+        </select>
+      </div>
+      <div class="input-group" id="customModelGroup" style="display: none;">
+        <label>Enter Exact Model Name</label>
+        <input type="text" id="customModelInput" placeholder="e.g. gemini-3.6-flash">
+      </div>
+      <div class="input-group">
         <label>Persona / System Prompt</label>
         <textarea id="systemPromptInput" rows="6"></textarea>
       </div>
@@ -237,6 +251,7 @@ RULES:
 
     let config = {
       apiKey: localStorage.getItem('gemini_api_key') || '',
+      model: localStorage.getItem('gemini_model') || 'gemini-2.5-flash',
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
 
@@ -255,16 +270,41 @@ RULES:
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
+    const modelSelect = document.getElementById('modelSelect');
+    const customModelGroup = document.getElementById('customModelGroup');
+    const customModelInput = document.getElementById('customModelInput');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
     apiKeyInput.value = config.apiKey;
     systemPromptInput.value = config.prompt;
 
+    // Model selection setup
+    const presetOptions = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-flash', 'gemini-2.5-pro'];
+    if (presetOptions.includes(config.model)) {
+      modelSelect.value = config.model;
+      customModelGroup.style.display = 'none';
+    } else {
+      modelSelect.value = 'custom';
+      customModelInput.value = config.model;
+      customModelGroup.style.display = 'block';
+    }
+
+    modelSelect.onchange = () => {
+      if (modelSelect.value === 'custom') {
+        customModelGroup.style.display = 'block';
+      } else {
+        customModelGroup.style.display = 'none';
+      }
+    };
+
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
       config.apiKey = apiKeyInput.value.trim();
+      config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
       config.prompt = systemPromptInput.value.trim();
+
       localStorage.setItem('gemini_api_key', config.apiKey);
+      localStorage.setItem('gemini_model', config.model);
       localStorage.setItem('gemini_prompt', config.prompt);
       settingsModal.classList.remove('open');
     };
@@ -322,7 +362,6 @@ RULES:
       };
 
       recognition.onend = () => {
-        // Keep listening if call is still active and Katee is not speaking
         if (isCalling && !synth.speaking) {
           try { recognition.start(); } catch (err) {}
         }
@@ -340,12 +379,14 @@ RULES:
       chatHistory.push({ role: "user", parts: [{ text: userText }] });
 
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.apiKey}`;
+        // Clean model string if user pasted 'models/' prefix
+        const cleanModel = config.model.replace(/^models\//, '');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${config.apiKey}`;
         
         const payload = {
           system_instruction: { parts: [{ text: config.prompt }] },
           contents: chatHistory,
-          generationConfig: { maxOutputTokens: 250 }
+          generationConfig: { maxOutputTokens: 300 }
         };
 
         const res = await fetch(url, {
@@ -366,8 +407,12 @@ RULES:
         console.error("Gemini Error:", err);
         errorMsg.innerText = `Error: ${err.message}`;
         errorMsg.style.display = "block";
-        callStatus.innerText = "Error. Resuming mic...";
-        if (isCalling) recognition.start();
+        callStatus.innerText = "Error. Tap Settings to adjust model.";
+        if (isCalling) {
+          setTimeout(() => {
+            try { recognition.start(); } catch (e) {}
+          }, 2000);
+        }
       }
     }
 
@@ -380,7 +425,6 @@ RULES:
       utterance.rate = 1.0;
       utterance.pitch = 1.05;
 
-      // Pick the best available female voice on device
       const voices = synth.getVoices();
       const preferredVoice = voices.find(v => v.name.includes("Female") || v.name.includes("Google") || v.name.includes("Natural"));
       if (preferredVoice) utterance.voice = preferredVoice;
