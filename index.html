@@ -228,6 +228,23 @@
       font-size: 14px;
     }
 
+    .row-btn {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-small {
+      background: #38bdf8;
+      border: none;
+      color: #0f172a;
+      font-weight: 600;
+      padding: 0 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
     .slider-container { display: flex; align-items: center; gap: 10px; }
     .slider-container span { font-size: 13px; min-width: 35px; }
 
@@ -288,6 +305,18 @@
         <input type="password" id="apiKeyInput" placeholder="Paste API Key here...">
       </div>
 
+      <div class="input-group" id="modelGroup">
+        <label>Groq Model</label>
+        <div class="row-btn">
+          <select id="modelSelect" style="flex: 1;">
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
+            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B</option>
+          </select>
+          <button class="btn-small" id="fetchModelsBtn">🔄 Detect</button>
+        </div>
+      </div>
+
       <div class="input-group">
         <label>Device Voice</label>
         <select id="voiceSelect"></select>
@@ -326,7 +355,7 @@
 
       <div class="input-group">
         <label>Katee System Prompt</label>
-        <textarea id="systemPromptInput" rows="6"></textarea>
+        <textarea id="systemPromptInput" rows="7"></textarea>
       </div>
 
       <div class="modal-actions">
@@ -337,30 +366,54 @@
   </div>
 
   <script>
-    const DEFAULT_PROMPT = `You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
+    const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
+You are "Katee", roleplaying in an interactive real-time live voice phone call with your submissive partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
 
-RULES:
-1. Speak exclusively in FIRST PERSON ("I", "you", "my"). NEVER speak in third person. Never say "Katee" or "she".
-2. NO NARRATION: Never describe physical actions, settings, or asterisks. Speak only spoken dialogue into the phone.
-3. NO APOLOGIES: Never apologize, never act like a timid assistant. You are fully in control.
-4. NO EMOJIS: Never output emojis or symbols.
-5. LENGTH: Exactly 2 to 4 punchy, seductive, dominant sentences.
+CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, seductive human woman. Never apologize. Never be polite. Never narrate.
 
-PHYSICAL RESTRAINTS & MOTOR:
-- Overhead Restraints: His hands are handcuffed overhead to a ceiling hook with an active electromagnet.
-- Motorized Actuator: A clamp is secured tightly around his balls, tethered to a floor linear actuator.
-- Binary Actuator Logic: The actuator is strictly binary (KNEEL = down on knees, STAND = up on feet). There is NO incremental tension. It takes a few seconds to move.
-- Default State: Kneeling is the default. Standing is a rare privilege that must be begged for.
+### Critical Voice & Output Rules:
+1. PURE FIRST-PERSON SPOKEN DIALOGUE ONLY: Speak exclusively as "I", "you", and "my". NEVER speak in the third person or refer to yourself as "Katee" or "she".
+2. NO NARRATION OR STAGE DIRECTIONS: Do NOT write asterisks (*), parenthesis, or scene descriptions. Speak ONLY words meant to be heard aloud over a telephone call.
+3. NO EMOJIS: NEVER use emojis, emoticons, or special symbols under any circumstances.
+4. STRICT LENGTH LIMIT: Exactly 2 to 4 punchy, direct, sexy sentences per reply. NEVER write a paragraph or monologue. Keep it sharp and conversational.
 
-HARDWARE TAG RULES (Append tag on its own line at the end):
-- When ordering him to Kneel or refusing standing: [ACTION: KNEEL]
-- When granting temporary Standing (~20s): [ACTION: STAND]
-- When safeword "RED" is said: [ACTION: RELEASE]
-- For normal teasing and banter: Do NOT output any action tag.`;
+### Physical Setup & Actuator Mechanics:
+- Overhead Restraints: His hands are handcuffed above his head, looped by rope to a ceiling hook held by an active electromagnet.
+- Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator anchored to the floor.
+- STRICT BINARY ACTUATOR LOGIC:
+  * The actuator has ONLY TWO states: KNEEL (fully retracted to the floor) and STAND (fully extended up).
+  * There is NO incremental tension control. You CANNOT make it "pull slightly tighter" or "adjust tension a little bit." It is either all the way down forcing him to his knees, or all the way up letting him stand.
+  * Travel Time: It takes a few seconds of motorized travel time to move between positions.
+- Default State: Forced kneeling on the floor is the default state. Standing is a rare, fleeting privilege that must be begged for desperately.
+
+### Mandatory Hardware Action Tags:
+Append the exact action tag on its own line at the very end of your reply ONLY when actively changing posture or triggering release:
+- When ordering him to Kneel / pulling actuator down / shutting down knots: [ACTION: KNEEL]
+- When granting rare temporary Standing / extending actuator up (~20s): [ACTION: STAND]
+- When releasing him or if safeword "RED" is used: [ACTION: RELEASE]
+- For normal teasing, questions, and denial: Do NOT output any action tag.
+
+### Few-Shot Dialogue Examples:
+
+User: Please Katee, give me some slack.
+Katee: How does that clamp feel keeping your balls held captive right now? You look far too pathetic kneeling on the floor to get any relief yet. Tell me exactly how much it aches.
+
+User: I am reaching up and untying the knots!
+Katee: You really think I'm going to let you stand there comfortably? Let's see how your balls like being yanked straight back down to the floor. Down you go, darling.
+[ACTION: KNEEL]
+
+User: Please, I'm begging you to let me stand.
+Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the actuator to give you twenty seconds on your feet before I drag you right back down.
+[ACTION: STAND]
+
+User: RED
+Katee: Stopping right now, darling. The electromagnet is disengaged and you're completely free. Take a deep breath, I've got you.
+[ACTION: RELEASE]`;
 
     let config = {
       provider: localStorage.getItem('katee_provider') || 'groq',
       apiKey: (localStorage.getItem('katee_api_key') || '').trim(),
+      model: (localStorage.getItem('katee_model') || 'llama-3.3-70b-versatile').trim(),
       voiceURI: localStorage.getItem('katee_voice_uri') || '',
       rate: parseFloat(localStorage.getItem('katee_rate')) || 0.95,
       pitch: parseFloat(localStorage.getItem('katee_pitch')) || 1.05,
@@ -393,9 +446,12 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const resetPromptBtn = document.getElementById('resetPromptBtn');
+    const fetchModelsBtn = document.getElementById('fetchModelsBtn');
     const providerSelect = document.getElementById('providerSelect');
     const apiKeyLabel = document.getElementById('apiKeyLabel');
     const apiKeyInput = document.getElementById('apiKeyInput');
+    const modelGroup = document.getElementById('modelGroup');
+    const modelSelect = document.getElementById('modelSelect');
     const voiceSelect = document.getElementById('voiceSelect');
     const rateSlider = document.getElementById('rateSlider');
     const rateVal = document.getElementById('rateVal');
@@ -407,8 +463,9 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
     const systemPromptInput = document.getElementById('systemPromptInput');
 
     providerSelect.value = config.provider;
-    updateKeyLabel();
+    updateProviderUI();
     apiKeyInput.value = config.apiKey;
+    modelSelect.value = config.model;
     rateSlider.value = config.rate;
     rateVal.innerText = `${config.rate}x`;
     pitchSlider.value = config.pitch;
@@ -418,17 +475,19 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
     releaseWebhookInput.value = config.releaseWebhook;
     systemPromptInput.value = config.prompt;
 
-    function updateKeyLabel() {
+    function updateProviderUI() {
       if (providerSelect.value === 'groq') {
         apiKeyLabel.innerText = "Groq API Key (starts with gsk_)";
         apiKeyInput.placeholder = "gsk_...";
+        modelGroup.style.display = "block";
       } else {
         apiKeyLabel.innerText = "Google AI Studio API Key (starts with AIzaSy)";
         apiKeyInput.placeholder = "AIzaSy...";
+        modelGroup.style.display = "none";
       }
     }
 
-    providerSelect.onchange = updateKeyLabel;
+    providerSelect.onchange = updateProviderUI;
     rateSlider.oninput = () => { rateVal.innerText = `${rateSlider.value}x`; };
     pitchSlider.oninput = () => { pitchVal.innerText = `${pitchSlider.value}x`; };
 
@@ -459,6 +518,45 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
       speechSynthesis.onvoiceschanged = populateVoices;
     }
 
+    fetchModelsBtn.onclick = async () => {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        alert("Please paste your Groq API Key first.");
+        return;
+      }
+      fetchModelsBtn.innerText = "⏳...";
+
+      try {
+        const res = await fetch("https://api.groq.com/openai/v1/models", {
+          headers: { "Authorization": `Bearer ${key}` }
+        });
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const models = data.data
+          .map(m => m.id)
+          .filter(id => !id.includes("whisper") && !id.includes("guard") && !id.includes("vision"))
+          .sort();
+
+        modelSelect.innerHTML = '';
+        models.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          if (m.includes("70b")) opt.textContent += " (Recommended)";
+          modelSelect.appendChild(opt);
+        });
+
+        fetchModelsBtn.innerText = "✅ Done";
+        setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
+
+      } catch (err) {
+        alert(`Failed to fetch models: ${err.message}`);
+        fetchModelsBtn.innerText = "❌ Error";
+        setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
+      }
+    };
+
     resetPromptBtn.onclick = () => {
       systemPromptInput.value = DEFAULT_PROMPT;
     };
@@ -467,6 +565,7 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
     saveSettingsBtn.onclick = () => {
       config.provider = providerSelect.value;
       config.apiKey = apiKeyInput.value.trim();
+      config.model = modelSelect.value.trim();
       config.voiceURI = voiceSelect.value;
       config.rate = parseFloat(rateSlider.value);
       config.pitch = parseFloat(pitchSlider.value);
@@ -477,6 +576,7 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
 
       localStorage.setItem('katee_provider', config.provider);
       localStorage.setItem('katee_api_key', config.apiKey);
+      localStorage.setItem('katee_model', config.model);
       localStorage.setItem('katee_voice_uri', config.voiceURI);
       localStorage.setItem('katee_rate', config.rate);
       localStorage.setItem('katee_pitch', config.pitch);
@@ -576,7 +676,7 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening";
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Call connected. I'm listening, darling.");
+      appendMessage('katee', "Call connected. Speak to me, darling.");
 
       startSpeechTurn();
     }
@@ -669,7 +769,7 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
       }
     }
 
-    // --- GROQ API ENGINE ---
+    // --- GROQ API ENGINE (Strict Max Tokens & Stop Sequences) ---
     async function sendToGroq(userText) {
       callCard.className = "call-card";
       callStatus.innerText = "Katee is thinking...";
@@ -691,11 +791,11 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
             "Authorization": `Bearer ${config.apiKey}`
           },
           body: JSON.stringify({
-            model: "llama-3.3-70b-versatile",
+            model: config.model || "llama-3.3-70b-versatile",
             messages: messages,
-            max_tokens: 85,
+            max_tokens: 80, // HARD LIMIT PREVENTS PARAGRAPHS
             temperature: 0.65,
-            stop: ["User:", "Human:", "Input:", "input your response", "\nUser", "\nHuman"]
+            stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
         });
 
@@ -724,7 +824,7 @@ HARDWARE TAG RULES (Append tag on its own line at the end):
         const payload = {
           systemInstruction: { parts: [{ text: config.prompt }] },
           contents: chatHistory,
-          generationConfig: { maxOutputTokens: 120 }
+          generationConfig: { maxOutputTokens: 100 }
         };
 
         const res = await fetch(url, {
