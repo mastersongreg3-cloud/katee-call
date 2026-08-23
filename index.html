@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Katee - Live Call</title>
+  <title>Katee - Voice Call</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -75,12 +75,12 @@
       pointer-events: none;
     }
 
-    .active .pulse-ring {
-      animation: pulse 2s infinite ease-out;
+    .talking .pulse-ring {
+      animation: pulse 1.5s infinite ease-out;
     }
 
     @keyframes pulse {
-      0% { transform: scale(1); opacity: 0.8; }
+      0% { transform: scale(1); opacity: 0.9; }
       100% { transform: scale(1.6); opacity: 0; }
     }
 
@@ -95,12 +95,20 @@
       color: #94a3b8;
     }
 
+    .transcript {
+      margin-top: 15px;
+      font-size: 13px;
+      color: #cbd5e1;
+      max-width: 320px;
+      min-height: 40px;
+      font-style: italic;
+    }
+
     .error-msg {
       color: #f87171;
       font-size: 13px;
-      margin-top: 12px;
+      margin-top: 10px;
       max-width: 320px;
-      line-height: 1.4;
       display: none;
     }
 
@@ -124,7 +132,7 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.15s ease, background-color 0.2s ease;
+      transition: transform 0.15s ease;
       box-shadow: 0 4px 15px rgba(0,0,0,0.3);
     }
 
@@ -159,7 +167,7 @@
     .modal-content h3 { margin-bottom: 12px; }
     .input-group { margin-bottom: 14px; }
     .input-group label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
-    .input-group input, .input-group textarea, .input-group select {
+    .input-group input, .input-group textarea {
       width: 100%;
       padding: 10px;
       border-radius: 8px;
@@ -182,7 +190,7 @@
 <body>
 
   <div class="header">
-    <span>Live Voice Call</span>
+    <span>Voice Call (Free Mode)</span>
     <button class="settings-btn" id="openSettings">⚙️</button>
   </div>
 
@@ -191,8 +199,9 @@
       <div class="pulse-ring"></div>
       🎙️
     </div>
-    <div class="caller-name" id="callerNameDisplay">Katee</div>
+    <div class="caller-name">Katee</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
+    <div class="transcript" id="transcript"></div>
     <div class="error-msg" id="errorMsg"></div>
   </div>
 
@@ -201,31 +210,12 @@
     <button class="btn-circle btn-end" id="hangupBtn" style="display: none;">🛑</button>
   </div>
 
-  <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
       <h3>Call Settings</h3>
       <div class="input-group">
         <label>Google AI Studio API Key</label>
         <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
-      </div>
-      <div class="input-group">
-        <label>Live Model</label>
-        <select id="modelSelect">
-          <option value="models/gemini-2.0-flash-exp">gemini-2.0-flash-exp (Recommended)</option>
-          <option value="models/gemini-2.0-flash">gemini-2.0-flash (General)</option>
-          <option value="models/gemini-2.5-flash">gemini-2.5-flash</option>
-        </select>
-      </div>
-      <div class="input-group">
-        <label>Voice</label>
-        <select id="voiceSelect">
-          <option value="Kore">Kore (Smooth & Confident)</option>
-          <option value="Aoede">Aoede (Brisk & Clear)</option>
-          <option value="Fenrir">Fenrir (Deeper Tone)</option>
-          <option value="Puck">Puck (Playful)</option>
-          <option value="Charon">Charon (Calm & Low)</option>
-        </select>
       </div>
       <div class="input-group">
         <label>Persona / System Prompt</label>
@@ -247,67 +237,42 @@ RULES:
 
     let config = {
       apiKey: localStorage.getItem('gemini_api_key') || '',
-      model: localStorage.getItem('gemini_model') || 'models/gemini-2.0-flash-exp',
-      voice: localStorage.getItem('gemini_voice') || 'Kore',
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
 
-    let ws = null;
-    let audioCtx = null;
-    let inputAudioStream = null;
-    let scriptProcessor = null;
+    let chatHistory = [];
     let isCalling = false;
-    let isHandshakeComplete = false;
-    let nextAudioStartTime = 0;
-    let activeAudioNodes = [];
+    let recognition = null;
+    let synth = window.speechSynthesis;
 
     const callBtn = document.getElementById('callBtn');
     const hangupBtn = document.getElementById('hangupBtn');
     const callStatus = document.getElementById('callStatus');
     const callCard = document.getElementById('callCard');
+    const transcript = document.getElementById('transcript');
     const errorMsg = document.getElementById('errorMsg');
     const settingsModal = document.getElementById('settingsModal');
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
-    const modelSelect = document.getElementById('modelSelect');
-    const voiceSelect = document.getElementById('voiceSelect');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
     apiKeyInput.value = config.apiKey;
-    modelSelect.value = config.model;
-    voiceSelect.value = config.voice;
     systemPromptInput.value = config.prompt;
 
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
       config.apiKey = apiKeyInput.value.trim();
-      config.model = modelSelect.value;
-      config.voice = voiceSelect.value;
       config.prompt = systemPromptInput.value.trim();
       localStorage.setItem('gemini_api_key', config.apiKey);
-      localStorage.setItem('gemini_model', config.model);
-      localStorage.setItem('gemini_voice', config.voice);
       localStorage.setItem('gemini_prompt', config.prompt);
       settingsModal.classList.remove('open');
-      hideError();
     };
 
-    function showError(text) {
-      errorMsg.innerText = text;
-      errorMsg.style.display = 'block';
-    }
-
-    function hideError() {
-      errorMsg.innerText = '';
-      errorMsg.style.display = 'none';
-    }
-
-    callBtn.onclick = async () => {
-      hideError();
+    callBtn.onclick = () => {
       if (!config.apiKey) {
         settingsModal.classList.add('open');
-        showError('Please enter your Google AI Studio API Key.');
+        alert('Please enter your Google AI Studio API key in settings.');
         return;
       }
       startCall();
@@ -315,237 +280,134 @@ RULES:
 
     hangupBtn.onclick = () => endCall();
 
-    async function startCall() {
-      callStatus.innerText = "Connecting...";
+    function startCall() {
+      isCalling = true;
+      chatHistory = [];
       callBtn.style.display = "none";
       hangupBtn.style.display = "flex";
-      isHandshakeComplete = false;
+      callStatus.innerText = "Listening...";
+      transcript.innerText = "";
+      errorMsg.style.display = "none";
 
-      try {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        if (audioCtx.state === 'suspended') await audioCtx.resume();
-        nextAudioStartTime = audioCtx.currentTime;
+      setupSpeechRecognition();
+    }
 
-        inputAudioStream = await navigator.mediaDevices.getUserMedia({
-          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
-        });
-
-        const host = "generativelanguage.googleapis.com";
-        const path = "ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
-        const url = `wss://${host}/${path}?key=${config.apiKey}`;
-        
-        ws = new WebSocket(url);
-
-        ws.onopen = () => {
-          callStatus.innerText = "Handshaking...";
-          sendSetupMessage();
-        };
-
-        ws.onmessage = async (event) => {
-          let data = event.data;
-          if (data instanceof Blob) data = await data.text();
-          try {
-            const response = JSON.parse(data);
-            
-            // Wait for setupComplete before sending mic audio!
-            if (response.setupComplete) {
-              callStatus.innerText = "Connected";
-              callCard.classList.add('active');
-              isCalling = true;
-              isHandshakeComplete = true;
-              startAudioStreaming();
-              return;
-            }
-
-            handleServerMessage(response);
-          } catch (e) {
-            console.error("Parse error:", e);
-          }
-        };
-
-        ws.onclose = (e) => {
-          console.warn("WebSocket Closed:", e);
-          if (e.code === 1008) {
-            showError("Error 1008: Check that your API key has no restrictions in AI Studio or switch the model in settings.");
-          } else if (e.code !== 1000 && isCalling) {
-            showError(`Disconnected (Code ${e.code}).`);
-          }
-          endCall();
-        };
-
-        ws.onerror = (err) => {
-          console.error("WebSocket Error:", err);
-          showError("WebSocket connection failed.");
-          endCall();
-        };
-
-      } catch (err) {
-        console.error("Call error:", err);
-        showError(`Microphone Error: ${err.message || err.name}`);
+    function setupSpeechRecognition() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Your browser does not support Speech Recognition. Please use Chrome on Android.");
         endCall();
-      }
-    }
-
-    function sendSetupMessage() {
-      const setupMsg = {
-        setup: {
-          model: config.model,
-          generationConfig: {
-            responseModalities: ["AUDIO"],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: config.voice
-                }
-              }
-            }
-          },
-          systemInstruction: {
-            parts: [{ text: config.prompt }]
-          }
-        }
-      };
-      ws.send(JSON.stringify(setupMsg));
-    }
-
-    function startAudioStreaming() {
-      const micSource = audioCtx.createMediaStreamSource(inputAudioStream);
-      const bufferSize = 4096;
-      scriptProcessor = audioCtx.createScriptProcessor(bufferSize, 1, 1);
-
-      micSource.connect(scriptProcessor);
-      scriptProcessor.connect(audioCtx.destination);
-
-      scriptProcessor.onaudioprocess = (e) => {
-        if (!isCalling || !isHandshakeComplete || ws.readyState !== WebSocket.OPEN) return;
-        const inputData = e.inputBuffer.getChannelData(0);
-        const downsampledPCM = downsampleTo16kPCM(inputData, audioCtx.sampleRate);
-        if (downsampledPCM.byteLength === 0) return;
-
-        const base64Audio = arrayBufferToBase64(downsampledPCM.buffer);
-        const audioMsg = {
-          realtimeInput: {
-            mediaChunks: [
-              { mimeType: "audio/pcm;rate=16000", data: base64Audio }
-            ]
-          }
-        };
-        ws.send(JSON.stringify(audioMsg));
-      };
-    }
-
-    function downsampleTo16kPCM(inputBuffer, inputRate) {
-      if (inputRate === 16000) {
-        const pcm16 = new Int16Array(inputBuffer.length);
-        for (let i = 0; i < inputBuffer.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputBuffer[i]));
-          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-        }
-        return pcm16;
-      }
-
-      const ratio = inputRate / 16000;
-      const newLength = Math.round(inputBuffer.length / ratio);
-      const result = new Int16Array(newLength);
-      let offsetResult = 0;
-      let offsetBuffer = 0;
-
-      while (offsetResult < result.length) {
-        const nextOffsetBuffer = Math.round((offsetResult + 1) * ratio);
-        let accum = 0, count = 0;
-        for (let i = offsetBuffer; i < nextOffsetBuffer && i < inputBuffer.length; i++) {
-          accum += inputBuffer[i];
-          count++;
-        }
-        const avg = count > 0 ? accum / count : 0;
-        const s = Math.max(-1, Math.min(1, avg));
-        result[offsetResult] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-        offsetResult++;
-        offsetBuffer = nextOffsetBuffer;
-      }
-      return result;
-    }
-
-    function handleServerMessage(msg) {
-      if (msg.serverContent && msg.serverContent.interrupted) {
-        stopAllActiveAudio();
-        nextAudioStartTime = audioCtx.currentTime;
         return;
       }
 
-      if (msg.serverContent && msg.serverContent.modelTurn) {
-        const parts = msg.serverContent.modelTurn.parts;
-        for (const part of parts) {
-          if (part.inlineData && part.inlineData.data) {
-            playAudioChunk(base64ToArrayBuffer(part.inlineData.data));
-          }
-        }
-      }
-    }
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = false;
+      recognition.lang = 'en-US';
 
-    function playAudioChunk(arrayBuffer) {
-      const pcm16 = new Int16Array(arrayBuffer);
-      const float32 = new Float32Array(pcm16.length);
-      for (let i = 0; i < pcm16.length; i++) {
-        float32[i] = pcm16[i] / 32768.0;
-      }
-
-      const audioBuffer = audioCtx.createBuffer(1, float32.length, 24000);
-      audioBuffer.copyToChannel(float32, 0);
-
-      const source = audioCtx.createBufferSource();
-      source.buffer = audioBuffer;
-      source.connect(audioCtx.destination);
-
-      const startTime = Math.max(audioCtx.currentTime, nextAudioStartTime);
-      source.start(startTime);
-      nextAudioStartTime = startTime + audioBuffer.duration;
-
-      activeAudioNodes.push(source);
-      source.onended = () => {
-        activeAudioNodes = activeAudioNodes.filter(n => n !== source);
+      recognition.onstart = () => {
+        if (isCalling) callStatus.innerText = "Listening...";
       };
+
+      recognition.onresult = async (event) => {
+        const userText = event.results[0][0].transcript;
+        transcript.innerText = `You: "${userText}"`;
+        await sendToGemini(userText);
+      };
+
+      recognition.onerror = (e) => {
+        if (isCalling && e.error !== 'no-speech') {
+          console.warn("Speech error:", e.error);
+        }
+      };
+
+      recognition.onend = () => {
+        // Keep listening if call is still active and Katee is not speaking
+        if (isCalling && !synth.speaking) {
+          try { recognition.start(); } catch (err) {}
+        }
+      };
+
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error("Recognition start failed:", err);
+      }
     }
 
-    function stopAllActiveAudio() {
-      activeAudioNodes.forEach(node => {
-        try { node.stop(); } catch (e) {}
-      });
-      activeAudioNodes = [];
+    async function sendToGemini(userText) {
+      callStatus.innerText = "Katee is thinking...";
+      chatHistory.push({ role: "user", parts: [{ text: userText }] });
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key=${config.apiKey}`;
+        
+        const payload = {
+          system_instruction: { parts: [{ text: config.prompt }] },
+          contents: chatHistory,
+          generationConfig: { maxOutputTokens: 250 }
+        };
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const reply = data.candidates[0].content.parts[0].text;
+        chatHistory.push({ role: "model", parts: [{ text: reply }] });
+
+        speakReply(reply);
+
+      } catch (err) {
+        console.error("Gemini Error:", err);
+        errorMsg.innerText = `Error: ${err.message}`;
+        errorMsg.style.display = "block";
+        callStatus.innerText = "Error. Resuming mic...";
+        if (isCalling) recognition.start();
+      }
+    }
+
+    function speakReply(text) {
+      callStatus.innerText = "Katee is speaking...";
+      callCard.classList.add("talking");
+      transcript.innerText = `Katee: "${text}"`;
+
+      const utterance = new SpeechSynthesisUtterance(text);
+      utterance.rate = 1.0;
+      utterance.pitch = 1.05;
+
+      // Pick the best available female voice on device
+      const voices = synth.getVoices();
+      const preferredVoice = voices.find(v => v.name.includes("Female") || v.name.includes("Google") || v.name.includes("Natural"));
+      if (preferredVoice) utterance.voice = preferredVoice;
+
+      utterance.onend = () => {
+        callCard.classList.remove("talking");
+        callStatus.innerText = "Listening...";
+        if (isCalling) {
+          try { recognition.start(); } catch (err) {}
+        }
+      };
+
+      synth.speak(utterance);
     }
 
     function endCall() {
       isCalling = false;
-      isHandshakeComplete = false;
-      callCard.classList.remove('active');
+      callCard.classList.remove("talking");
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex";
       hangupBtn.style.display = "none";
 
-      stopAllActiveAudio();
-
-      if (scriptProcessor) { scriptProcessor.disconnect(); scriptProcessor = null; }
-      if (inputAudioStream) { inputAudioStream.getTracks().forEach(t => t.stop()); }
-      if (ws && ws.readyState === WebSocket.OPEN) { ws.close(); }
-      if (audioCtx && audioCtx.state !== 'closed') { audioCtx.close(); }
-    }
-
-    function arrayBufferToBase64(buffer) {
-      let binary = '';
-      const bytes = new Uint8Array(buffer);
-      for (let i = 0; i < bytes.byteLength; i++) {
-        binary += String.fromCharCode(bytes[i]);
+      if (recognition) {
+        recognition.abort();
+        recognition = null;
       }
-      return window.btoa(binary);
-    }
-
-    function base64ToArrayBuffer(base64) {
-      const binaryString = window.atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
-      return bytes.buffer;
+      if (synth) synth.cancel();
     }
   </script>
 </body>
