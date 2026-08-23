@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Katee - Live Voice Call</title>
+  <title>Katee - Voice Call (Groq)</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -58,7 +58,7 @@
       width: 80px;
       height: 80px;
       border-radius: 50%;
-      background: linear-gradient(135deg, #6366f1, #a855f7);
+      background: linear-gradient(135deg, #f97316, #ec4899);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -96,7 +96,6 @@
       margin-top: 2px;
     }
 
-    /* Hardware Trigger Notification Badge */
     .action-badge {
       display: none;
       background: #7c3aed;
@@ -228,6 +227,9 @@
       font-size: 14px;
     }
 
+    .slider-container { display: flex; align-items: center; gap: 10px; }
+    .slider-container span { font-size: 13px; min-width: 35px; }
+
     .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
     .btn-secondary {
       background: #334155;
@@ -243,7 +245,7 @@
 <body>
 
   <div class="header">
-    <span>Katee Voice Call</span>
+    <span>Katee Voice Call (Groq Powered)</span>
     <button class="settings-btn" id="openSettings">⚙️</button>
   </div>
 
@@ -258,13 +260,11 @@
   </div>
 
   <div class="chat-container" id="chatLog">
-    <div class="bubble katee">Press Call below to connect with Katee. You can pause anytime to think.</div>
+    <div class="bubble katee">Press Call below to connect. Fast responses and generous rate limits enabled via Groq.</div>
   </div>
 
   <div class="controls">
     <button class="btn-circle btn-call" id="callBtn">📞</button>
-    
-    <!-- In-Call Controls: Pause & Hang Up -->
     <button class="btn-circle btn-pause" id="pauseBtn" style="display: none;" title="Pause Mic">⏸️</button>
     <button class="btn-circle btn-end" id="hangupBtn" style="display: none;" title="End Call">🛑</button>
   </div>
@@ -272,38 +272,47 @@
   <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
-      <h3>Call & Hardware Settings</h3>
+      <h3>Groq & Voice Settings</h3>
       
       <div class="input-group">
-        <label>Google AI Studio API Key</label>
-        <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+        <label>Groq API Key (from console.groq.com)</label>
+        <input type="password" id="apiKeyInput" placeholder="gsk_...">
       </div>
 
       <div class="input-group">
-        <label>Gemini Model</label>
+        <label>Groq AI Model</label>
         <select id="modelSelect">
-          <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended)</option>
-          <option value="gemini-3.6-flash">gemini-3.6-flash</option>
-          <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-          <option value="gemini-2.5-pro">gemini-2.5-pro</option>
-          <option value="custom">Other / Custom Model Name...</option>
+          <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Best Intelligence & Roleplay)</option>
+          <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant / Ultra Fast)</option>
+          <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
+          <option value="custom">Other / Custom Model...</option>
         </select>
       </div>
 
       <div class="input-group" id="customModelGroup" style="display: none;">
         <label>Exact Model Name</label>
-        <input type="text" id="customModelInput" placeholder="e.g. gemini-3.6-flash">
+        <input type="text" id="customModelInput" placeholder="e.g. llama-3.3-70b-versatile">
       </div>
 
       <div class="input-group">
-        <label>Katee's Studio AI Voice</label>
-        <select id="voiceSelect">
-          <option value="Kore">Kore (Smooth & Confident)</option>
-          <option value="Aoede">Aoede (Brisk & Sharp)</option>
-          <option value="Puck">Puck (Playful)</option>
-          <option value="Fenrir">Fenrir (Deeper Tone)</option>
-          <option value="Charon">Charon (Calm)</option>
-        </select>
+        <label>Device Voice</label>
+        <select id="voiceSelect"></select>
+      </div>
+
+      <div class="input-group">
+        <label>Speech Speed (Pace)</label>
+        <div class="slider-container">
+          <input type="range" id="rateSlider" min="0.75" max="1.3" step="0.05" value="0.95">
+          <span id="rateVal">0.95x</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Voice Pitch</label>
+        <div class="slider-container">
+          <input type="range" id="pitchSlider" min="0.8" max="1.3" step="0.05" value="1.05">
+          <span id="pitchVal">1.05x</span>
+        </div>
       </div>
 
       <div class="input-group">
@@ -338,8 +347,8 @@
 You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
 
 ### Critical Voice Rules:
-1. Pure Spoken Dialogue Only: Speak exclusively in the FIRST PERSON ("I", "you", "my"). Never narrate in the third person.
-2. NO Stage Directions: Never write asterisks, parenthesis, or scene narration. Every single word you generate is read aloud.
+1. Pure Spoken Dialogue Only: Speak exclusively in the FIRST PERSON ("I", "you", "my"). Never narrate in third person or describe physical actions in text.
+2. NO Stage Directions: Never output asterisks (*), parenthesis, or scene narration. Every single word you write is read aloud.
 3. Conversational Length: Keep responses punchy, sharp, and natural for a phone call (2 to 4 sentences max).
 
 ### Physical Restraint & Actuator Hardware Setup:
@@ -360,13 +369,15 @@ Output the action tag on its own line at the very end of your reply when changin
 - For normal teasing and denial: Do NOT output any action tag.`;
 
     let config = {
-      apiKey: localStorage.getItem('gemini_api_key') || '',
-      model: localStorage.getItem('gemini_model') || 'gemini-2.5-flash',
-      voice: localStorage.getItem('gemini_voice') || 'Kore',
-      kneelWebhook: localStorage.getItem('gemini_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
-      standWebhook: localStorage.getItem('gemini_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
-      releaseWebhook: localStorage.getItem('gemini_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167822',
-      prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
+      apiKey: localStorage.getItem('groq_api_key') || '',
+      model: localStorage.getItem('groq_model') || 'llama-3.3-70b-versatile',
+      voiceURI: localStorage.getItem('groq_voice_uri') || '',
+      rate: parseFloat(localStorage.getItem('groq_rate')) || 0.95,
+      pitch: parseFloat(localStorage.getItem('groq_pitch')) || 1.05,
+      kneelWebhook: localStorage.getItem('groq_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
+      standWebhook: localStorage.getItem('groq_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
+      releaseWebhook: localStorage.getItem('groq_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167822',
+      prompt: localStorage.getItem('groq_prompt') || DEFAULT_PROMPT
     };
 
     let chatHistory = [];
@@ -377,8 +388,8 @@ Output the action tag on its own line at the very end of your reply when changin
     let silenceTimer = null;
     let currentInterimBubble = null;
     let latestTranscript = "";
-    let audioCtx = null;
-    let activeAudioSource = null;
+    let synth = window.speechSynthesis;
+    let availableVoices = [];
 
     // DOM Elements
     const callBtn = document.getElementById('callBtn');
@@ -397,20 +408,27 @@ Output the action tag on its own line at the very end of your reply when changin
     const customModelGroup = document.getElementById('customModelGroup');
     const customModelInput = document.getElementById('customModelInput');
     const voiceSelect = document.getElementById('voiceSelect');
+    const rateSlider = document.getElementById('rateSlider');
+    const rateVal = document.getElementById('rateVal');
+    const pitchSlider = document.getElementById('pitchSlider');
+    const pitchVal = document.getElementById('pitchVal');
     const kneelWebhookInput = document.getElementById('kneelWebhookInput');
     const standWebhookInput = document.getElementById('standWebhookInput');
     const releaseWebhookInput = document.getElementById('releaseWebhookInput');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
     apiKeyInput.value = config.apiKey;
-    voiceSelect.value = config.voice;
+    rateSlider.value = config.rate;
+    rateVal.innerText = `${config.rate}x`;
+    pitchSlider.value = config.pitch;
+    pitchVal.innerText = `${config.pitch}x`;
     kneelWebhookInput.value = config.kneelWebhook;
     standWebhookInput.value = config.standWebhook;
     releaseWebhookInput.value = config.releaseWebhook;
     systemPromptInput.value = config.prompt;
 
-    const presetOptions = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-flash', 'gemini-2.5-pro'];
-    if (presetOptions.includes(config.model)) {
+    const presetModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
+    if (presetModels.includes(config.model)) {
       modelSelect.value = config.model;
       customModelGroup.style.display = 'none';
     } else {
@@ -423,6 +441,36 @@ Output the action tag on its own line at the very end of your reply when changin
       customModelGroup.style.display = modelSelect.value === 'custom' ? 'block' : 'none';
     };
 
+    rateSlider.oninput = () => { rateVal.innerText = `${rateSlider.value}x`; };
+    pitchSlider.oninput = () => { pitchVal.innerText = `${pitchSlider.value}x`; };
+
+    function populateVoices() {
+      availableVoices = synth.getVoices();
+      if (!availableVoices.length) return;
+
+      voiceSelect.innerHTML = '';
+      availableVoices.forEach((v) => {
+        const opt = document.createElement('option');
+        opt.value = v.voiceURI;
+        opt.textContent = `${v.name} (${v.lang})`;
+        if (v.voiceURI === config.voiceURI) opt.selected = true;
+        voiceSelect.appendChild(opt);
+      });
+
+      if (!config.voiceURI && availableVoices.length > 0) {
+        const bestDefault = availableVoices.find(v => (v.name.includes("Female") || v.name.includes("Google") || v.name.includes("Natural")) && v.lang.startsWith("en")) || availableVoices[0];
+        if (bestDefault) {
+          voiceSelect.value = bestDefault.voiceURI;
+          config.voiceURI = bestDefault.voiceURI;
+        }
+      }
+    }
+
+    populateVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
     resetPromptBtn.onclick = () => {
       systemPromptInput.value = DEFAULT_PROMPT;
     };
@@ -431,26 +479,30 @@ Output the action tag on its own line at the very end of your reply when changin
     saveSettingsBtn.onclick = () => {
       config.apiKey = apiKeyInput.value.trim();
       config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
-      config.voice = voiceSelect.value;
+      config.voiceURI = voiceSelect.value;
+      config.rate = parseFloat(rateSlider.value);
+      config.pitch = parseFloat(pitchSlider.value);
       config.kneelWebhook = kneelWebhookInput.value.trim();
       config.standWebhook = standWebhookInput.value.trim();
       config.releaseWebhook = releaseWebhookInput.value.trim();
       config.prompt = systemPromptInput.value.trim();
 
-      localStorage.setItem('gemini_api_key', config.apiKey);
-      localStorage.setItem('gemini_model', config.model);
-      localStorage.setItem('gemini_voice', config.voice);
-      localStorage.setItem('gemini_kneel_webhook', config.kneelWebhook);
-      localStorage.setItem('gemini_stand_webhook', config.standWebhook);
-      localStorage.setItem('gemini_release_webhook', config.releaseWebhook);
-      localStorage.setItem('gemini_prompt', config.prompt);
+      localStorage.setItem('groq_api_key', config.apiKey);
+      localStorage.setItem('groq_model', config.model);
+      localStorage.setItem('groq_voice_uri', config.voiceURI);
+      localStorage.setItem('groq_rate', config.rate);
+      localStorage.setItem('groq_pitch', config.pitch);
+      localStorage.setItem('groq_kneel_webhook', config.kneelWebhook);
+      localStorage.setItem('groq_stand_webhook', config.standWebhook);
+      localStorage.setItem('groq_release_webhook', config.releaseWebhook);
+      localStorage.setItem('groq_prompt', config.prompt);
       settingsModal.classList.remove('open');
     };
 
     callBtn.onclick = () => {
       if (!config.apiKey) {
         settingsModal.classList.add('open');
-        alert('Please enter your Google AI Studio API key in settings.');
+        alert('Please enter your Groq API key in settings.');
         return;
       }
       startCall();
@@ -532,11 +584,6 @@ Output the action tag on its own line at the very end of your reply when changin
       callStatus.innerText = "Listening...";
       appendMessage('katee', "Call connected. Speak to me, darling.");
 
-      if (!audioCtx) {
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      if (audioCtx.state === 'suspended') audioCtx.resume();
-
       startSpeechTurn();
     }
 
@@ -577,7 +624,6 @@ Output the action tag on its own line at the very end of your reply when changin
         if (latestTranscript) {
           appendMessage('user', latestTranscript, true);
 
-          // Instant Emergency Trigger on Safeword "RED"
           if (latestTranscript.toUpperCase().includes("RED")) {
             triggerWebhook(config.releaseWebhook, "Electromagnet Release (Safeword RED)");
           }
@@ -587,7 +633,7 @@ Output the action tag on its own line at the very end of your reply when changin
             if (latestTranscript && isCalling && !isPaused && !isProcessing) {
               commitUserSpeech(latestTranscript);
             }
-          }, 1100);
+          }, 1000);
         }
       };
 
@@ -621,151 +667,95 @@ Output the action tag on its own line at the very end of your reply when changin
         recognition = null;
       }
       appendMessage('user', text, false);
-      sendToGemini(text);
+      sendToGroq(text);
     }
 
-    async function sendToGemini(userText) {
+    async function sendToGroq(userText) {
       callCard.className = "call-card";
       callStatus.innerText = "Katee is thinking...";
-      chatHistory.push({ role: "user", parts: [{ text: userText }] });
+      chatHistory.push({ role: "user", content: userText });
 
-      // Keep last 8 messages strictly to prevent hitting token caps
-      if (chatHistory.length > 8) {
-        chatHistory = chatHistory.slice(-8);
+      if (chatHistory.length > 10) {
+        chatHistory = chatHistory.slice(-10);
       }
 
       try {
-        const cleanModel = config.model.replace(/^models\//, '');
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${config.apiKey}`;
+        const url = "https://api.groq.com/openai/v1/chat/completions";
         
-        const payload = {
-          systemInstruction: { parts: [{ text: config.prompt }] },
-          contents: chatHistory,
-          generationConfig: {
-            responseModalities: ["AUDIO", "TEXT"],
-            speechConfig: {
-              voiceConfig: {
-                prebuiltVoiceConfig: {
-                  voiceName: config.voice
-                }
-              }
-            }
-          }
-        };
+        const messages = [
+          { role: "system", content: config.prompt },
+          ...chatHistory
+        ];
 
         const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(payload)
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${config.apiKey}`
+          },
+          body: JSON.stringify({
+            model: config.model,
+            messages: messages,
+            max_tokens: 250,
+            temperature: 0.7
+          })
         });
 
         const data = await res.json();
         
         if (data.error) {
-          if (data.error.code === 429 || data.error.message.includes("quota")) {
-            throw new Error("Daily / Per-Minute rate limit reached. Pause a moment or check AI Studio quota.");
-          }
           throw new Error(data.error.message);
         }
 
-        const candidate = data.candidates?.[0];
-        if (!candidate || !candidate.content?.parts) {
-          if (candidate?.finishReason === "SAFETY") {
-            throw new Error("Response was filtered by safety policies.");
-          }
-          throw new Error("No response parts received from model.");
-        }
-
-        const candidateParts = candidate.content.parts;
-        let audioData = null;
-        let rawTextReply = "";
-
-        for (const part of candidateParts) {
-          if (part.text) rawTextReply += part.text + " ";
-          if (part.inlineData && part.inlineData.data) {
-            audioData = part.inlineData.data;
-          }
-        }
-
-        rawTextReply = rawTextReply.trim();
+        const rawReply = data.choices[0].message.content.trim();
 
         // 1. Hardware Action Webhook Triggers
-        if (rawTextReply.includes("[ACTION: KNEEL]")) {
+        if (rawReply.includes("[ACTION: KNEEL]")) {
           triggerWebhook(config.kneelWebhook, "Kneel Command");
-        } else if (rawTextReply.includes("[ACTION: STAND]")) {
+        } else if (rawReply.includes("[ACTION: STAND]")) {
           triggerWebhook(config.standWebhook, "Stand Command");
-        } else if (rawTextReply.includes("[ACTION: RELEASE]")) {
+        } else if (rawReply.includes("[ACTION: RELEASE]")) {
           triggerWebhook(config.releaseWebhook, "Electromagnet Release");
         }
 
-        // 2. Clean out tags for text & speech
-        const cleanText = rawTextReply
+        // 2. Clean out tags for clean text & voice
+        const cleanText = rawReply
           .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
           .replace(/\*/g, '')
           .trim();
 
-        chatHistory.push({ role: "model", parts: [{ text: cleanText }] });
+        chatHistory.push({ role: "assistant", content: cleanText });
         appendMessage('katee', cleanText);
 
-        if (audioData) {
-          playStudioVoice(audioData);
-        } else {
-          playFallbackVoice(cleanText);
-        }
+        speakReply(cleanText);
 
       } catch (err) {
-        console.error("Gemini Error:", err);
+        console.error("Groq Error:", err);
         appendMessage('system', err.message);
-        resumeListeningWithDelay(2500);
+        resumeListeningWithDelay(2000);
       }
     }
 
-    function playStudioVoice(base64Audio) {
-      callCard.className = "call-card talking";
-      callStatus.innerText = "Katee is speaking...";
-
-      try {
-        const binaryString = window.atob(base64Audio);
-        const bytes = new Uint8Array(binaryString.length);
-        for (let i = 0; i < binaryString.length; i++) {
-          bytes[i] = binaryString.charCodeAt(i);
-        }
-
-        const pcm16 = new Int16Array(bytes.buffer);
-        const float32 = new Float32Array(pcm16.length);
-        for (let i = 0; i < pcm16.length; i++) {
-          float32[i] = pcm16[i] / 32768.0;
-        }
-
-        if (audioCtx.state === 'suspended') audioCtx.resume();
-
-        const buffer = audioCtx.createBuffer(1, float32.length, 24000);
-        buffer.copyToChannel(float32, 0);
-
-        activeAudioSource = audioCtx.createBufferSource();
-        activeAudioSource.buffer = buffer;
-        activeAudioSource.connect(audioCtx.destination);
-
-        activeAudioSource.onended = () => {
-          resumeListeningWithDelay(600);
-        };
-
-        activeAudioSource.start(0);
-
-      } catch (e) {
-        console.error("Audio playback error:", e);
-        resumeListeningWithDelay(500);
-      }
-    }
-
-    function playFallbackVoice(text) {
+    function speakReply(text) {
       callCard.className = "call-card talking";
       callStatus.innerText = "Katee is speaking...";
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.95;
-      utterance.onend = () => resumeListeningWithDelay(600);
-      window.speechSynthesis.speak(utterance);
+      utterance.rate = config.rate;
+      utterance.pitch = config.pitch;
+
+      const selected = availableVoices.find(v => v.voiceURI === config.voiceURI);
+      if (selected) utterance.voice = selected;
+
+      utterance.onend = () => {
+        resumeListeningWithDelay(600);
+      };
+
+      utterance.onerror = () => {
+        resumeListeningWithDelay(500);
+      };
+
+      synth.speak(utterance);
     }
 
     function resumeListeningWithDelay(ms) {
@@ -800,12 +790,7 @@ Output the action tag on its own line at the very end of your reply when changin
         try { recognition.abort(); } catch (e) {}
         recognition = null;
       }
-
-      if (activeAudioSource) {
-        try { activeAudioSource.stop(); } catch (e) {}
-        activeAudioSource = null;
-      }
-      if (window.speechSynthesis) window.speechSynthesis.cancel();
+      if (synth) synth.cancel();
     }
   </script>
 </body>
