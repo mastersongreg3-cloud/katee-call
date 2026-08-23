@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+  <title>Live Call</title>
+  <style>
+    :root {
+      --bg: #0f172a;
+      --card-bg: #1e293b;
+      --text: #f8fafc;
+      --accent: #38bdf8;
+      --danger: #ef4444;
+      --success: #22c55e;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: 24px 16px;
+    }
+
+    .header {
+      width: 100%;
+      max-width: 400px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .settings-btn {
+      background: none;
+      border: none;
+      color: #94a3b8;
+      font-size: 24px;
+      cursor: pointer;
+    }
+
+    .call-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: auto 0;
+    }
+
+    .avatar-wrapper {
+      position: relative;
+      width: 130px;
+      height: 130px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, #6366f1, #a855f7);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 48px;
+      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
+      margin-bottom: 20px;
+    }
+
+    .pulse-ring {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      border-radius: 50%;
+      border: 2px solid var(--accent);
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .active .pulse-ring {
+      animation: pulse 2s infinite ease-out;
+    }
+
+    @keyframes pulse {
+      0% { transform: scale(1); opacity: 0.8; }
+      100% { transform: scale(1.6); opacity: 0; }
+    }
+
+    .caller-name {
+      font-size: 26px;
+      font-weight: 600;
+      margin-bottom: 6px;
+    }
+
+    .call-status {
+      font-size: 15px;
+      color: #94a3b8;
+    }
+
+    .controls {
+      width: 100%;
+      max-width: 320px;
+      display: flex;
+      justify-content: center;
+      gap: 30px;
+      margin-bottom: 20px;
+    }
+
+    .btn-circle {
+      width: 72px;
+      height: 72px;
+      border-radius: 50%;
+      border: none;
+      color: white;
+      font-size: 28px;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: transform 0.15s ease, background-color 0.2s ease;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+    }
+
+    .btn-circle:active { transform: scale(0.92); }
+    .btn-call { background-color: var(--success); }
+    .btn-end { background-color: var(--danger); }
+
+    /* Settings Modal */
+    .modal {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.8);
+      padding: 20px;
+      align-items: center;
+      justify-content: center;
+      z-index: 10;
+    }
+
+    .modal.open { display: flex; }
+
+    .modal-content {
+      background: var(--card-bg);
+      border-radius: 16px;
+      padding: 20px;
+      width: 100%;
+      max-width: 400px;
+      max-height: 85vh;
+      overflow-y: auto;
+    }
+
+    .modal-content h3 { margin-bottom: 12px; }
+    .input-group { margin-bottom: 14px; }
+    .input-group label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+    .input-group input, .input-group textarea, .input-group select {
+      width: 100%;
+      padding: 10px;
+      border-radius: 8px;
+      border: 1px solid #334155;
+      background: #0f172a;
+      color: white;
+      font-size: 14px;
+    }
+    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .btn-secondary {
+      background: #334155;
+      border: none;
+      color: white;
+      padding: 8px 16px;
+      border-radius: 6px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <span>Live Voice Call</span>
+    <button class="settings-btn" id="openSettings">⚙️</button>
+  </div>
+
+  <div class="call-card" id="callCard">
+    <div class="avatar-wrapper">
+      <div class="pulse-ring"></div>
+      🎙️
+    </div>
+    <div class="caller-name" id="callerNameDisplay">Katee</div>
+    <div class="call-status" id="callStatus">Ready to Call</div>
+  </div>
+
+  <div class="controls">
+    <button class="btn-circle btn-call" id="callBtn">📞</button>
+    <button class="btn-circle btn-end" id="hangupBtn" style="display: none;">🛑</button>
+  </div>
+
+  <!-- Settings Modal -->
+  <div class="modal" id="settingsModal">
+    <div class="modal-content">
+      <h3>Call Settings</h3>
+      <div class="input-group">
+        <label>Google AI Studio API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
+      </div>
+      <div class="input-group">
+        <label>Voice Model</label>
+        <select id="voiceSelect">
+          <option value="Kore">Kore (Smooth & Confident)</option>
+          <option value="Aoede">Aoede (Brisk & Clear)</option>
+          <option value="Fenrir">Fenrir (Deeper Tone)</option>
+          <option value="Puck">Puck (Playful)</option>
+          <option value="Charon">Charon (Calm & Low)</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Persona / System Prompt</label>
+        <textarea id="systemPromptInput" rows="6"></textarea>
+      </div>
+      <div class="modal-actions">
+        <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // --- Default Configuration ---
+    const DEFAULT_PROMPT = `Adopt the persona of "Katee", a commanding, confident, and playfully strict girlfriend on an interactive live voice phone call.
+RULES:
+- Pure spoken dialogue only ("I", "you", "my").
+- NEVER use asterisks, narration, or stage directions.
+- Keep all responses sharp, punchy, and conversational (2-4 sentences max).
+- If the user uses the safeword "RED" or speaks out-of-character to stop, immediately break character, end the dynamic, and check in with warmth and care.`;
+
+    let config = {
+      apiKey: localStorage.getItem('gemini_api_key') || '',
+      voice: localStorage.getItem('gemini_voice') || 'Kore',
+      prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
+    };
+
+    // --- State & Audio Variables ---
+    let ws = null;
+    let audioCtx = null;
+    let inputAudioStream = null;
+    let scriptProcessor = null;
+    let isCalling = false;
+    let nextAudioStartTime = 0;
+    let activeAudioNodes = [];
+
+    // --- DOM Elements ---
+    const callBtn = document.getElementById('callBtn');
+    const hangupBtn = document.getElementById('hangupBtn');
+    const callStatus = document.getElementById('callStatus');
+    const callCard = document.getElementById('callCard');
+    const settingsModal = document.getElementById('settingsModal');
+    const openSettings = document.getElementById('openSettings');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const apiKeyInput = document.getElementById('apiKeyInput');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const systemPromptInput = document.getElementById('systemPromptInput');
+
+    // Populate Settings
+    apiKeyInput.value = config.apiKey;
+    voiceSelect.value = config.voice;
+    systemPromptInput.value = config.prompt;
+
+    openSettings.onclick = () => settingsModal.classList.add('open');
+    saveSettingsBtn.onclick = () => {
+      config.apiKey = apiKeyInput.value.trim();
+      config.voice = voiceSelect.value;
+      config.prompt = systemPromptInput.value.trim();
+      localStorage.setItem('gemini_api_key', config.apiKey);
+      localStorage.setItem('gemini_voice', config.voice);
+      localStorage.setItem('gemini_prompt', config.prompt);
+      settingsModal.classList.remove('open');
+    };
+
+    // --- Start Call ---
+    callBtn.onclick = async () => {
+      if (!config.apiKey) {
+        settingsModal.classList.add('open');
+        alert('Please enter your Google AI Studio API Key first.');
+        return;
+      }
+      startCall();
+    };
+
+    hangupBtn.onclick = () => endCall();
+
+    async function startCall() {
+      callStatus.innerText = "Connecting...";
+      callBtn.style.display = "none";
+      hangupBtn.style.display = "flex";
+
+      try {
+        // Initialize Web Audio
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+        nextAudioStartTime = audioCtx.currentTime;
+
+        // Connect WebSocket
+        const host = "generativelanguage.googleapis.com";
+        const path = "ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
+        const url = `wss://${host}/${path}?key=${config.apiKey}`;
+        ws = new WebSocket(url);
+
+        ws.onopen = () => {
+          callStatus.innerText = "Connected";
+          callCard.classList.add('active');
+          isCalling = true;
+          sendSetupMessage();
+          startMicrophone();
+        };
+
+        ws.onmessage = async (event) => {
+          let data = event.data;
+          if (data instanceof Blob) {
+            data = await data.text();
+          }
+          const response = JSON.parse(data);
+          handleServerMessage(response);
+        };
+
+        ws.onclose = (e) => {
+          console.log("WebSocket Closed", e);
+          endCall();
+        };
+
+        ws.onerror = (err) => {
+          console.error("WebSocket Error:", err);
+          alert("Connection error. Verify your API key.");
+          endCall();
+        };
+
+      } catch (err) {
+        console.error("Call start failed:", err);
+        alert("Microphone permission denied or audio initialization failed.");
+        endCall();
+      }
+    }
+
+    // --- WebSocket Setup Handshake ---
+    function sendSetupMessage() {
+      const setupMsg = {
+        setup: {
+          model: "models/gemini-2.0-flash-exp",
+          generationConfig: {
+            responseModalities: ["AUDIO"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: config.voice
+                }
+              }
+            }
+          },
+          systemInstruction: {
+            parts: [{ text: config.prompt }]
+          }
+        }
+      };
+      ws.send(JSON.stringify(setupMsg));
+    }
+
+    // --- Microphone Input (16kHz PCM streaming) ---
+    async function startMicrophone() {
+      inputAudioStream = await navigator.mediaDevices.getUserMedia({
+        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true }
+      });
+
+      const micContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
+      const micSource = micContext.createMediaStreamSource(inputAudioStream);
+
+      // Buffer PCM data and convert Float32 -> Int16
+      scriptProcessor = micContext.createScriptProcessor(2048, 1, 1);
+      micSource.connect(scriptProcessor);
+      scriptProcessor.connect(micContext.destination);
+
+      scriptProcessor.onaudioprocess = (e) => {
+        if (!isCalling || ws.readyState !== WebSocket.OPEN) return;
+        const inputData = e.inputBuffer.getChannelData(0);
+        const pcm16 = new Int16Array(inputData.length);
+        for (let i = 0; i < inputData.length; i++) {
+          const s = Math.max(-1, Math.min(1, inputData[i]));
+          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+
+        // Send base64 chunk
+        const base64Audio = arrayBufferToBase64(pcm16.buffer);
+        const audioMsg = {
+          realtimeInput: {
+            mediaChunks: [
+              { mimeType: "audio/pcm;rate=16000", data: base64Audio }
+            ]
+          }
+        };
+        ws.send(JSON.stringify(audioMsg));
+      };
+    }
+
+    // --- Handle Responses & Audio Playback ---
+    function handleServerMessage(msg) {
+      // 1. Handle User Interruption (stop talking immediately if user spoke)
+      if (msg.serverContent && msg.serverContent.interrupted) {
+        stopAllActiveAudio();
+        nextAudioStartTime = audioCtx.currentTime;
+        return;
+      }
+
+      // 2. Play incoming 24kHz audio chunks
+      if (msg.serverContent && msg.serverContent.modelTurn) {
+        const parts = msg.serverContent.modelTurn.parts;
+        for (const part of parts) {
+          if (part.inlineData && part.inlineData.data) {
+            playAudioChunk(base64ToArrayBuffer(part.inlineData.data));
+          }
+        }
+      }
+    }
+
+    function playAudioChunk(arrayBuffer) {
+      const pcm16 = new Int16Array(arrayBuffer);
+      const float32 = new Float32Array(pcm16.length);
+      for (let i = 0; i < pcm16.length; i++) {
+        float32[i] = pcm16[i] / 32768.0;
+      }
+
+      const audioBuffer = audioCtx.createBuffer(1, float32.length, 24000);
+      audioBuffer.copyToChannel(float32, 0);
+
+      const source = audioCtx.createBufferSource();
+      source.buffer = audioBuffer;
+      source.connect(audioCtx.destination);
+
+      const startTime = Math.max(audioCtx.currentTime, nextAudioStartTime);
+      source.start(startTime);
+      nextAudioStartTime = startTime + audioBuffer.duration;
+
+      activeAudioNodes.push(source);
+      source.onended = () => {
+        activeAudioNodes = activeAudioNodes.filter(n => n !== source);
+      };
+    }
+
+    function stopAllActiveAudio() {
+      activeAudioNodes.forEach(node => {
+        try { node.stop(); } catch (e) {}
+      });
+      activeAudioNodes = [];
+    }
+
+    // --- End Call ---
+    function endCall() {
+      isCalling = false;
+      callCard.classList.remove('active');
+      callStatus.innerText = "Call Ended";
+      callBtn.style.display = "flex";
+      hangupBtn.style.display = "none";
+
+      stopAllActiveAudio();
+
+      if (scriptProcessor) { scriptProcessor.disconnect(); scriptProcessor = null; }
+      if (inputAudioStream) { inputAudioStream.getTracks().forEach(t => t.stop()); }
+      if (ws && ws.readyState === WebSocket.OPEN) { ws.close(); }
+      if (audioCtx) { audioCtx.close(); }
+    }
+
+    // --- Utilities ---
+    function arrayBufferToBase64(buffer) {
+      let binary = '';
+      const bytes = new Uint8Array(buffer);
+      for (let i = 0; i < bytes.byteLength; i++) {
+        binary += String.fromCharCode(bytes[i]);
+      }
+      return window.btoa(binary);
+    }
+
+    function base64ToArrayBuffer(base64) {
+      const binaryString = window.atob(base64);
+      const bytes = new Uint8Array(binaryString.length);
+      for (let i = 0; i < binaryString.length; i++) {
+        bytes[i] = binaryString.charCodeAt(i);
+      }
+      return bytes.buffer;
+    }
+  </script>
+</body>
+</html>
