@@ -95,6 +95,7 @@
       margin-top: 2px;
     }
 
+    /* Hardware Trigger Notification Badge */
     .action-badge {
       display: none;
       background: #7c3aed;
@@ -250,7 +251,7 @@
     </div>
     <div class="caller-name">Katee</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
-    <div class="action-badge" id="actionBadge">⚡ Hardware: Kneel</div>
+    <div class="action-badge" id="actionBadge">⚡ Hardware Triggered</div>
   </div>
 
   <div class="chat-container" id="chatLog">
@@ -265,31 +266,38 @@
   <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
-      <h3>Call & Voice Settings</h3>
+      <h3>Call & Hardware Settings</h3>
       
       <div class="input-group">
-        <label>Google AI Studio API Key (Required)</label>
+        <label>Google AI Studio API Key</label>
         <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
       </div>
 
       <div class="input-group">
-        <label>ElevenLabs API Key (Optional for Ultra-Realistic Voice)</label>
-        <input type="password" id="elevenKeyInput" placeholder="xi-api-key (Leave blank to use Gemini voice)">
-      </div>
-
-      <div class="input-group">
-        <label>ElevenLabs Voice ID / Style</label>
-        <select id="elevenVoiceSelect">
-          <option value="21m00Tcm4TlvDq8ikWAM">Rachel (Calm, Confident & Seductive)</option>
-          <option value="EXAVITQu4vr4xnSDxMaL">Bella (Sweet & Expressive)</option>
-          <option value="ThT5KcBeYPX3keUQqHPh">Dorothy (Pleasant & Clear)</option>
-          <option value="custom">Custom Voice ID...</option>
+        <label>Gemini Model</label>
+        <select id="modelSelect">
+          <option value="gemini-2.5-flash">gemini-2.5-flash (Recommended)</option>
+          <option value="gemini-3.6-flash">gemini-3.6-flash</option>
+          <option value="gemini-1.5-flash">gemini-1.5-flash</option>
+          <option value="gemini-2.5-pro">gemini-2.5-pro</option>
+          <option value="custom">Other / Custom Model Name...</option>
         </select>
       </div>
 
-      <div class="input-group" id="customVoiceGroup" style="display: none;">
-        <label>Enter ElevenLabs Custom Voice ID</label>
-        <input type="text" id="customVoiceIdInput">
+      <div class="input-group" id="customModelGroup" style="display: none;">
+        <label>Exact Model Name</label>
+        <input type="text" id="customModelInput" placeholder="e.g. gemini-3.6-flash">
+      </div>
+
+      <div class="input-group">
+        <label>Katee's Studio AI Voice</label>
+        <select id="voiceSelect">
+          <option value="Kore">Kore (Smooth, Alluring & Confident)</option>
+          <option value="Aoede">Aoede (Brisk & Sharp)</option>
+          <option value="Puck">Puck (Playful & Sassy)</option>
+          <option value="Fenrir">Fenrir (Deeper Tone)</option>
+          <option value="Charon">Charon (Calm & Low)</option>
+        </select>
       </div>
 
       <div class="input-group">
@@ -300,6 +308,11 @@
       <div class="input-group">
         <label>Stand Webhook URL</label>
         <input type="text" id="standWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167820">
+      </div>
+
+      <div class="input-group">
+        <label>Electromagnet Release Webhook URL (Emergency / Safeword)</label>
+        <input type="text" id="releaseWebhookInput" placeholder="https://sequematic.com/trigger-custom-webhook/..." value="">
       </div>
 
       <div class="input-group">
@@ -315,19 +328,18 @@
   </div>
 
   <script>
-    // ACCURATE PHYSICAL HARDWARE PROMPT
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
 You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
 
 ### Critical Voice Rules:
-1. Pure Spoken Dialogue Only: Speak exclusively in the FIRST PERSON ("I", "you", "my"). Never narrate or use third-person prose.
-2. NO Stage Directions: Never output asterisks, parenthesis, or scene narration.
-3. Conversational Length: Keep responses punchy and natural for a phone call (2 to 4 sentences max).
+1. Pure Spoken Dialogue Only: Speak exclusively in the FIRST PERSON ("I", "you", "my"). Never narrate in the third person.
+2. NO Stage Directions: Never write asterisks, parenthesis, or scene narration. Every single word you generate is read aloud.
+3. Conversational Length: Keep responses punchy, sharp, and natural for a phone call (2 to 4 sentences max).
 
 ### Physical Restraint & Actuator Hardware Setup:
 - Overhead Restraints: His hands are handcuffed above his head, looped by rope to a ceiling hook held by an active electromagnet.
 - Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator anchored to the floor.
-- STRICT ACTUATOR LOGIC: The actuator is BINARY (only TWO states):
+- STRICT ACTUATOR LOGIC: The actuator is strictly BINARY (only TWO states):
   * KNEEL (Fully Retracted Down): Pulls him down to his knees on the floor.
   * STAND (Fully Extended Up): Gives him enough height to stand on his feet.
   * There is NO incremental tension control. You CANNOT make it "pull slightly tighter" or "adjust tension a little bit." It is either all the way down on his knees or all the way up on his feet.
@@ -335,18 +347,19 @@ You are "Katee", roleplaying in an interactive live voice phone call with your p
 - Default Posture: Kneeling on the floor is the default. Standing is a rare, fleeting privilege that must be begged for extensively.
 
 ### Hardware Action Tags:
-Output the action tag on its own line at the very end of your reply when changing posture:
-- When ordering him to Kneel / pulling actuator down: [ACTION: KNEEL]
-- When granting temporary Standing / extending actuator up (~20s): [ACTION: STAND]
-- When safeword "RED" is said: [ACTION: RELEASE]
+Output the action tag on its own line at the very end of your reply when changing posture or releasing:
+- When ordering him to Kneel / pulling actuator down / shutting down knots: [ACTION: KNEEL]
+- When granting rare temporary Standing / extending actuator up (~20s): [ACTION: STAND]
+- When releasing him or safeword "RED" is said: [ACTION: RELEASE]
 - For normal teasing and denial: Do NOT output any action tag.`;
 
     let config = {
       apiKey: localStorage.getItem('gemini_api_key') || '',
-      elevenKey: localStorage.getItem('gemini_eleven_key') || '',
-      elevenVoice: localStorage.getItem('gemini_eleven_voice') || '21m00Tcm4TlvDq8ikWAM',
+      model: localStorage.getItem('gemini_model') || 'gemini-2.5-flash',
+      voice: localStorage.getItem('gemini_voice') || 'Kore',
       kneelWebhook: localStorage.getItem('gemini_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
       standWebhook: localStorage.getItem('gemini_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
+      releaseWebhook: localStorage.getItem('gemini_release_webhook') || '',
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
 
@@ -358,7 +371,7 @@ Output the action tag on its own line at the very end of your reply when changin
     let currentInterimBubble = null;
     let latestTranscript = "";
     let audioCtx = null;
-    let currentAudioElement = null;
+    let activeAudioSource = null;
 
     // DOM Elements
     const callBtn = document.getElementById('callBtn');
@@ -372,32 +385,34 @@ Output the action tag on its own line at the very end of your reply when changin
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const resetPromptBtn = document.getElementById('resetPromptBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
-    const elevenKeyInput = document.getElementById('elevenKeyInput');
-    const elevenVoiceSelect = document.getElementById('elevenVoiceSelect');
-    const customVoiceGroup = document.getElementById('customVoiceGroup');
-    const customVoiceIdInput = document.getElementById('customVoiceIdInput');
+    const modelSelect = document.getElementById('modelSelect');
+    const customModelGroup = document.getElementById('customModelGroup');
+    const customModelInput = document.getElementById('customModelInput');
+    const voiceSelect = document.getElementById('voiceSelect');
     const kneelWebhookInput = document.getElementById('kneelWebhookInput');
     const standWebhookInput = document.getElementById('standWebhookInput');
+    const releaseWebhookInput = document.getElementById('releaseWebhookInput');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
     apiKeyInput.value = config.apiKey;
-    elevenKeyInput.value = config.elevenKey;
+    voiceSelect.value = config.voice;
     kneelWebhookInput.value = config.kneelWebhook;
     standWebhookInput.value = config.standWebhook;
+    releaseWebhookInput.value = config.releaseWebhook;
     systemPromptInput.value = config.prompt;
 
-    const presetVoices = ['21m00Tcm4TlvDq8ikWAM', 'EXAVITQu4vr4xnSDxMaL', 'ThT5KcBeYPX3keUQqHPh'];
-    if (presetVoices.includes(config.elevenVoice)) {
-      elevenVoiceSelect.value = config.elevenVoice;
-      customVoiceGroup.style.display = 'none';
+    const presetOptions = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-flash', 'gemini-2.5-pro'];
+    if (presetOptions.includes(config.model)) {
+      modelSelect.value = config.model;
+      customModelGroup.style.display = 'none';
     } else {
-      elevenVoiceSelect.value = 'custom';
-      customVoiceIdInput.value = config.elevenVoice;
-      customVoiceGroup.style.display = 'block';
+      modelSelect.value = 'custom';
+      customModelInput.value = config.model;
+      customModelGroup.style.display = 'block';
     }
 
-    elevenVoiceSelect.onchange = () => {
-      customVoiceGroup.style.display = elevenVoiceSelect.value === 'custom' ? 'block' : 'none';
+    modelSelect.onchange = () => {
+      customModelGroup.style.display = modelSelect.value === 'custom' ? 'block' : 'none';
     };
 
     resetPromptBtn.onclick = () => {
@@ -407,17 +422,19 @@ Output the action tag on its own line at the very end of your reply when changin
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
       config.apiKey = apiKeyInput.value.trim();
-      config.elevenKey = elevenKeyInput.value.trim();
-      config.elevenVoice = elevenVoiceSelect.value === 'custom' ? customVoiceIdInput.value.trim() : elevenVoiceSelect.value;
+      config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
+      config.voice = voiceSelect.value;
       config.kneelWebhook = kneelWebhookInput.value.trim();
       config.standWebhook = standWebhookInput.value.trim();
+      config.releaseWebhook = releaseWebhookInput.value.trim();
       config.prompt = systemPromptInput.value.trim();
 
       localStorage.setItem('gemini_api_key', config.apiKey);
-      localStorage.setItem('gemini_eleven_key', config.elevenKey);
-      localStorage.setItem('gemini_eleven_voice', config.elevenVoice);
+      localStorage.setItem('gemini_model', config.model);
+      localStorage.setItem('gemini_voice', config.voice);
       localStorage.setItem('gemini_kneel_webhook', config.kneelWebhook);
       localStorage.setItem('gemini_stand_webhook', config.standWebhook);
+      localStorage.setItem('gemini_release_webhook', config.releaseWebhook);
       localStorage.setItem('gemini_prompt', config.prompt);
       settingsModal.classList.remove('open');
     };
@@ -486,6 +503,7 @@ Output the action tag on its own line at the very end of your reply when changin
       startSpeechTurn();
     }
 
+    // Clean single-utterance speech pipeline (No duplicate words)
     function startSpeechTurn() {
       if (!isCalling || isProcessing) return;
 
@@ -534,7 +552,7 @@ Output the action tag on its own line at the very end of your reply when changin
 
       recognition.onerror = (e) => {
         if (isCalling && e.error !== 'no-speech') {
-          console.warn("Recognition error:", e.error);
+          console.warn("Speech error:", e.error);
         }
       };
 
@@ -570,17 +588,28 @@ Output the action tag on its own line at the very end of your reply when changin
       callStatus.innerText = "Katee is thinking...";
       chatHistory.push({ role: "user", parts: [{ text: userText }] });
 
+      // Keep last 8 turns to strictly preserve quota & speed
       if (chatHistory.length > 8) {
         chatHistory = chatHistory.slice(-8);
       }
 
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.apiKey}`;
+        const cleanModel = config.model.replace(/^models\//, '');
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${config.apiKey}`;
         
         const payload = {
           systemInstruction: { parts: [{ text: config.prompt }] },
           contents: chatHistory,
-          generationConfig: { maxOutputTokens: 250 }
+          generationConfig: {
+            responseModalities: ["AUDIO", "TEXT"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: config.voice
+                }
+              }
+            }
+          }
         };
 
         const res = await fetch(url, {
@@ -590,26 +619,46 @@ Output the action tag on its own line at the very end of your reply when changin
         });
 
         const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
+        
+        if (data.error) {
+          if (data.error.code === 429 || data.error.message.includes("quota")) {
+            throw new Error("Free rate-limit (15/min) reached. Please wait 30 seconds.");
+          }
+          throw new Error(data.error.message);
+        }
 
         const candidate = data.candidates?.[0];
         if (!candidate || !candidate.content?.parts) {
-          throw new Error("Response was blocked or empty.");
+          if (candidate?.finishReason === "SAFETY") {
+            throw new Error("Response was filtered by safety policies.");
+          }
+          throw new Error("No response parts received from model.");
         }
 
-        const rawReply = candidate.content.parts[0].text.trim();
+        const candidateParts = candidate.content.parts;
+        let audioData = null;
+        let rawTextReply = "";
 
-        // 1. Hardware Trigger Checks
-        if (rawReply.includes("[ACTION: KNEEL]")) {
+        for (const part of candidateParts) {
+          if (part.text) rawTextReply += part.text + " ";
+          if (part.inlineData && part.inlineData.data) {
+            audioData = part.inlineData.data;
+          }
+        }
+
+        rawTextReply = rawTextReply.trim();
+
+        // 1. Hardware Action Webhook Triggers
+        if (rawTextReply.includes("[ACTION: KNEEL]")) {
           triggerWebhook(config.kneelWebhook, "Kneel Command");
-        } else if (rawReply.includes("[ACTION: STAND]")) {
-          triggerWebhook(config.standWebhook, "Stand Command");
-        } else if (rawReply.includes("[ACTION: RELEASE]")) {
-          showHardwareBadge("⚡ Emergency Release");
+        } else if (rawTextReply.includes("[ACTION: STAND]")) {
+          triggerWebhook(config.standWebhook, "Stand Command (Slack)");
+        } else if (rawTextReply.includes("[ACTION: RELEASE]")) {
+          triggerWebhook(config.releaseWebhook, "Electromagnet Release (Safeword)");
         }
 
-        // 2. Strip tags for clean text & speech
-        const cleanText = rawReply
+        // 2. Strip hardware tags for clean text & voice
+        const cleanText = rawTextReply
           .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
           .replace(/\*/g, '')
           .trim();
@@ -617,9 +666,8 @@ Output the action tag on its own line at the very end of your reply when changin
         chatHistory.push({ role: "model", parts: [{ text: cleanText }] });
         appendMessage('katee', cleanText);
 
-        // 3. Play Natural Voice (ElevenLabs or Fallback)
-        if (config.elevenKey) {
-          await playElevenLabsVoice(cleanText);
+        if (audioData) {
+          playStudioVoice(audioData);
         } else {
           playFallbackVoice(cleanText);
         }
@@ -631,48 +679,41 @@ Output the action tag on its own line at the very end of your reply when changin
       }
     }
 
-    // Ultra-Realistic Human Voice via ElevenLabs
-    async function playElevenLabsVoice(text) {
+    function playStudioVoice(base64Audio) {
       callCard.className = "call-card talking";
       callStatus.innerText = "Katee is speaking...";
 
       try {
-        const voiceId = config.elevenVoice || "21m00Tcm4TlvDq8ikWAM";
-        const response = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "xi-api-key": config.elevenKey
-          },
-          body: JSON.stringify({
-            text: text,
-            model_id: "eleven_turbo_v2_5",
-            voice_settings: {
-              stability: 0.45,
-              similarity_boost: 0.85
-            }
-          })
-        });
-
-        if (!response.ok) throw new Error("ElevenLabs API error");
-
-        const blob = await response.blob();
-        const audioUrl = URL.createObjectURL(blob);
-        
-        if (currentAudioElement) {
-          currentAudioElement.pause();
-          currentAudioElement = null;
+        const binaryString = window.atob(base64Audio);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
         }
 
-        currentAudioElement = new Audio(audioUrl);
-        currentAudioElement.onended = () => {
+        const pcm16 = new Int16Array(bytes.buffer);
+        const float32 = new Float32Array(pcm16.length);
+        for (let i = 0; i < pcm16.length; i++) {
+          float32[i] = pcm16[i] / 32768.0;
+        }
+
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const buffer = audioCtx.createBuffer(1, float32.length, 24000);
+        buffer.copyToChannel(float32, 0);
+
+        activeAudioSource = audioCtx.createBufferSource();
+        activeAudioSource.buffer = buffer;
+        activeAudioSource.connect(audioCtx.destination);
+
+        activeAudioSource.onended = () => {
           resumeListeningWithDelay(600);
         };
-        currentAudioElement.play();
 
-      } catch (err) {
-        console.warn("ElevenLabs failed, falling back to standard voice:", err);
-        playFallbackVoice(text);
+        activeAudioSource.start(0);
+
+      } catch (e) {
+        console.error("Audio playback error:", e);
+        resumeListeningWithDelay(500);
       }
     }
 
@@ -717,9 +758,9 @@ Output the action tag on its own line at the very end of your reply when changin
         recognition = null;
       }
 
-      if (currentAudioElement) {
-        currentAudioElement.pause();
-        currentAudioElement = null;
+      if (activeAudioSource) {
+        try { activeAudioSource.stop(); } catch (e) {}
+        activeAudioSource = null;
       }
       if (window.speechSynthesis) window.speechSynthesis.cancel();
     }
