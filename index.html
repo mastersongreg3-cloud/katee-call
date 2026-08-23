@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Live Call</title>
+  <title>Katee - Live Call</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -48,6 +48,7 @@
       flex-direction: column;
       align-items: center;
       margin: auto 0;
+      text-align: center;
     }
 
     .avatar-wrapper {
@@ -92,6 +93,15 @@
     .call-status {
       font-size: 15px;
       color: #94a3b8;
+    }
+
+    .error-msg {
+      color: #f87171;
+      font-size: 13px;
+      margin-top: 10px;
+      max-width: 320px;
+      word-break: break-word;
+      display: none;
     }
 
     .controls {
@@ -183,6 +193,7 @@
     </div>
     <div class="caller-name" id="callerNameDisplay">Katee</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
+    <div class="error-msg" id="errorMsg"></div>
   </div>
 
   <div class="controls">
@@ -219,8 +230,7 @@
   </div>
 
   <script>
-    // --- Default Configuration ---
-    const DEFAULT_PROMPT = `Adopt the persona of "Katee", a commanding, confident, and playfully strict girlfriend on an interactive live voice phone call.
+    const DEFAULT_PROMPT = `Adopt the persona of "Katee", a commanding, confident, and playfully strict partner on an interactive live voice phone call.
 RULES:
 - Pure spoken dialogue only ("I", "you", "my").
 - NEVER use asterisks, narration, or stage directions.
@@ -233,7 +243,6 @@ RULES:
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
 
-    // --- State & Audio Variables ---
     let ws = null;
     let audioCtx = null;
     let inputAudioStream = null;
@@ -242,11 +251,11 @@ RULES:
     let nextAudioStartTime = 0;
     let activeAudioNodes = [];
 
-    // --- DOM Elements ---
     const callBtn = document.getElementById('callBtn');
     const hangupBtn = document.getElementById('hangupBtn');
     const callStatus = document.getElementById('callStatus');
     const callCard = document.getElementById('callCard');
+    const errorMsg = document.getElementById('errorMsg');
     const settingsModal = document.getElementById('settingsModal');
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
@@ -254,7 +263,6 @@ RULES:
     const voiceSelect = document.getElementById('voiceSelect');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
-    // Populate Settings
     apiKeyInput.value = config.apiKey;
     voiceSelect.value = config.voice;
     systemPromptInput.value = config.prompt;
@@ -268,13 +276,24 @@ RULES:
       localStorage.setItem('gemini_voice', config.voice);
       localStorage.setItem('gemini_prompt', config.prompt);
       settingsModal.classList.remove('open');
+      hideError();
     };
 
-    // --- Start Call ---
+    function showError(text) {
+      errorMsg.innerText = text;
+      errorMsg.style.display = 'block';
+    }
+
+    function hideError() {
+      errorMsg.innerText = '';
+      errorMsg.style.display = 'none';
+    }
+
     callBtn.onclick = async () => {
+      hideError();
       if (!config.apiKey) {
         settingsModal.classList.add('open');
-        alert('Please enter your Google AI Studio API Key first.');
+        showError('Please enter your Google AI Studio API Key in settings.');
         return;
       }
       startCall();
@@ -288,15 +307,21 @@ RULES:
       hangupBtn.style.display = "flex";
 
       try {
-        // Initialize Web Audio
-        audioCtx = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 24000 });
+        // Use default hardware rate to avoid mobile crashes
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') await audioCtx.resume();
         nextAudioStartTime = audioCtx.currentTime;
 
-        // Connect WebSocket
+        // Request standard microphone access
+        inputAudioStream = await navigator.mediaDevices.getUserMedia({
+          audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
+        });
+
+        // Use v1beta endpoint
         const host = "generativelanguage.googleapis.com";
-        const path = "ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
+        const path = "ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
         const url = `wss://${host}/${path}?key=${config.apiKey}`;
+        
         ws = new WebSocket(url);
 
         ws.onopen = () => {
@@ -304,37 +329,41 @@ RULES:
           callCard.classList.add('active');
           isCalling = true;
           sendSetupMessage();
-          startMicrophone();
+          startAudioStreaming();
         };
 
         ws.onmessage = async (event) => {
           let data = event.data;
-          if (data instanceof Blob) {
-            data = await data.text();
+          if (data instanceof Blob) data = await data.text();
+          try {
+            const response = JSON.parse(data);
+            handleServerMessage(response);
+          } catch (e) {
+            console.error("JSON Parse Error:", e);
           }
-          const response = JSON.parse(data);
-          handleServerMessage(response);
         };
 
         ws.onclose = (e) => {
-          console.log("WebSocket Closed", e);
+          console.warn("WebSocket Closed:", e);
+          if (e.code !== 1000 && isCalling) {
+            showError(`Connection closed (${e.code}). Verify API key & internet.`);
+          }
           endCall();
         };
 
         ws.onerror = (err) => {
           console.error("WebSocket Error:", err);
-          alert("Connection error. Verify your API key.");
+          showError("WebSocket connection failed. Check your API key.");
           endCall();
         };
 
       } catch (err) {
-        console.error("Call start failed:", err);
-        alert("Microphone permission denied or audio initialization failed.");
+        console.error("Call error:", err);
+        showError(`Mic/Audio Error: ${err.message || err.name}`);
         endCall();
       }
     }
 
-    // --- WebSocket Setup Handshake ---
     function sendSetupMessage() {
       const setupMsg = {
         setup: {
@@ -357,31 +386,25 @@ RULES:
       ws.send(JSON.stringify(setupMsg));
     }
 
-    // --- Microphone Input (16kHz PCM streaming) ---
-    async function startMicrophone() {
-      inputAudioStream = await navigator.mediaDevices.getUserMedia({
-        audio: { sampleRate: 16000, channelCount: 1, echoCancellation: true, noiseSuppression: true }
-      });
+    // Capture mic at native rate, downsample to 16kHz PCM for Gemini
+    function startAudioStreaming() {
+      const micSource = audioCtx.createMediaStreamSource(inputAudioStream);
+      const bufferSize = 4096;
+      scriptProcessor = audioCtx.createScriptProcessor(bufferSize, 1, 1);
 
-      const micContext = new (window.AudioContext || window.webkitAudioContext)({ sampleRate: 16000 });
-      const micSource = micContext.createMediaStreamSource(inputAudioStream);
-
-      // Buffer PCM data and convert Float32 -> Int16
-      scriptProcessor = micContext.createScriptProcessor(2048, 1, 1);
       micSource.connect(scriptProcessor);
-      scriptProcessor.connect(micContext.destination);
+      scriptProcessor.connect(audioCtx.destination);
 
       scriptProcessor.onaudioprocess = (e) => {
         if (!isCalling || ws.readyState !== WebSocket.OPEN) return;
         const inputData = e.inputBuffer.getChannelData(0);
-        const pcm16 = new Int16Array(inputData.length);
-        for (let i = 0; i < inputData.length; i++) {
-          const s = Math.max(-1, Math.min(1, inputData[i]));
-          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
-        }
+        const nativeSampleRate = audioCtx.sampleRate;
 
-        // Send base64 chunk
-        const base64Audio = arrayBufferToBase64(pcm16.buffer);
+        // Downsample Float32 from native (e.g. 44.1kHz / 48kHz) to 16kHz PCM16
+        const downsampledPCM = downsampleTo16kPCM(inputData, nativeSampleRate);
+        if (downsampledPCM.byteLength === 0) return;
+
+        const base64Audio = arrayBufferToBase64(downsampledPCM.buffer);
         const audioMsg = {
           realtimeInput: {
             mediaChunks: [
@@ -393,16 +416,45 @@ RULES:
       };
     }
 
-    // --- Handle Responses & Audio Playback ---
+    function downsampleTo16kPCM(inputBuffer, inputRate) {
+      if (inputRate === 16000) {
+        const pcm16 = new Int16Array(inputBuffer.length);
+        for (let i = 0; i < inputBuffer.length; i++) {
+          const s = Math.max(-1, Math.min(1, inputBuffer[i]));
+          pcm16[i] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        }
+        return pcm16;
+      }
+
+      const ratio = inputRate / 16000;
+      const newLength = Math.round(inputBuffer.length / ratio);
+      const result = new Int16Array(newLength);
+      let offsetResult = 0;
+      let offsetBuffer = 0;
+
+      while (offsetResult < result.length) {
+        const nextOffsetBuffer = Math.round((offsetResult + 1) * ratio);
+        let accum = 0, count = 0;
+        for (let i = offsetBuffer; i < nextOffsetBuffer && i < inputBuffer.length; i++) {
+          accum += inputBuffer[i];
+          count++;
+        }
+        const avg = count > 0 ? accum / count : 0;
+        const s = Math.max(-1, Math.min(1, avg));
+        result[offsetResult] = s < 0 ? s * 0x8000 : s * 0x7FFF;
+        offsetResult++;
+        offsetBuffer = nextOffsetBuffer;
+      }
+      return result;
+    }
+
     function handleServerMessage(msg) {
-      // 1. Handle User Interruption (stop talking immediately if user spoke)
       if (msg.serverContent && msg.serverContent.interrupted) {
         stopAllActiveAudio();
         nextAudioStartTime = audioCtx.currentTime;
         return;
       }
 
-      // 2. Play incoming 24kHz audio chunks
       if (msg.serverContent && msg.serverContent.modelTurn) {
         const parts = msg.serverContent.modelTurn.parts;
         for (const part of parts) {
@@ -420,6 +472,7 @@ RULES:
         float32[i] = pcm16[i] / 32768.0;
       }
 
+      // Gemini native voice output is 24kHz
       const audioBuffer = audioCtx.createBuffer(1, float32.length, 24000);
       audioBuffer.copyToChannel(float32, 0);
 
@@ -444,7 +497,6 @@ RULES:
       activeAudioNodes = [];
     }
 
-    // --- End Call ---
     function endCall() {
       isCalling = false;
       callCard.classList.remove('active');
@@ -457,10 +509,9 @@ RULES:
       if (scriptProcessor) { scriptProcessor.disconnect(); scriptProcessor = null; }
       if (inputAudioStream) { inputAudioStream.getTracks().forEach(t => t.stop()); }
       if (ws && ws.readyState === WebSocket.OPEN) { ws.close(); }
-      if (audioCtx) { audioCtx.close(); }
+      if (audioCtx && audioCtx.state !== 'closed') { audioCtx.close(); }
     }
 
-    // --- Utilities ---
     function arrayBufferToBase64(buffer) {
       let binary = '';
       const bytes = new Uint8Array(buffer);
