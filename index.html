@@ -98,9 +98,9 @@
     .error-msg {
       color: #f87171;
       font-size: 13px;
-      margin-top: 10px;
+      margin-top: 12px;
       max-width: 320px;
-      word-break: break-word;
+      line-height: 1.4;
       display: none;
     }
 
@@ -132,7 +132,7 @@
     .btn-call { background-color: var(--success); }
     .btn-end { background-color: var(--danger); }
 
-    /* Settings Modal */
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -210,7 +210,14 @@
         <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
       </div>
       <div class="input-group">
-        <label>Voice Model</label>
+        <label>Live Model</label>
+        <select id="modelSelect">
+          <option value="models/gemini-2.0-flash-exp">gemini-2.0-flash-exp (Default)</option>
+          <option value="models/gemini-2.0-flash">gemini-2.0-flash (Stable)</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Voice</label>
         <select id="voiceSelect">
           <option value="Kore">Kore (Smooth & Confident)</option>
           <option value="Aoede">Aoede (Brisk & Clear)</option>
@@ -239,6 +246,7 @@ RULES:
 
     let config = {
       apiKey: localStorage.getItem('gemini_api_key') || '',
+      model: localStorage.getItem('gemini_model') || 'models/gemini-2.0-flash-exp',
       voice: localStorage.getItem('gemini_voice') || 'Kore',
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
@@ -260,19 +268,23 @@ RULES:
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
+    const modelSelect = document.getElementById('modelSelect');
     const voiceSelect = document.getElementById('voiceSelect');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
     apiKeyInput.value = config.apiKey;
+    modelSelect.value = config.model;
     voiceSelect.value = config.voice;
     systemPromptInput.value = config.prompt;
 
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
       config.apiKey = apiKeyInput.value.trim();
+      config.model = modelSelect.value;
       config.voice = voiceSelect.value;
       config.prompt = systemPromptInput.value.trim();
       localStorage.setItem('gemini_api_key', config.apiKey);
+      localStorage.setItem('gemini_model', config.model);
       localStorage.setItem('gemini_voice', config.voice);
       localStorage.setItem('gemini_prompt', config.prompt);
       settingsModal.classList.remove('open');
@@ -293,7 +305,7 @@ RULES:
       hideError();
       if (!config.apiKey) {
         settingsModal.classList.add('open');
-        showError('Please enter your Google AI Studio API Key in settings.');
+        showError('Please enter your Google AI Studio API Key.');
         return;
       }
       startCall();
@@ -307,19 +319,17 @@ RULES:
       hangupBtn.style.display = "flex";
 
       try {
-        // Use default hardware rate to avoid mobile crashes
         audioCtx = new (window.AudioContext || window.webkitAudioContext)();
         if (audioCtx.state === 'suspended') await audioCtx.resume();
         nextAudioStartTime = audioCtx.currentTime;
 
-        // Request standard microphone access
         inputAudioStream = await navigator.mediaDevices.getUserMedia({
           audio: { echoCancellation: true, noiseSuppression: true, autoGainControl: true }
         });
 
-        // Use v1beta endpoint
+        // Use v1alpha for experimental Live WebSocket support
         const host = "generativelanguage.googleapis.com";
-        const path = "ws/google.ai.generativelanguage.v1beta.GenerativeService.BidiGenerateContent";
+        const path = "ws/google.ai.generativelanguage.v1alpha.GenerativeService.BidiGenerateContent";
         const url = `wss://${host}/${path}?key=${config.apiKey}`;
         
         ws = new WebSocket(url);
@@ -339,27 +349,29 @@ RULES:
             const response = JSON.parse(data);
             handleServerMessage(response);
           } catch (e) {
-            console.error("JSON Parse Error:", e);
+            console.error("JSON Error:", e);
           }
         };
 
         ws.onclose = (e) => {
           console.warn("WebSocket Closed:", e);
-          if (e.code !== 1000 && isCalling) {
-            showError(`Connection closed (${e.code}). Verify API key & internet.`);
+          if (e.code === 1008) {
+            showError("Error 1008: Policy Violation. Check if your API key is Unrestricted or try selecting a different Model in settings.");
+          } else if (e.code !== 1000 && isCalling) {
+            showError(`Connection closed (Code ${e.code}).`);
           }
           endCall();
         };
 
         ws.onerror = (err) => {
           console.error("WebSocket Error:", err);
-          showError("WebSocket connection failed. Check your API key.");
+          showError("WebSocket failed. Check API key & network.");
           endCall();
         };
 
       } catch (err) {
-        console.error("Call error:", err);
-        showError(`Mic/Audio Error: ${err.message || err.name}`);
+        console.error("Call init error:", err);
+        showError(`Microphone Error: ${err.message || err.name}`);
         endCall();
       }
     }
@@ -367,7 +379,7 @@ RULES:
     function sendSetupMessage() {
       const setupMsg = {
         setup: {
-          model: "models/gemini-2.0-flash-exp",
+          model: config.model,
           generationConfig: {
             responseModalities: ["AUDIO"],
             speechConfig: {
@@ -386,7 +398,6 @@ RULES:
       ws.send(JSON.stringify(setupMsg));
     }
 
-    // Capture mic at native rate, downsample to 16kHz PCM for Gemini
     function startAudioStreaming() {
       const micSource = audioCtx.createMediaStreamSource(inputAudioStream);
       const bufferSize = 4096;
@@ -398,10 +409,7 @@ RULES:
       scriptProcessor.onaudioprocess = (e) => {
         if (!isCalling || ws.readyState !== WebSocket.OPEN) return;
         const inputData = e.inputBuffer.getChannelData(0);
-        const nativeSampleRate = audioCtx.sampleRate;
-
-        // Downsample Float32 from native (e.g. 44.1kHz / 48kHz) to 16kHz PCM16
-        const downsampledPCM = downsampleTo16kPCM(inputData, nativeSampleRate);
+        const downsampledPCM = downsampleTo16kPCM(inputData, audioCtx.sampleRate);
         if (downsampledPCM.byteLength === 0) return;
 
         const base64Audio = arrayBufferToBase64(downsampledPCM.buffer);
@@ -472,7 +480,6 @@ RULES:
         float32[i] = pcm16[i] / 32768.0;
       }
 
-      // Gemini native voice output is 24kHz
       const audioBuffer = audioCtx.createBuffer(1, float32.length, 24000);
       audioBuffer.copyToChannel(float32, 0);
 
