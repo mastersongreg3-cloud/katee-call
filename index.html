@@ -12,6 +12,8 @@
       --accent: #38bdf8;
       --danger: #ef4444;
       --success: #22c55e;
+      --user-bubble: #2563eb;
+      --katee-bubble: #334155;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -19,20 +21,19 @@
     body {
       background: var(--bg);
       color: var(--text);
-      min-height: 100vh;
+      height: 100dvh;
       display: flex;
       flex-direction: column;
-      align-items: center;
-      justify-content: space-between;
-      padding: 24px 16px;
+      padding: 16px;
+      overflow: hidden;
     }
 
     .header {
       width: 100%;
-      max-width: 400px;
       display: flex;
       justify-content: space-between;
       align-items: center;
+      padding-bottom: 8px;
     }
 
     .settings-btn {
@@ -47,22 +48,22 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: auto 0;
+      margin: 8px 0;
       text-align: center;
     }
 
     .avatar-wrapper {
       position: relative;
-      width: 130px;
-      height: 130px;
+      width: 80px;
+      height: 80px;
       border-radius: 50%;
       background: linear-gradient(135deg, #6366f1, #a855f7);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 48px;
-      box-shadow: 0 10px 25px rgba(0,0,0,0.5);
-      margin-bottom: 20px;
+      font-size: 32px;
+      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      margin-bottom: 8px;
     }
 
     .pulse-ring {
@@ -75,9 +76,8 @@
       pointer-events: none;
     }
 
-    .talking .pulse-ring {
-      animation: pulse 1.5s infinite ease-out;
-    }
+    .talking .pulse-ring { animation: pulse 1.4s infinite ease-out; }
+    .listening .pulse-ring { border-color: var(--success); animation: pulse 1.8s infinite ease-out; }
 
     @keyframes pulse {
       0% { transform: scale(1); opacity: 0.9; }
@@ -85,71 +85,96 @@
     }
 
     .caller-name {
-      font-size: 26px;
+      font-size: 20px;
       font-weight: 600;
-      margin-bottom: 6px;
     }
 
     .call-status {
-      font-size: 15px;
+      font-size: 13px;
       color: #94a3b8;
+      margin-top: 2px;
     }
 
-    .transcript {
-      margin-top: 15px;
-      font-size: 13px;
-      color: #cbd5e1;
-      max-width: 320px;
-      min-height: 40px;
-      font-style: italic;
+    /* Scrollable Live Chat / Transcript Log */
+    .chat-container {
+      flex: 1;
+      width: 100%;
+      max-width: 480px;
+      margin: 8px auto;
+      background: rgba(15, 23, 42, 0.6);
+      border: 1px solid #334155;
+      border-radius: 14px;
+      padding: 12px;
+      overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
     }
 
-    .error-msg {
-      color: #f87171;
-      font-size: 13px;
-      margin-top: 10px;
-      max-width: 320px;
-      display: none;
+    .bubble {
+      max-width: 85%;
+      padding: 10px 14px;
+      border-radius: 12px;
+      font-size: 14px;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .bubble.katee {
+      align-self: flex-start;
+      background: var(--katee-bubble);
+      color: #f1f5f9;
+      border-bottom-left-radius: 2px;
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: var(--user-bubble);
+      color: white;
+      border-bottom-right-radius: 2px;
+    }
+
+    .bubble.interim {
+      opacity: 0.7;
+      border: 1px dashed #60a5fa;
     }
 
     .controls {
       width: 100%;
-      max-width: 320px;
       display: flex;
       justify-content: center;
-      gap: 30px;
-      margin-bottom: 20px;
+      padding-top: 10px;
     }
 
     .btn-circle {
-      width: 72px;
-      height: 72px;
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
       border: none;
       color: white;
-      font-size: 28px;
+      font-size: 26px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
       transition: transform 0.15s ease;
-      box-shadow: 0 4px 15px rgba(0,0,0,0.3);
+      box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
 
     .btn-circle:active { transform: scale(0.92); }
     .btn-call { background-color: var(--success); }
     .btn-end { background-color: var(--danger); }
 
-    /* Modal */
+    /* Settings Modal */
     .modal {
       display: none;
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.8);
+      background: rgba(0,0,0,0.85);
       padding: 20px;
       align-items: center;
       justify-content: center;
-      z-index: 10;
+      z-index: 100;
     }
 
     .modal.open { display: flex; }
@@ -159,8 +184,8 @@
       border-radius: 16px;
       padding: 20px;
       width: 100%;
-      max-width: 400px;
-      max-height: 85vh;
+      max-width: 420px;
+      max-height: 88vh;
       overflow-y: auto;
     }
 
@@ -176,7 +201,14 @@
       color: white;
       font-size: 14px;
     }
-    .modal-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .slider-container {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+    .slider-container span { font-size: 13px; min-width: 35px; }
+
+    .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
     .btn-secondary {
       background: #334155;
       border: none;
@@ -185,12 +217,13 @@
       border-radius: 6px;
       cursor: pointer;
     }
+    .btn-test { background: #6366f1; }
   </style>
 </head>
 <body>
 
   <div class="header">
-    <span>Voice Call (Free Mode)</span>
+    <span>Katee Voice Call</span>
     <button class="settings-btn" id="openSettings">⚙️</button>
   </div>
 
@@ -201,8 +234,11 @@
     </div>
     <div class="caller-name">Katee</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
-    <div class="transcript" id="transcript"></div>
-    <div class="error-msg" id="errorMsg"></div>
+  </div>
+
+  <!-- Live Transcript Log -->
+  <div class="chat-container" id="chatLog">
+    <div class="bubble katee">Press the call button below to start your conversation.</div>
   </div>
 
   <div class="controls">
@@ -210,13 +246,16 @@
     <button class="btn-circle btn-end" id="hangupBtn" style="display: none;">🛑</button>
   </div>
 
+  <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
-      <h3>Call Settings</h3>
+      <h3>Call & Voice Settings</h3>
+      
       <div class="input-group">
         <label>Google AI Studio API Key</label>
         <input type="password" id="apiKeyInput" placeholder="AIzaSy...">
       </div>
+
       <div class="input-group">
         <label>Gemini Model</label>
         <select id="modelSelect">
@@ -227,15 +266,40 @@
           <option value="custom">Other / Custom Model Name...</option>
         </select>
       </div>
+
       <div class="input-group" id="customModelGroup" style="display: none;">
-        <label>Enter Exact Model Name</label>
+        <label>Exact Model Name</label>
         <input type="text" id="customModelInput" placeholder="e.g. gemini-3.6-flash">
       </div>
+
+      <div class="input-group">
+        <label>Katee's Voice (Natural Female Voices)</label>
+        <select id="voiceSelect"></select>
+      </div>
+
+      <div class="input-group">
+        <label>Voice Speed (Pace)</label>
+        <div class="slider-container">
+          <input type="range" id="rateSlider" min="0.75" max="1.3" step="0.05" value="0.95">
+          <span id="rateVal">0.95x</span>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label>Voice Pitch</label>
+        <div class="slider-container">
+          <input type="range" id="pitchSlider" min="0.8" max="1.3" step="0.05" value="1.05">
+          <span id="pitchVal">1.05x</span>
+        </div>
+      </div>
+
       <div class="input-group">
         <label>Persona / System Prompt</label>
-        <textarea id="systemPromptInput" rows="6"></textarea>
+        <textarea id="systemPromptInput" rows="5"></textarea>
       </div>
+
       <div class="modal-actions">
+        <button class="btn-secondary btn-test" id="testVoiceBtn">🔊 Test Voice</button>
         <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
       </div>
     </div>
@@ -252,6 +316,9 @@ RULES:
     let config = {
       apiKey: localStorage.getItem('gemini_api_key') || '',
       model: localStorage.getItem('gemini_model') || 'gemini-2.5-flash',
+      voiceURI: localStorage.getItem('gemini_voice_uri') || '',
+      rate: parseFloat(localStorage.getItem('gemini_rate')) || 0.95,
+      pitch: parseFloat(localStorage.getItem('gemini_pitch')) || 1.05,
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
 
@@ -259,26 +326,39 @@ RULES:
     let isCalling = false;
     let recognition = null;
     let synth = window.speechSynthesis;
+    let availableVoices = [];
+    let silenceTimer = null;
+    let currentInterimBubble = null;
 
+    // DOM Elements
     const callBtn = document.getElementById('callBtn');
     const hangupBtn = document.getElementById('hangupBtn');
     const callStatus = document.getElementById('callStatus');
     const callCard = document.getElementById('callCard');
-    const transcript = document.getElementById('transcript');
-    const errorMsg = document.getElementById('errorMsg');
+    const chatLog = document.getElementById('chatLog');
     const settingsModal = document.getElementById('settingsModal');
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const testVoiceBtn = document.getElementById('testVoiceBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
     const modelSelect = document.getElementById('modelSelect');
     const customModelGroup = document.getElementById('customModelGroup');
     const customModelInput = document.getElementById('customModelInput');
+    const voiceSelect = document.getElementById('voiceSelect');
+    const rateSlider = document.getElementById('rateSlider');
+    const rateVal = document.getElementById('rateVal');
+    const pitchSlider = document.getElementById('pitchSlider');
+    const pitchVal = document.getElementById('pitchVal');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
+    // Populate Initial Settings
     apiKeyInput.value = config.apiKey;
     systemPromptInput.value = config.prompt;
+    rateSlider.value = config.rate;
+    rateVal.innerText = `${config.rate}x`;
+    pitchSlider.value = config.pitch;
+    pitchVal.innerText = `${config.pitch}x`;
 
-    // Model selection setup
     const presetOptions = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-flash', 'gemini-2.5-pro'];
     if (presetOptions.includes(config.model)) {
       modelSelect.value = config.model;
@@ -290,21 +370,67 @@ RULES:
     }
 
     modelSelect.onchange = () => {
-      if (modelSelect.value === 'custom') {
-        customModelGroup.style.display = 'block';
-      } else {
-        customModelGroup.style.display = 'none';
+      customModelGroup.style.display = modelSelect.value === 'custom' ? 'block' : 'none';
+    };
+
+    rateSlider.oninput = () => { rateVal.innerText = `${rateSlider.value}x`; };
+    pitchSlider.oninput = () => { pitchVal.innerText = `${pitchSlider.value}x`; };
+
+    // Voice Selection Handling
+    function populateVoices() {
+      availableVoices = synth.getVoices();
+      if (!availableVoices.length) return;
+
+      voiceSelect.innerHTML = '';
+      
+      // Filter & sort prioritizing English Female / Natural voices
+      availableVoices.forEach((v) => {
+        const opt = document.createElement('option');
+        opt.value = v.voiceURI;
+        opt.textContent = `${v.name} (${v.lang})`;
+        if (v.voiceURI === config.voiceURI) opt.selected = true;
+        voiceSelect.appendChild(opt);
+      });
+
+      // Default to best natural female voice if none selected
+      if (!config.voiceURI && availableVoices.length > 0) {
+        const bestDefault = availableVoices.find(v => (v.name.includes("Female") || v.name.includes("Natural") || v.name.includes("Google")) && v.lang.startsWith("en")) || availableVoices[0];
+        if (bestDefault) {
+          voiceSelect.value = bestDefault.voiceURI;
+          config.voiceURI = bestDefault.voiceURI;
+        }
       }
+    }
+
+    populateVoices();
+    if (speechSynthesis.onvoiceschanged !== undefined) {
+      speechSynthesis.onvoiceschanged = populateVoices;
+    }
+
+    testVoiceBtn.onclick = () => {
+      const utterance = new SpeechSynthesisUtterance("Hello darling. Does this voice sound right to you?");
+      const selected = availableVoices.find(v => v.voiceURI === voiceSelect.value);
+      if (selected) utterance.voice = selected;
+      utterance.rate = parseFloat(rateSlider.value);
+      utterance.pitch = parseFloat(pitchSlider.value);
+      synth.cancel();
+      synth.speak(utterance);
     };
 
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
       config.apiKey = apiKeyInput.value.trim();
       config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
+      config.voiceURI = voiceSelect.value;
+      config.rate = parseFloat(rateSlider.value);
+      config.pitch = parseFloat(pitchSlider.value);
       config.prompt = systemPromptInput.value.trim();
 
       localStorage.setItem('gemini_api_key', config.apiKey);
       localStorage.setItem('gemini_model', config.model);
+      localStorage.setItem('gemini_voice_uri', config.voiceURI);
+      localStorage.setItem('gemini_rate', config.rate);
+      localStorage.setItem('gemini_pitch', config.pitch);
       localStorage.setItem('gemini_prompt', config.prompt);
       settingsModal.classList.remove('open');
     };
@@ -320,14 +446,36 @@ RULES:
 
     hangupBtn.onclick = () => endCall();
 
+    function appendMessage(sender, text, isInterim = false) {
+      if (isInterim) {
+        if (!currentInterimBubble) {
+          currentInterimBubble = document.createElement('div');
+          currentInterimBubble.className = 'bubble user interim';
+          chatLog.appendChild(currentInterimBubble);
+        }
+        currentInterimBubble.textContent = text;
+      } else {
+        if (currentInterimBubble) {
+          currentInterimBubble.remove();
+          currentInterimBubble = null;
+        }
+        const b = document.createElement('div');
+        b.className = `bubble ${sender}`;
+        b.textContent = text;
+        chatLog.appendChild(b);
+      }
+      chatLog.scrollTop = chatLog.scrollHeight;
+    }
+
     function startCall() {
       isCalling = true;
       chatHistory = [];
+      chatLog.innerHTML = '';
       callBtn.style.display = "none";
       hangupBtn.style.display = "flex";
+      callCard.className = "call-card listening";
       callStatus.innerText = "Listening...";
-      transcript.innerText = "";
-      errorMsg.style.display = "none";
+      appendMessage('katee', "Call connected. I'm listening...");
 
       setupSpeechRecognition();
     }
@@ -335,51 +483,74 @@ RULES:
     function setupSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("Your browser does not support Speech Recognition. Please use Chrome on Android.");
+        alert("Your browser does not support Speech Recognition. Please use Google Chrome on Android.");
         endCall();
         return;
       }
 
       recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = false;
+      recognition.continuous = true;
+      recognition.interimResults = true;
       recognition.lang = 'en-US';
 
+      let accumulatedFinalText = "";
+
       recognition.onstart = () => {
-        if (isCalling) callStatus.innerText = "Listening...";
+        if (isCalling) {
+          callCard.className = "call-card listening";
+          callStatus.innerText = "Listening...";
+        }
       };
 
-      recognition.onresult = async (event) => {
-        const userText = event.results[0][0].transcript;
-        transcript.innerText = `You: "${userText}"`;
-        await sendToGemini(userText);
+      recognition.onresult = (event) => {
+        let interimText = '';
+        for (let i = event.resultIndex; i < event.results.length; ++i) {
+          if (event.results[i].isFinal) {
+            accumulatedFinalText += event.results[i][0].transcript + ' ';
+          } else {
+            interimText += event.results[i][0].transcript;
+          }
+        }
+
+        const displayText = (accumulatedFinalText + interimText).trim();
+        if (displayText) {
+          appendMessage('user', displayText, true);
+
+          // Silence detection debounce: wait 1.2s of silence before sending
+          clearTimeout(silenceTimer);
+          silenceTimer = setTimeout(() => {
+            if (displayText && isCalling) {
+              const fullSpeech = displayText;
+              accumulatedFinalText = "";
+              appendMessage('user', fullSpeech, false);
+              try { recognition.stop(); } catch (e) {}
+              sendToGemini(fullSpeech);
+            }
+          }, 1200);
+        }
       };
 
       recognition.onerror = (e) => {
         if (isCalling && e.error !== 'no-speech') {
-          console.warn("Speech error:", e.error);
+          console.warn("Recognition error:", e.error);
         }
       };
 
       recognition.onend = () => {
-        if (isCalling && !synth.speaking) {
+        if (isCalling && !synth.speaking && callStatus.innerText !== "Katee is thinking...") {
           try { recognition.start(); } catch (err) {}
         }
       };
 
-      try {
-        recognition.start();
-      } catch (err) {
-        console.error("Recognition start failed:", err);
-      }
+      try { recognition.start(); } catch (err) { console.error(err); }
     }
 
     async function sendToGemini(userText) {
+      callCard.className = "call-card";
       callStatus.innerText = "Katee is thinking...";
       chatHistory.push({ role: "user", parts: [{ text: userText }] });
 
       try {
-        // Clean model string if user pasted 'models/' prefix
         const cleanModel = config.model.replace(/^models\//, '');
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${config.apiKey}`;
         
@@ -405,50 +576,63 @@ RULES:
 
       } catch (err) {
         console.error("Gemini Error:", err);
-        errorMsg.innerText = `Error: ${err.message}`;
-        errorMsg.style.display = "block";
-        callStatus.innerText = "Error. Tap Settings to adjust model.";
-        if (isCalling) {
-          setTimeout(() => {
-            try { recognition.start(); } catch (e) {}
-          }, 2000);
-        }
+        appendMessage('katee', `[Error: ${err.message}]`);
+        callStatus.innerText = "Error. Resuming mic...";
+        resumeListeningWithDelay(1500);
       }
     }
 
     function speakReply(text) {
+      callCard.className = "call-card talking";
       callStatus.innerText = "Katee is speaking...";
-      callCard.classList.add("talking");
-      transcript.innerText = `Katee: "${text}"`;
+      appendMessage('katee', text);
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 1.0;
-      utterance.pitch = 1.05;
+      utterance.rate = config.rate;
+      utterance.pitch = config.pitch;
 
-      const voices = synth.getVoices();
-      const preferredVoice = voices.find(v => v.name.includes("Female") || v.name.includes("Google") || v.name.includes("Natural"));
-      if (preferredVoice) utterance.voice = preferredVoice;
+      const selected = availableVoices.find(v => v.voiceURI === config.voiceURI);
+      if (selected) utterance.voice = selected;
 
       utterance.onend = () => {
-        callCard.classList.remove("talking");
-        callStatus.innerText = "Listening...";
-        if (isCalling) {
-          try { recognition.start(); } catch (err) {}
-        }
+        // Add a gentle 700ms pause after she finishes before opening your mic
+        resumeListeningWithDelay(700);
+      };
+
+      utterance.onerror = () => {
+        resumeListeningWithDelay(500);
       };
 
       synth.speak(utterance);
     }
 
+    function resumeListeningWithDelay(ms) {
+      callCard.className = "call-card";
+      callStatus.innerText = "Get ready...";
+      setTimeout(() => {
+        if (isCalling) {
+          callCard.className = "call-card listening";
+          callStatus.innerText = "Listening...";
+          try { recognition.start(); } catch (err) {}
+        }
+      }, ms);
+    }
+
     function endCall() {
       isCalling = false;
-      callCard.classList.remove("talking");
+      clearTimeout(silenceTimer);
+      callCard.className = "call-card";
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex";
       hangupBtn.style.display = "none";
 
+      if (currentInterimBubble) {
+        currentInterimBubble.remove();
+        currentInterimBubble = null;
+      }
+
       if (recognition) {
-        recognition.abort();
+        try { recognition.abort(); } catch (e) {}
         recognition = null;
       }
       if (synth) synth.cancel();
