@@ -227,6 +227,23 @@
       font-size: 14px;
     }
 
+    .row-btn {
+      display: flex;
+      gap: 8px;
+    }
+
+    .btn-small {
+      background: #38bdf8;
+      border: none;
+      color: #0f172a;
+      font-weight: 600;
+      padding: 0 12px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
     .slider-container { display: flex; align-items: center; gap: 10px; }
     .slider-container span { font-size: 13px; min-width: 35px; }
 
@@ -245,7 +262,7 @@
 <body>
 
   <div class="header">
-    <span>Katee Voice Call (Groq Powered)</span>
+    <span>Katee Voice Call (Groq)</span>
     <button class="settings-btn" id="openSettings">⚙️</button>
   </div>
 
@@ -260,7 +277,7 @@
   </div>
 
   <div class="chat-container" id="chatLog">
-    <div class="bubble katee">Press Call below to connect. Fast responses and generous rate limits enabled via Groq.</div>
+    <div class="bubble katee">Press Call below to connect. Katee will answer with high-speed responses.</div>
   </div>
 
   <div class="controls">
@@ -275,18 +292,22 @@
       <h3>Groq & Voice Settings</h3>
       
       <div class="input-group">
-        <label>Groq API Key (from console.groq.com)</label>
+        <label>Groq API Key (from console.groq.com/keys)</label>
         <input type="password" id="apiKeyInput" placeholder="gsk_...">
       </div>
 
       <div class="input-group">
         <label>Groq AI Model</label>
-        <select id="modelSelect">
-          <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Best Intelligence & Roleplay)</option>
-          <option value="llama-3.1-8b-instant">Llama 3.1 8B (Instant / Ultra Fast)</option>
-          <option value="mixtral-8x7b-32768">Mixtral 8x7B</option>
-          <option value="custom">Other / Custom Model...</option>
-        </select>
+        <div class="row-btn">
+          <select id="modelSelect" style="flex: 1;">
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
+            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B</option>
+            <option value="gemma2-9b-it">Gemma 2 9B</option>
+            <option value="custom">Other / Custom...</option>
+          </select>
+          <button class="btn-small" id="fetchModelsBtn">🔄 Detect</button>
+        </div>
       </div>
 
       <div class="input-group" id="customModelGroup" style="display: none;">
@@ -369,8 +390,8 @@ Output the action tag on its own line at the very end of your reply when changin
 - For normal teasing and denial: Do NOT output any action tag.`;
 
     let config = {
-      apiKey: localStorage.getItem('groq_api_key') || '',
-      model: localStorage.getItem('groq_model') || 'llama-3.3-70b-versatile',
+      apiKey: (localStorage.getItem('groq_api_key') || '').trim(),
+      model: (localStorage.getItem('groq_model') || 'llama-3.3-70b-versatile').trim(),
       voiceURI: localStorage.getItem('groq_voice_uri') || '',
       rate: parseFloat(localStorage.getItem('groq_rate')) || 0.95,
       pitch: parseFloat(localStorage.getItem('groq_pitch')) || 1.05,
@@ -403,6 +424,7 @@ Output the action tag on its own line at the very end of your reply when changin
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const resetPromptBtn = document.getElementById('resetPromptBtn');
+    const fetchModelsBtn = document.getElementById('fetchModelsBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
     const modelSelect = document.getElementById('modelSelect');
     const customModelGroup = document.getElementById('customModelGroup');
@@ -427,7 +449,7 @@ Output the action tag on its own line at the very end of your reply when changin
     releaseWebhookInput.value = config.releaseWebhook;
     systemPromptInput.value = config.prompt;
 
-    const presetModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'mixtral-8x7b-32768'];
+    const presetModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'deepseek-r1-distill-llama-70b', 'gemma2-9b-it'];
     if (presetModels.includes(config.model)) {
       modelSelect.value = config.model;
       customModelGroup.style.display = 'none';
@@ -471,6 +493,55 @@ Output the action tag on its own line at the very end of your reply when changin
       speechSynthesis.onvoiceschanged = populateVoices;
     }
 
+    // Auto-detect valid models from Groq API
+    fetchModelsBtn.onclick = async () => {
+      const key = apiKeyInput.value.trim();
+      if (!key) {
+        alert("Please paste your Groq API Key first.");
+        return;
+      }
+      fetchModelsBtn.innerText = "⏳...";
+
+      try {
+        const res = await fetch("https://api.groq.com/openai/v1/models", {
+          headers: { "Authorization": `Bearer ${key}` }
+        });
+        const data = await res.json();
+        
+        if (data.error) throw new Error(data.error.message);
+
+        // Filter active chat models
+        const models = data.data
+          .map(m => m.id)
+          .filter(id => !id.includes("whisper") && !id.includes("guard") && !id.includes("vision"))
+          .sort();
+
+        modelSelect.innerHTML = '';
+        models.forEach(m => {
+          const opt = document.createElement('option');
+          opt.value = m;
+          opt.textContent = m;
+          if (m.includes("70b")) opt.textContent += " (Recommended)";
+          modelSelect.appendChild(opt);
+        });
+
+        // Add custom option at the end
+        const customOpt = document.createElement('option');
+        customOpt.value = "custom";
+        customOpt.textContent = "Other / Custom...";
+        modelSelect.appendChild(customOpt);
+
+        customModelGroup.style.display = 'none';
+        fetchModelsBtn.innerText = "✅ Done";
+        setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
+
+      } catch (err) {
+        alert(`Failed to fetch models: ${err.message}\nMake sure your key starts with gsk_`);
+        fetchModelsBtn.innerText = "❌ Error";
+        setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
+      }
+    };
+
     resetPromptBtn.onclick = () => {
       systemPromptInput.value = DEFAULT_PROMPT;
     };
@@ -478,7 +549,7 @@ Output the action tag on its own line at the very end of your reply when changin
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
       config.apiKey = apiKeyInput.value.trim();
-      config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
+      config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value.trim();
       config.voiceURI = voiceSelect.value;
       config.rate = parseFloat(rateSlider.value);
       config.pitch = parseFloat(pitchSlider.value);
@@ -691,10 +762,10 @@ Output the action tag on its own line at the very end of your reply when changin
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${config.apiKey}`
+            "Authorization": `Bearer ${config.apiKey.trim()}`
           },
           body: JSON.stringify({
-            model: config.model,
+            model: config.model.trim(),
             messages: messages,
             max_tokens: 250,
             temperature: 0.7
