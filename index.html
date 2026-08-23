@@ -11,6 +11,7 @@
       --text: #f8fafc;
       --accent: #38bdf8;
       --danger: #ef4444;
+      --warning: #f59e0b;
       --success: #22c55e;
       --user-bubble: #2563eb;
       --katee-bubble: #334155;
@@ -166,26 +167,28 @@
       width: 100%;
       display: flex;
       justify-content: center;
+      gap: 20px;
       padding-top: 10px;
     }
 
     .btn-circle {
-      width: 68px;
-      height: 68px;
+      width: 64px;
+      height: 64px;
       border-radius: 50%;
       border: none;
       color: white;
-      font-size: 26px;
+      font-size: 24px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.15s ease;
+      transition: transform 0.15s ease, background-color 0.2s ease;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
 
     .btn-circle:active { transform: scale(0.92); }
     .btn-call { background-color: var(--success); }
+    .btn-pause { background-color: var(--warning); }
     .btn-end { background-color: var(--danger); }
 
     /* Modal */
@@ -255,12 +258,15 @@
   </div>
 
   <div class="chat-container" id="chatLog">
-    <div class="bubble katee">Press the call button below to start your conversation with Katee.</div>
+    <div class="bubble katee">Press Call below to connect with Katee. You can pause anytime to think.</div>
   </div>
 
   <div class="controls">
     <button class="btn-circle btn-call" id="callBtn">📞</button>
-    <button class="btn-circle btn-end" id="hangupBtn" style="display: none;">🛑</button>
+    
+    <!-- In-Call Controls: Pause & Hang Up -->
+    <button class="btn-circle btn-pause" id="pauseBtn" style="display: none;" title="Pause Mic">⏸️</button>
+    <button class="btn-circle btn-end" id="hangupBtn" style="display: none;" title="End Call">🛑</button>
   </div>
 
   <!-- Settings Modal -->
@@ -292,11 +298,11 @@
       <div class="input-group">
         <label>Katee's Studio AI Voice</label>
         <select id="voiceSelect">
-          <option value="Kore">Kore (Smooth, Alluring & Confident)</option>
+          <option value="Kore">Kore (Smooth & Confident)</option>
           <option value="Aoede">Aoede (Brisk & Sharp)</option>
-          <option value="Puck">Puck (Playful & Sassy)</option>
+          <option value="Puck">Puck (Playful)</option>
           <option value="Fenrir">Fenrir (Deeper Tone)</option>
-          <option value="Charon">Charon (Calm & Low)</option>
+          <option value="Charon">Charon (Calm)</option>
         </select>
       </div>
 
@@ -312,7 +318,7 @@
 
       <div class="input-group">
         <label>Electromagnet Release Webhook URL (Emergency / Safeword)</label>
-        <input type="text" id="releaseWebhookInput" placeholder="https://sequematic.com/trigger-custom-webhook/..." value="">
+        <input type="text" id="releaseWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167822">
       </div>
 
       <div class="input-group">
@@ -359,12 +365,13 @@ Output the action tag on its own line at the very end of your reply when changin
       voice: localStorage.getItem('gemini_voice') || 'Kore',
       kneelWebhook: localStorage.getItem('gemini_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
       standWebhook: localStorage.getItem('gemini_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
-      releaseWebhook: localStorage.getItem('gemini_release_webhook') || '',
+      releaseWebhook: localStorage.getItem('gemini_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167822',
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
 
     let chatHistory = [];
     let isCalling = false;
+    let isPaused = false;
     let isProcessing = false;
     let recognition = null;
     let silenceTimer = null;
@@ -375,6 +382,7 @@ Output the action tag on its own line at the very end of your reply when changin
 
     // DOM Elements
     const callBtn = document.getElementById('callBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
     const hangupBtn = document.getElementById('hangupBtn');
     const callStatus = document.getElementById('callStatus');
     const callCard = document.getElementById('callCard');
@@ -448,7 +456,32 @@ Output the action tag on its own line at the very end of your reply when changin
       startCall();
     };
 
+    pauseBtn.onclick = () => togglePause();
     hangupBtn.onclick = () => endCall();
+
+    function togglePause() {
+      if (!isCalling) return;
+      isPaused = !isPaused;
+
+      if (isPaused) {
+        if (recognition) {
+          try { recognition.abort(); } catch (e) {}
+        }
+        clearTimeout(silenceTimer);
+        callCard.className = "call-card";
+        callStatus.innerText = "⏸️ Call Paused (Mic Off)";
+        pauseBtn.innerText = "▶️";
+        pauseBtn.title = "Resume Call";
+        pauseBtn.style.backgroundColor = "var(--success)";
+      } else {
+        pauseBtn.innerText = "⏸️";
+        pauseBtn.title = "Pause Mic";
+        pauseBtn.style.backgroundColor = "var(--warning)";
+        callStatus.innerText = "Listening...";
+        callCard.className = "call-card listening";
+        startSpeechTurn();
+      }
+    }
 
     function appendMessage(sender, text, isInterim = false) {
       if (isInterim) {
@@ -486,10 +519,14 @@ Output the action tag on its own line at the very end of your reply when changin
 
     function startCall() {
       isCalling = true;
+      isPaused = false;
       isProcessing = false;
       chatHistory = [];
       chatLog.innerHTML = '';
       callBtn.style.display = "none";
+      pauseBtn.style.display = "flex";
+      pauseBtn.innerText = "⏸️";
+      pauseBtn.style.backgroundColor = "var(--warning)";
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening";
       callStatus.innerText = "Listening...";
@@ -503,9 +540,8 @@ Output the action tag on its own line at the very end of your reply when changin
       startSpeechTurn();
     }
 
-    // Clean single-utterance speech pipeline (No duplicate words)
     function startSpeechTurn() {
-      if (!isCalling || isProcessing) return;
+      if (!isCalling || isPaused || isProcessing) return;
 
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
@@ -526,7 +562,7 @@ Output the action tag on its own line at the very end of your reply when changin
       latestTranscript = "";
 
       recognition.onstart = () => {
-        if (isCalling && !isProcessing) {
+        if (isCalling && !isPaused && !isProcessing) {
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
         }
@@ -541,9 +577,14 @@ Output the action tag on its own line at the very end of your reply when changin
         if (latestTranscript) {
           appendMessage('user', latestTranscript, true);
 
+          // Instant Emergency Trigger on Safeword "RED"
+          if (latestTranscript.toUpperCase().includes("RED")) {
+            triggerWebhook(config.releaseWebhook, "Electromagnet Release (Safeword RED)");
+          }
+
           clearTimeout(silenceTimer);
           silenceTimer = setTimeout(() => {
-            if (latestTranscript && isCalling && !isProcessing) {
+            if (latestTranscript && isCalling && !isPaused && !isProcessing) {
               commitUserSpeech(latestTranscript);
             }
           }, 1100);
@@ -557,11 +598,11 @@ Output the action tag on its own line at the very end of your reply when changin
       };
 
       recognition.onend = () => {
-        if (isCalling && !isProcessing && callStatus.innerText === "Listening...") {
-          if (latestTranscript) {
+        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
+          if (latestTranscript && latestTranscript.length > 1) {
             commitUserSpeech(latestTranscript);
           } else {
-            setTimeout(() => { if (isCalling && !isProcessing) startSpeechTurn(); }, 300);
+            setTimeout(() => { if (isCalling && !isPaused && !isProcessing) startSpeechTurn(); }, 300);
           }
         }
       };
@@ -570,7 +611,7 @@ Output the action tag on its own line at the very end of your reply when changin
     }
 
     function commitUserSpeech(text) {
-      if (isProcessing) return;
+      if (isProcessing || isPaused) return;
       isProcessing = true;
       clearTimeout(silenceTimer);
       latestTranscript = "";
@@ -588,7 +629,7 @@ Output the action tag on its own line at the very end of your reply when changin
       callStatus.innerText = "Katee is thinking...";
       chatHistory.push({ role: "user", parts: [{ text: userText }] });
 
-      // Keep last 8 turns to strictly preserve quota & speed
+      // Keep last 8 messages strictly to prevent hitting token caps
       if (chatHistory.length > 8) {
         chatHistory = chatHistory.slice(-8);
       }
@@ -622,7 +663,7 @@ Output the action tag on its own line at the very end of your reply when changin
         
         if (data.error) {
           if (data.error.code === 429 || data.error.message.includes("quota")) {
-            throw new Error("Free rate-limit (15/min) reached. Please wait 30 seconds.");
+            throw new Error("Daily / Per-Minute rate limit reached. Pause a moment or check AI Studio quota.");
           }
           throw new Error(data.error.message);
         }
@@ -652,12 +693,12 @@ Output the action tag on its own line at the very end of your reply when changin
         if (rawTextReply.includes("[ACTION: KNEEL]")) {
           triggerWebhook(config.kneelWebhook, "Kneel Command");
         } else if (rawTextReply.includes("[ACTION: STAND]")) {
-          triggerWebhook(config.standWebhook, "Stand Command (Slack)");
+          triggerWebhook(config.standWebhook, "Stand Command");
         } else if (rawTextReply.includes("[ACTION: RELEASE]")) {
-          triggerWebhook(config.releaseWebhook, "Electromagnet Release (Safeword)");
+          triggerWebhook(config.releaseWebhook, "Electromagnet Release");
         }
 
-        // 2. Strip hardware tags for clean text & voice
+        // 2. Clean out tags for text & speech
         const cleanText = rawTextReply
           .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
           .replace(/\*/g, '')
@@ -675,7 +716,7 @@ Output the action tag on its own line at the very end of your reply when changin
       } catch (err) {
         console.error("Gemini Error:", err);
         appendMessage('system', err.message);
-        resumeListeningWithDelay(2000);
+        resumeListeningWithDelay(2500);
       }
     }
 
@@ -729,10 +770,10 @@ Output the action tag on its own line at the very end of your reply when changin
 
     function resumeListeningWithDelay(ms) {
       callCard.className = "call-card";
-      callStatus.innerText = "Listening...";
+      if (!isPaused) callStatus.innerText = "Listening...";
       setTimeout(() => {
         isProcessing = false;
-        if (isCalling) {
+        if (isCalling && !isPaused) {
           startSpeechTurn();
         }
       }, ms);
@@ -740,11 +781,13 @@ Output the action tag on its own line at the very end of your reply when changin
 
     function endCall() {
       isCalling = false;
+      isPaused = false;
       isProcessing = false;
       clearTimeout(silenceTimer);
       callCard.className = "call-card";
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex";
+      pauseBtn.style.display = "none";
       hangupBtn.style.display = "none";
       actionBadge.style.display = 'none';
 
