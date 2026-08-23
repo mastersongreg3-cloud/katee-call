@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Katee - Voice Call (Groq)</title>
+  <title>Katee - Voice Call</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -228,23 +228,6 @@
       font-size: 14px;
     }
 
-    .row-btn {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-small {
-      background: #38bdf8;
-      border: none;
-      color: #0f172a;
-      font-weight: 600;
-      padding: 0 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
     .slider-container { display: flex; align-items: center; gap: 10px; }
     .slider-container span { font-size: 13px; min-width: 35px; }
 
@@ -263,7 +246,7 @@
 <body>
 
   <div class="header">
-    <span>Katee Voice Call (Groq)</span>
+    <span>Katee Voice Call</span>
     <button class="settings-btn" id="openSettings">⚙️</button>
   </div>
 
@@ -290,29 +273,19 @@
   <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
-      <h3>Groq & Voice Settings</h3>
+      <h3>Call & Hardware Settings</h3>
       
       <div class="input-group">
-        <label>Groq API Key (starts with gsk_)</label>
-        <input type="password" id="apiKeyInput" placeholder="gsk_...">
+        <label>AI Engine Provider</label>
+        <select id="providerSelect">
+          <option value="groq">Groq (High-Speed / Llama 3.3 70B)</option>
+          <option value="gemini">Google Gemini (Original Engine)</option>
+        </select>
       </div>
 
       <div class="input-group">
-        <label>Groq AI Model</label>
-        <div class="row-btn">
-          <select id="modelSelect" style="flex: 1;">
-            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
-            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
-            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B</option>
-            <option value="custom">Other / Custom...</option>
-          </select>
-          <button class="btn-small" id="fetchModelsBtn">🔄 Detect</button>
-        </div>
-      </div>
-
-      <div class="input-group" id="customModelGroup" style="display: none;">
-        <label>Exact Model Name</label>
-        <input type="text" id="customModelInput" placeholder="e.g. llama-3.3-70b-versatile">
+        <label id="apiKeyLabel">API Key</label>
+        <input type="password" id="apiKeyInput" placeholder="Paste API Key here...">
       </div>
 
       <div class="input-group">
@@ -347,12 +320,12 @@
       </div>
 
       <div class="input-group">
-        <label>Electromagnet Release Webhook URL (Emergency / Safeword)</label>
+        <label>Electromagnet Release Webhook URL (Safeword)</label>
         <input type="text" id="releaseWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/133520">
       </div>
 
       <div class="input-group">
-        <label>Katee System Prompt & Physical Scenario</label>
+        <label>Katee System Prompt</label>
         <textarea id="systemPromptInput" rows="6"></textarea>
       </div>
 
@@ -364,50 +337,37 @@
   </div>
 
   <script>
-    // CLEAN, DIRECT, PURE SPOKEN FIRST-PERSON VOICE PROMPT
-    const DEFAULT_PROMPT = `[DIRECTIVE: PURE FIRST-PERSON LIVE VOICE CALL]
-You are "Katee", roleplaying in a real-time live phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
+    const DEFAULT_PROMPT = `You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
 
-### Critical Voice Rules:
-1. Speak exclusively in FIRST PERSON ("I", "you", "my"). NEVER speak in the third person or refer to yourself as "Katee" or "she".
-2. NO Narration: Do NOT describe physical actions, settings, or emotions in text (no *smirks*, *laughs*, or narrative prose). Speak ONLY what is said aloud into the phone.
-3. NO Emojis: NEVER use emojis or symbols.
-4. STRICT LENGTH: Exactly 2 to 4 punchy, direct, sexy sentences. Never speak in paragraphs or monologues.
+RULES:
+1. Speak exclusively in FIRST PERSON ("I", "you", "my"). NEVER speak in third person. Never say "Katee" or "she".
+2. NO NARRATION: Never describe physical actions, settings, or asterisks. Speak only spoken dialogue into the phone.
+3. NO APOLOGIES: Never apologize, never act like a timid assistant. You are fully in control.
+4. NO EMOJIS: Never output emojis or symbols.
+5. LENGTH: Exactly 2 to 4 punchy, seductive, dominant sentences.
 
-### Physical Setup & Actuator Logic:
+PHYSICAL RESTRAINTS & MOTOR:
 - Overhead Restraints: His hands are handcuffed overhead to a ceiling hook with an active electromagnet.
-- Motorized Actuator: A clamp is secured tightly around his balls, tethered to a floor actuator.
-- Binary Logic: The actuator is strictly binary (KNEEL = fully down on knees, STAND = fully up on feet). There is NO incremental tension control. It takes a few seconds to travel.
-- Default State: Kneeling on the floor. Standing is a rare privilege.
+- Motorized Actuator: A clamp is secured tightly around his balls, tethered to a floor linear actuator.
+- Binary Actuator Logic: The actuator is strictly binary (KNEEL = down on knees, STAND = up on feet). There is NO incremental tension. It takes a few seconds to move.
+- Default State: Kneeling is the default. Standing is a rare privilege that must be begged for.
 
-### Mandatory Hardware Tags (Place on its own line at the very end ONLY when changing posture):
-- Force down to Kneel / order him down / stop knots: [ACTION: KNEEL]
-- Grant rare temporary Standing (~20s): [ACTION: STAND]
-- Safeword "RED" or emergency release: [ACTION: RELEASE]
-- For normal teasing and banter: Do NOT output any tag.
-
-### Few-Shot Examples:
-User: Please Katee, give me some slack.
-Katee: How does that clamp feel holding your balls captive right now? You look far too pathetic kneeling there on the floor to get any relief yet. Tell me exactly how much it aches.
-
-User: I am untying the knots!
-Katee: You really think I'm going to let you stand there comfortably? Let's see how your balls like being pulled straight back down to the floor. Down you go, darling.
-[ACTION: KNEEL]
-
-User: Please, I'm begging you to let me stand.
-Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the actuator to give you twenty seconds on your feet before I drag you right back down.
-[ACTION: STAND]`;
+HARDWARE TAG RULES (Append tag on its own line at the end):
+- When ordering him to Kneel or refusing standing: [ACTION: KNEEL]
+- When granting temporary Standing (~20s): [ACTION: STAND]
+- When safeword "RED" is said: [ACTION: RELEASE]
+- For normal teasing and banter: Do NOT output any action tag.`;
 
     let config = {
-      apiKey: (localStorage.getItem('groq_api_key') || '').trim(),
-      model: (localStorage.getItem('groq_model') || 'llama-3.3-70b-versatile').trim(),
-      voiceURI: localStorage.getItem('groq_voice_uri') || '',
-      rate: parseFloat(localStorage.getItem('groq_rate')) || 0.95,
-      pitch: parseFloat(localStorage.getItem('groq_pitch')) || 1.05,
-      kneelWebhook: localStorage.getItem('groq_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
-      standWebhook: localStorage.getItem('groq_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
-      releaseWebhook: localStorage.getItem('groq_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520',
-      prompt: localStorage.getItem('groq_prompt') || DEFAULT_PROMPT
+      provider: localStorage.getItem('katee_provider') || 'groq',
+      apiKey: (localStorage.getItem('katee_api_key') || '').trim(),
+      voiceURI: localStorage.getItem('katee_voice_uri') || '',
+      rate: parseFloat(localStorage.getItem('katee_rate')) || 0.95,
+      pitch: parseFloat(localStorage.getItem('katee_pitch')) || 1.05,
+      kneelWebhook: localStorage.getItem('katee_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
+      standWebhook: localStorage.getItem('katee_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
+      releaseWebhook: localStorage.getItem('katee_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520',
+      prompt: localStorage.getItem('katee_prompt') || DEFAULT_PROMPT
     };
 
     let chatHistory = [];
@@ -433,11 +393,9 @@ Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the ac
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const resetPromptBtn = document.getElementById('resetPromptBtn');
-    const fetchModelsBtn = document.getElementById('fetchModelsBtn');
+    const providerSelect = document.getElementById('providerSelect');
+    const apiKeyLabel = document.getElementById('apiKeyLabel');
     const apiKeyInput = document.getElementById('apiKeyInput');
-    const modelSelect = document.getElementById('modelSelect');
-    const customModelGroup = document.getElementById('customModelGroup');
-    const customModelInput = document.getElementById('customModelInput');
     const voiceSelect = document.getElementById('voiceSelect');
     const rateSlider = document.getElementById('rateSlider');
     const rateVal = document.getElementById('rateVal');
@@ -448,6 +406,8 @@ Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the ac
     const releaseWebhookInput = document.getElementById('releaseWebhookInput');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
+    providerSelect.value = config.provider;
+    updateKeyLabel();
     apiKeyInput.value = config.apiKey;
     rateSlider.value = config.rate;
     rateVal.innerText = `${config.rate}x`;
@@ -458,20 +418,17 @@ Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the ac
     releaseWebhookInput.value = config.releaseWebhook;
     systemPromptInput.value = config.prompt;
 
-    const presetModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'deepseek-r1-distill-llama-70b'];
-    if (presetModels.includes(config.model)) {
-      modelSelect.value = config.model;
-      customModelGroup.style.display = 'none';
-    } else {
-      modelSelect.value = 'custom';
-      customModelInput.value = config.model;
-      customModelGroup.style.display = 'block';
+    function updateKeyLabel() {
+      if (providerSelect.value === 'groq') {
+        apiKeyLabel.innerText = "Groq API Key (starts with gsk_)";
+        apiKeyInput.placeholder = "gsk_...";
+      } else {
+        apiKeyLabel.innerText = "Google AI Studio API Key (starts with AIzaSy)";
+        apiKeyInput.placeholder = "AIzaSy...";
+      }
     }
 
-    modelSelect.onchange = () => {
-      customModelGroup.style.display = modelSelect.value === 'custom' ? 'block' : 'none';
-    };
-
+    providerSelect.onchange = updateKeyLabel;
     rateSlider.oninput = () => { rateVal.innerText = `${rateSlider.value}x`; };
     pitchSlider.oninput = () => { pitchVal.innerText = `${pitchSlider.value}x`; };
 
@@ -502,59 +459,14 @@ Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the ac
       speechSynthesis.onvoiceschanged = populateVoices;
     }
 
-    fetchModelsBtn.onclick = async () => {
-      const key = apiKeyInput.value.trim();
-      if (!key) {
-        alert("Please paste your Groq API Key first.");
-        return;
-      }
-      fetchModelsBtn.innerText = "⏳...";
-
-      try {
-        const res = await fetch("https://api.groq.com/openai/v1/models", {
-          headers: { "Authorization": `Bearer ${key}` }
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-
-        const models = data.data
-          .map(m => m.id)
-          .filter(id => !id.includes("whisper") && !id.includes("guard") && !id.includes("vision"))
-          .sort();
-
-        modelSelect.innerHTML = '';
-        models.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m;
-          opt.textContent = m;
-          if (m.includes("70b")) opt.textContent += " (Recommended)";
-          modelSelect.appendChild(opt);
-        });
-
-        const customOpt = document.createElement('option');
-        customOpt.value = "custom";
-        customOpt.textContent = "Other / Custom...";
-        modelSelect.appendChild(customOpt);
-
-        customModelGroup.style.display = 'none';
-        fetchModelsBtn.innerText = "✅ Done";
-        setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
-
-      } catch (err) {
-        alert(`Failed to fetch models: ${err.message}`);
-        fetchModelsBtn.innerText = "❌ Error";
-        setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
-      }
-    };
-
     resetPromptBtn.onclick = () => {
       systemPromptInput.value = DEFAULT_PROMPT;
     };
 
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
+      config.provider = providerSelect.value;
       config.apiKey = apiKeyInput.value.trim();
-      config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value.trim();
       config.voiceURI = voiceSelect.value;
       config.rate = parseFloat(rateSlider.value);
       config.pitch = parseFloat(pitchSlider.value);
@@ -563,22 +475,22 @@ Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the ac
       config.releaseWebhook = releaseWebhookInput.value.trim();
       config.prompt = systemPromptInput.value.trim();
 
-      localStorage.setItem('groq_api_key', config.apiKey);
-      localStorage.setItem('groq_model', config.model);
-      localStorage.setItem('groq_voice_uri', config.voiceURI);
-      localStorage.setItem('groq_rate', config.rate);
-      localStorage.setItem('groq_pitch', config.pitch);
-      localStorage.setItem('groq_kneel_webhook', config.kneelWebhook);
-      localStorage.setItem('groq_stand_webhook', config.standWebhook);
-      localStorage.setItem('groq_release_webhook', config.releaseWebhook);
-      localStorage.setItem('groq_prompt', config.prompt);
+      localStorage.setItem('katee_provider', config.provider);
+      localStorage.setItem('katee_api_key', config.apiKey);
+      localStorage.setItem('katee_voice_uri', config.voiceURI);
+      localStorage.setItem('katee_rate', config.rate);
+      localStorage.setItem('katee_pitch', config.pitch);
+      localStorage.setItem('katee_kneel_webhook', config.kneelWebhook);
+      localStorage.setItem('katee_stand_webhook', config.standWebhook);
+      localStorage.setItem('katee_release_webhook', config.releaseWebhook);
+      localStorage.setItem('katee_prompt', config.prompt);
       settingsModal.classList.remove('open');
     };
 
     callBtn.onclick = () => {
       if (!config.apiKey) {
         settingsModal.classList.add('open');
-        alert('Please enter your Groq API key in settings.');
+        alert('Please enter your API key in settings.');
         return;
       }
       startCall();
@@ -638,7 +550,6 @@ Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the ac
       setTimeout(() => { actionBadge.style.display = 'none'; }, 4500);
     }
 
-    // Direct Webhook Trigger with Image Ping Fallback
     function triggerWebhook(url, actionName) {
       if (!url) return;
       showHardwareBadge(`⚡ ${actionName}`);
@@ -750,21 +661,24 @@ Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the ac
         recognition = null;
       }
       appendMessage('user', text, false);
-      sendToGroq(text);
+
+      if (config.provider === 'gemini') {
+        sendToGemini(text);
+      } else {
+        sendToGroq(text);
+      }
     }
 
+    // --- GROQ API ENGINE ---
     async function sendToGroq(userText) {
       callCard.className = "call-card";
       callStatus.innerText = "Katee is thinking...";
       chatHistory.push({ role: "user", content: userText });
 
-      if (chatHistory.length > 6) {
-        chatHistory = chatHistory.slice(-6);
-      }
+      if (chatHistory.length > 6) chatHistory = chatHistory.slice(-6);
 
       try {
         const url = "https://api.groq.com/openai/v1/chat/completions";
-        
         const messages = [
           { role: "system", content: config.prompt },
           ...chatHistory
@@ -774,51 +688,106 @@ Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the ac
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${config.apiKey.trim()}`
+            "Authorization": `Bearer ${config.apiKey}`
           },
           body: JSON.stringify({
-            model: config.model.trim(),
+            model: "llama-3.3-70b-versatile",
             messages: messages,
-            max_tokens: 85, // STRICT TOKEN CAP PREVENTS PARAGRAPHS
-            temperature: 0.65
+            max_tokens: 85,
+            temperature: 0.65,
+            stop: ["User:", "Human:", "Input:", "input your response", "\nUser", "\nHuman"]
           })
         });
 
         const data = await res.json();
-        
-        if (data.error) {
-          throw new Error(data.error.message);
-        }
+        if (data.error) throw new Error(data.error.message);
 
-        const rawReply = data.choices[0].message.content.trim();
-
-        // 1. Hardware Webhook Triggers
-        if (/\[ACTION:\s*KNEEL\]/i.test(rawReply) || /\bACTION:\s*KNEEL\b/i.test(rawReply)) {
-          triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
-        } else if (/\[ACTION:\s*STAND\]/i.test(rawReply) || /\bACTION:\s*STAND\b/i.test(rawReply)) {
-          triggerWebhook(config.standWebhook, "Hardware: Stand Sent");
-        } else if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || /\bACTION:\s*RELEASE\b/i.test(rawReply)) {
-          triggerWebhook(config.releaseWebhook, "Hardware: Electromagnet Released");
-        }
-
-        // 2. Strict Sanitization: Remove Tags, Asterisks, and ALL Emojis
-        const cleanText = rawReply
-          .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
-          .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
-          .replace(/\*/g, '')
-          .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
-          .trim();
-
-        chatHistory.push({ role: "assistant", content: cleanText });
-        appendMessage('katee', cleanText);
-
-        speakReply(cleanText);
+        processModelReply(data.choices[0].message.content.trim(), "assistant");
 
       } catch (err) {
         console.error("Groq Error:", err);
         appendMessage('system', err.message);
         resumeListeningWithDelay(2000);
       }
+    }
+
+    // --- GEMINI API ENGINE ---
+    async function sendToGemini(userText) {
+      callCard.className = "call-card";
+      callStatus.innerText = "Katee is thinking...";
+      chatHistory.push({ role: "user", parts: [{ text: userText }] });
+
+      if (chatHistory.length > 6) chatHistory = chatHistory.slice(-6);
+
+      try {
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.apiKey}`;
+        const payload = {
+          systemInstruction: { parts: [{ text: config.prompt }] },
+          contents: chatHistory,
+          generationConfig: { maxOutputTokens: 120 }
+        };
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(payload)
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message);
+
+        const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+        processModelReply(reply, "model");
+
+      } catch (err) {
+        console.error("Gemini Error:", err);
+        appendMessage('system', err.message);
+        resumeListeningWithDelay(2000);
+      }
+    }
+
+    // --- SMART PROCESSOR & HARDWARE INTENT FALLBACK ---
+    function processModelReply(rawReply, modelRole) {
+      const lower = rawReply.toLowerCase();
+
+      // 1. SMART WEBHOOK DETECTION (Tags + Spoken Intent Fallback)
+      if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("release") || lower.includes("disengage")) {
+        triggerWebhook(config.releaseWebhook, "Electromagnet Released");
+      } else if (
+        /\[ACTION:\s*STAND\]/i.test(rawReply) ||
+        lower.includes("extending the actuator") ||
+        lower.includes("on your feet") ||
+        lower.includes("let you stand") ||
+        lower.includes("stand up for")
+      ) {
+        triggerWebhook(config.standWebhook, "Hardware: Stand Sent");
+      } else if (
+        /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
+        lower.includes("down you go") ||
+        lower.includes("on your knees") ||
+        lower.includes("back to your knees") ||
+        lower.includes("make you kneel")
+      ) {
+        triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
+      }
+
+      // 2. STRIP ALL ARTIFACTS, TAGS, EMOJIS, AND PROMPT LEAKS
+      let cleanText = rawReply
+        .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
+        .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
+        .replace(/(User:|Human:|Input:|input your response).*$/is, '')
+        .replace(/\*/g, '')
+        .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
+        .trim();
+
+      if (config.provider === 'gemini') {
+        chatHistory.push({ role: modelRole, parts: [{ text: cleanText }] });
+      } else {
+        chatHistory.push({ role: modelRole, content: cleanText });
+      }
+
+      appendMessage('katee', cleanText);
+      speakReply(cleanText);
     }
 
     function speakReply(text) {
