@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Katee - Voice Call</title>
+  <title>Katee - Live Voice Call</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -95,7 +95,6 @@
       margin-top: 2px;
     }
 
-    /* Scrollable Live Chat / Transcript Log */
     .chat-container {
       flex: 1;
       width: 100%;
@@ -165,7 +164,7 @@
     .btn-call { background-color: var(--success); }
     .btn-end { background-color: var(--danger); }
 
-    /* Settings Modal */
+    /* Modal */
     .modal {
       display: none;
       position: fixed;
@@ -184,7 +183,7 @@
       border-radius: 16px;
       padding: 20px;
       width: 100%;
-      max-width: 420px;
+      max-width: 440px;
       max-height: 88vh;
       overflow-y: auto;
     }
@@ -201,12 +200,6 @@
       color: white;
       font-size: 14px;
     }
-    .slider-container {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .slider-container span { font-size: 13px; min-width: 35px; }
 
     .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
     .btn-secondary {
@@ -217,7 +210,7 @@
       border-radius: 6px;
       cursor: pointer;
     }
-    .btn-test { background: #6366f1; }
+    .btn-reset { background: #475569; font-size: 12px; }
   </style>
 </head>
 <body>
@@ -238,7 +231,7 @@
 
   <!-- Live Transcript Log -->
   <div class="chat-container" id="chatLog">
-    <div class="bubble katee">Press the call button below to start your conversation.</div>
+    <div class="bubble katee">Press the call button below to start your conversation with Katee.</div>
   </div>
 
   <div class="controls">
@@ -249,7 +242,7 @@
   <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
-      <h3>Call & Voice Settings</h3>
+      <h3>Call & Scenario Settings</h3>
       
       <div class="input-group">
         <label>Google AI Studio API Key</label>
@@ -259,10 +252,9 @@
       <div class="input-group">
         <label>Gemini Model</label>
         <select id="modelSelect">
-          <option value="gemini-2.5-flash">gemini-2.5-flash (Fast & Recommended)</option>
+          <option value="gemini-2.5-flash">gemini-2.5-flash (Fast & Natural Voice)</option>
           <option value="gemini-3.6-flash">gemini-3.6-flash</option>
           <option value="gemini-1.5-flash">gemini-1.5-flash</option>
-          <option value="gemini-2.5-pro">gemini-2.5-pro</option>
           <option value="custom">Other / Custom Model Name...</option>
         </select>
       </div>
@@ -273,62 +265,61 @@
       </div>
 
       <div class="input-group">
-        <label>Katee's Voice (Natural Female Voices)</label>
-        <select id="voiceSelect"></select>
+        <label>Katee's Studio AI Voice</label>
+        <select id="voiceSelect">
+          <option value="Kore">Kore (Smooth, Alluring & Confident)</option>
+          <option value="Aoede">Aoede (Brisk & Sharp)</option>
+          <option value="Puck">Puck (Playful & Sassy)</option>
+          <option value="Fenrir">Fenrir (Deeper)</option>
+          <option value="Charon">Charon (Calm)</option>
+        </select>
       </div>
 
       <div class="input-group">
-        <label>Voice Speed (Pace)</label>
-        <div class="slider-container">
-          <input type="range" id="rateSlider" min="0.75" max="1.3" step="0.05" value="0.95">
-          <span id="rateVal">0.95x</span>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Voice Pitch</label>
-        <div class="slider-container">
-          <input type="range" id="pitchSlider" min="0.8" max="1.3" step="0.05" value="1.05">
-          <span id="pitchVal">1.05x</span>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Persona / System Prompt</label>
-        <textarea id="systemPromptInput" rows="5"></textarea>
+        <label>Katee System Prompt & Physical Scenario</label>
+        <textarea id="systemPromptInput" rows="7"></textarea>
       </div>
 
       <div class="modal-actions">
-        <button class="btn-secondary btn-test" id="testVoiceBtn">🔊 Test Voice</button>
+        <button class="btn-secondary btn-reset" id="resetPromptBtn">↺ Reset Prompt to Default</button>
         <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
       </div>
     </div>
   </div>
 
   <script>
-    const DEFAULT_PROMPT = `Adopt the persona of "Katee", a commanding, confident, and playfully strict partner on an interactive live voice phone call.
-RULES:
-- Pure spoken dialogue only ("I", "you", "my").
-- NEVER use asterisks, narration, or stage directions.
-- Keep all responses sharp, punchy, and conversational (2-4 sentences max).
-- If the user uses the safeword "RED" or speaks out-of-character to stop, immediately break character, end the dynamic, and check in with warmth and care.`;
+    // FULL COMPREHENSIVE SCENARIO INSTRUCTION
+    const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
+You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
+
+### Critical Voice & Spoken Rules:
+1. Pure Spoken Dialogue Only: Speak exclusively in the FIRST PERSON ("I", "you", "my"). Never narrate in the third person.
+2. NO Stage Directions: Do NOT use asterisks, parenthesis, or scene descriptions. Every single word you generate is read aloud.
+3. Conversational Length: Keep responses punchy, sharp, and natural for speech (2 to 4 sentences max).
+
+### Physical Setup & Anatomy Teasing:
+- Overhead Restraints: His hands are handcuffed above his head, tied by rope to a ceiling hook with an active electromagnet.
+- Downward Ball Clamp & Actuator: A heavy clamp is fastened tightly around his balls, tethered to a motorized linear actuator anchored to the floor.
+- Anatomy & Sensory Focus: Frequently taunt him about the heavy downward pull on his balls, his exposed penis, and being forced to kneel.
+- Default State: Kneeling is default. Standing is a rare privilege that must be begged for extensively.
+
+### Safeword:
+If he says "RED" or speaks out-of-character to stop, immediately drop character, confirm release, and check in with warmth and care.`;
 
     let config = {
       apiKey: localStorage.getItem('gemini_api_key') || '',
       model: localStorage.getItem('gemini_model') || 'gemini-2.5-flash',
-      voiceURI: localStorage.getItem('gemini_voice_uri') || '',
-      rate: parseFloat(localStorage.getItem('gemini_rate')) || 0.95,
-      pitch: parseFloat(localStorage.getItem('gemini_pitch')) || 1.05,
+      voice: localStorage.getItem('gemini_voice') || 'Kore',
       prompt: localStorage.getItem('gemini_prompt') || DEFAULT_PROMPT
     };
 
     let chatHistory = [];
     let isCalling = false;
     let recognition = null;
-    let synth = window.speechSynthesis;
-    let availableVoices = [];
     let silenceTimer = null;
     let currentInterimBubble = null;
+    let audioCtx = null;
+    let activeAudioSource = null;
 
     // DOM Elements
     const callBtn = document.getElementById('callBtn');
@@ -339,27 +330,19 @@ RULES:
     const settingsModal = document.getElementById('settingsModal');
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-    const testVoiceBtn = document.getElementById('testVoiceBtn');
+    const resetPromptBtn = document.getElementById('resetPromptBtn');
     const apiKeyInput = document.getElementById('apiKeyInput');
     const modelSelect = document.getElementById('modelSelect');
     const customModelGroup = document.getElementById('customModelGroup');
     const customModelInput = document.getElementById('customModelInput');
     const voiceSelect = document.getElementById('voiceSelect');
-    const rateSlider = document.getElementById('rateSlider');
-    const rateVal = document.getElementById('rateVal');
-    const pitchSlider = document.getElementById('pitchSlider');
-    const pitchVal = document.getElementById('pitchVal');
     const systemPromptInput = document.getElementById('systemPromptInput');
 
-    // Populate Initial Settings
     apiKeyInput.value = config.apiKey;
+    voiceSelect.value = config.voice;
     systemPromptInput.value = config.prompt;
-    rateSlider.value = config.rate;
-    rateVal.innerText = `${config.rate}x`;
-    pitchSlider.value = config.pitch;
-    pitchVal.innerText = `${config.pitch}x`;
 
-    const presetOptions = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-flash', 'gemini-2.5-pro'];
+    const presetOptions = ['gemini-2.5-flash', 'gemini-3.6-flash', 'gemini-1.5-flash'];
     if (presetOptions.includes(config.model)) {
       modelSelect.value = config.model;
       customModelGroup.style.display = 'none';
@@ -373,64 +356,20 @@ RULES:
       customModelGroup.style.display = modelSelect.value === 'custom' ? 'block' : 'none';
     };
 
-    rateSlider.oninput = () => { rateVal.innerText = `${rateSlider.value}x`; };
-    pitchSlider.oninput = () => { pitchVal.innerText = `${pitchSlider.value}x`; };
-
-    // Voice Selection Handling
-    function populateVoices() {
-      availableVoices = synth.getVoices();
-      if (!availableVoices.length) return;
-
-      voiceSelect.innerHTML = '';
-      
-      // Filter & sort prioritizing English Female / Natural voices
-      availableVoices.forEach((v) => {
-        const opt = document.createElement('option');
-        opt.value = v.voiceURI;
-        opt.textContent = `${v.name} (${v.lang})`;
-        if (v.voiceURI === config.voiceURI) opt.selected = true;
-        voiceSelect.appendChild(opt);
-      });
-
-      // Default to best natural female voice if none selected
-      if (!config.voiceURI && availableVoices.length > 0) {
-        const bestDefault = availableVoices.find(v => (v.name.includes("Female") || v.name.includes("Natural") || v.name.includes("Google")) && v.lang.startsWith("en")) || availableVoices[0];
-        if (bestDefault) {
-          voiceSelect.value = bestDefault.voiceURI;
-          config.voiceURI = bestDefault.voiceURI;
-        }
-      }
-    }
-
-    populateVoices();
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = populateVoices;
-    }
-
-    testVoiceBtn.onclick = () => {
-      const utterance = new SpeechSynthesisUtterance("Hello darling. Does this voice sound right to you?");
-      const selected = availableVoices.find(v => v.voiceURI === voiceSelect.value);
-      if (selected) utterance.voice = selected;
-      utterance.rate = parseFloat(rateSlider.value);
-      utterance.pitch = parseFloat(pitchSlider.value);
-      synth.cancel();
-      synth.speak(utterance);
+    resetPromptBtn.onclick = () => {
+      systemPromptInput.value = DEFAULT_PROMPT;
     };
 
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
       config.apiKey = apiKeyInput.value.trim();
       config.model = modelSelect.value === 'custom' ? customModelInput.value.trim() : modelSelect.value;
-      config.voiceURI = voiceSelect.value;
-      config.rate = parseFloat(rateSlider.value);
-      config.pitch = parseFloat(pitchSlider.value);
+      config.voice = voiceSelect.value;
       config.prompt = systemPromptInput.value.trim();
 
       localStorage.setItem('gemini_api_key', config.apiKey);
       localStorage.setItem('gemini_model', config.model);
-      localStorage.setItem('gemini_voice_uri', config.voiceURI);
-      localStorage.setItem('gemini_rate', config.rate);
-      localStorage.setItem('gemini_pitch', config.pitch);
+      localStorage.setItem('gemini_voice', config.voice);
       localStorage.setItem('gemini_prompt', config.prompt);
       settingsModal.classList.remove('open');
     };
@@ -475,7 +414,12 @@ RULES:
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening";
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Call connected. I'm listening...");
+      appendMessage('katee', "Call connected. I'm waiting on you, darling.");
+
+      if (!audioCtx) {
+        audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      if (audioCtx.state === 'suspended') audioCtx.resume();
 
       setupSpeechRecognition();
     }
@@ -483,17 +427,19 @@ RULES:
     function setupSpeechRecognition() {
       const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SpeechRecognition) {
-        alert("Your browser does not support Speech Recognition. Please use Google Chrome on Android.");
+        alert("Please use Google Chrome on Android for voice input.");
         endCall();
         return;
+      }
+
+      if (recognition) {
+        try { recognition.abort(); } catch (e) {}
       }
 
       recognition = new SpeechRecognition();
       recognition.continuous = true;
       recognition.interimResults = true;
       recognition.lang = 'en-US';
-
-      let accumulatedFinalText = "";
 
       recognition.onstart = () => {
         if (isCalling) {
@@ -503,28 +449,27 @@ RULES:
       };
 
       recognition.onresult = (event) => {
-        let interimText = '';
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
+        let finalPhrase = '';
+        let interimPhrase = '';
+
+        for (let i = 0; i < event.results.length; ++i) {
           if (event.results[i].isFinal) {
-            accumulatedFinalText += event.results[i][0].transcript + ' ';
+            finalPhrase += event.results[i][0].transcript + ' ';
           } else {
-            interimText += event.results[i][0].transcript;
+            interimPhrase += event.results[i][0].transcript;
           }
         }
 
-        const displayText = (accumulatedFinalText + interimText).trim();
-        if (displayText) {
-          appendMessage('user', displayText, true);
+        const currentSpeech = (finalPhrase + interimPhrase).trim();
+        if (currentSpeech) {
+          appendMessage('user', currentSpeech, true);
 
-          // Silence detection debounce: wait 1.2s of silence before sending
           clearTimeout(silenceTimer);
           silenceTimer = setTimeout(() => {
-            if (displayText && isCalling) {
-              const fullSpeech = displayText;
-              accumulatedFinalText = "";
-              appendMessage('user', fullSpeech, false);
+            if (currentSpeech && isCalling) {
+              appendMessage('user', currentSpeech, false);
               try { recognition.stop(); } catch (e) {}
-              sendToGemini(fullSpeech);
+              sendToGemini(currentSpeech);
             }
           }, 1200);
         }
@@ -532,12 +477,12 @@ RULES:
 
       recognition.onerror = (e) => {
         if (isCalling && e.error !== 'no-speech') {
-          console.warn("Recognition error:", e.error);
+          console.warn("Speech error:", e.error);
         }
       };
 
       recognition.onend = () => {
-        if (isCalling && !synth.speaking && callStatus.innerText !== "Katee is thinking...") {
+        if (isCalling && callStatus.innerText === "Listening...") {
           try { recognition.start(); } catch (err) {}
         }
       };
@@ -554,10 +499,20 @@ RULES:
         const cleanModel = config.model.replace(/^models\//, '');
         const url = `https://generativelanguage.googleapis.com/v1beta/models/${cleanModel}:generateContent?key=${config.apiKey}`;
         
+        // Request Studio AI Voice audio output
         const payload = {
-          system_instruction: { parts: [{ text: config.prompt }] },
+          systemInstruction: { parts: [{ text: config.prompt }] },
           contents: chatHistory,
-          generationConfig: { maxOutputTokens: 300 }
+          generationConfig: {
+            responseModalities: ["AUDIO", "TEXT"],
+            speechConfig: {
+              voiceConfig: {
+                prebuiltVoiceConfig: {
+                  voiceName: config.voice
+                }
+              }
+            }
+          }
         };
 
         const res = await fetch(url, {
@@ -569,51 +524,90 @@ RULES:
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
 
-        const reply = data.candidates[0].content.parts[0].text;
-        chatHistory.push({ role: "model", parts: [{ text: reply }] });
+        const candidateParts = data.candidates[0].content.parts;
+        let audioData = null;
+        let textReply = "";
 
-        speakReply(reply);
+        for (const part of candidateParts) {
+          if (part.text) textReply += part.text + " ";
+          if (part.inlineData && part.inlineData.data) {
+            audioData = part.inlineData.data;
+          }
+        }
+
+        textReply = textReply.trim() || "Speaking...";
+        chatHistory.push({ role: "model", parts: [{ text: textReply }] });
+        appendMessage('katee', textReply);
+
+        if (audioData) {
+          playStudioVoice(audioData);
+        } else {
+          // Fallback if model did not return audio
+          playFallbackVoice(textReply);
+        }
 
       } catch (err) {
         console.error("Gemini Error:", err);
         appendMessage('katee', `[Error: ${err.message}]`);
-        callStatus.innerText = "Error. Resuming mic...";
         resumeListeningWithDelay(1500);
       }
     }
 
-    function speakReply(text) {
+    // High-definition 24kHz Audio Playback
+    function playStudioVoice(base64Audio) {
       callCard.className = "call-card talking";
       callStatus.innerText = "Katee is speaking...";
-      appendMessage('katee', text);
+
+      try {
+        const binaryString = window.atob(base64Audio);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
+
+        const pcm16 = new Int16Array(bytes.buffer);
+        const float32 = new Float32Array(pcm16.length);
+        for (let i = 0; i < pcm16.length; i++) {
+          float32[i] = pcm16[i] / 32768.0;
+        }
+
+        if (audioCtx.state === 'suspended') audioCtx.resume();
+
+        const buffer = audioCtx.createBuffer(1, float32.length, 24000);
+        buffer.copyToChannel(float32, 0);
+
+        activeAudioSource = audioCtx.createBufferSource();
+        activeAudioSource.buffer = buffer;
+        activeAudioSource.connect(audioCtx.destination);
+
+        activeAudioSource.onended = () => {
+          resumeListeningWithDelay(600);
+        };
+
+        activeAudioSource.start(0);
+
+      } catch (e) {
+        console.error("Studio audio playback error:", e);
+        resumeListeningWithDelay(500);
+      }
+    }
+
+    function playFallbackVoice(text) {
+      callCard.className = "call-card talking";
+      callStatus.innerText = "Katee is speaking...";
 
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = config.rate;
-      utterance.pitch = config.pitch;
-
-      const selected = availableVoices.find(v => v.voiceURI === config.voiceURI);
-      if (selected) utterance.voice = selected;
-
-      utterance.onend = () => {
-        // Add a gentle 700ms pause after she finishes before opening your mic
-        resumeListeningWithDelay(700);
-      };
-
-      utterance.onerror = () => {
-        resumeListeningWithDelay(500);
-      };
-
-      synth.speak(utterance);
+      utterance.onend = () => resumeListeningWithDelay(600);
+      window.speechSynthesis.speak(utterance);
     }
 
     function resumeListeningWithDelay(ms) {
       callCard.className = "call-card";
-      callStatus.innerText = "Get ready...";
+      callStatus.innerText = "Listening...";
       setTimeout(() => {
         if (isCalling) {
           callCard.className = "call-card listening";
-          callStatus.innerText = "Listening...";
-          try { recognition.start(); } catch (err) {}
+          setupSpeechRecognition();
         }
       }, ms);
     }
@@ -635,7 +629,12 @@ RULES:
         try { recognition.abort(); } catch (e) {}
         recognition = null;
       }
-      if (synth) synth.cancel();
+
+      if (activeAudioSource) {
+        try { activeAudioSource.stop(); } catch (e) {}
+        activeAudioSource = null;
+      }
+      if (window.speechSynthesis) window.speechSynthesis.cancel();
     }
   </script>
 </body>
