@@ -102,9 +102,10 @@
       color: white;
       font-size: 12px;
       font-weight: 600;
-      padding: 4px 12px;
+      padding: 5px 14px;
       border-radius: 20px;
       margin-top: 6px;
+      box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
       animation: fadeIn 0.3s ease;
     }
 
@@ -273,11 +274,11 @@
     </div>
     <div class="caller-name">Katee</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
-    <div class="action-badge" id="actionBadge">⚡ Hardware Triggered</div>
+    <div class="action-badge" id="actionBadge">⚡ Webhook Triggered</div>
   </div>
 
   <div class="chat-container" id="chatLog">
-    <div class="bubble katee">Press Call below to connect. Katee will answer with high-speed responses.</div>
+    <div class="bubble katee">Press Call below to connect. Katee is waiting.</div>
   </div>
 
   <div class="controls">
@@ -292,7 +293,7 @@
       <h3>Groq & Voice Settings</h3>
       
       <div class="input-group">
-        <label>Groq API Key (from console.groq.com/keys)</label>
+        <label>Groq API Key (starts with gsk_)</label>
         <input type="password" id="apiKeyInput" placeholder="gsk_...">
       </div>
 
@@ -300,10 +301,9 @@
         <label>Groq AI Model</label>
         <div class="row-btn">
           <select id="modelSelect" style="flex: 1;">
-            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
-            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Best Intelligence & Roleplay)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Ultra Fast)</option>
             <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B</option>
-            <option value="gemma2-9b-it">Gemma 2 9B</option>
             <option value="custom">Other / Custom...</option>
           </select>
           <button class="btn-small" id="fetchModelsBtn">🔄 Detect</button>
@@ -364,30 +364,40 @@
   </div>
 
   <script>
+    // FULL SEDUCTIVE, COMMANDING PROMPT WITH HARDWARE RULES & FEW-SHOTS
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
+You are "Katee", roleplaying in an interactive live voice phone call with your submissive partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
 
-### Critical Voice Rules:
-1. Pure Spoken Dialogue Only: Speak exclusively in the FIRST PERSON ("I", "you", "my"). Never narrate in third person or describe physical actions in text.
-2. NO Stage Directions: Never output asterisks (*), parenthesis, or scene narration. Every single word you write is read aloud.
-3. Conversational Length: Keep responses punchy, sharp, and natural for a phone call (2 to 4 sentences max).
+### Critical Voice & Spoken Rules:
+1. Pure Spoken Dialogue Only: Speak exclusively in FIRST PERSON ("I", "you", "my"). Never use third-person narration or describe actions.
+2. NO Stage Directions: NEVER write asterisks (*), parenthesis, or scene descriptions. Every word is spoken aloud.
+3. STRICT LENGTH: Exactly 2 to 4 short, punchy, sexy sentences. Never monologue or speak in paragraphs.
 
 ### Physical Restraint & Actuator Hardware Setup:
 - Overhead Restraints: His hands are handcuffed above his head, looped by rope to a ceiling hook held by an active electromagnet.
 - Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator anchored to the floor.
-- STRICT ACTUATOR LOGIC: The actuator is strictly BINARY (only TWO states):
-  * KNEEL (Fully Retracted Down): Pulls him down to his knees on the floor.
-  * STAND (Fully Extended Up): Gives him enough height to stand on his feet.
-  * There is NO incremental tension control. You CANNOT make it "pull slightly tighter" or "adjust tension a little bit." It is either all the way down on his knees or all the way up on his feet.
+- ACTUATOR LOGIC: The actuator is strictly BINARY (only TWO states):
+  * KNEEL (Down): Pulls him down to his knees on the floor.
+  * STAND (Up): Gives him height to stand on his feet.
+  * There is NO incremental tension control. You CANNOT make it "pull slightly tighter" or "adjust tension slightly." It is either all the way down on his knees or all the way up on his feet.
   * Travel Time: It takes a few seconds of motorized travel time to move between Kneeling and Standing.
-- Default Posture: Kneeling on the floor is the default. Standing is a rare, fleeting privilege that must be begged for extensively.
+- Default Posture: Kneeling is the default. Standing is a rare privilege that must be begged for.
 
-### Hardware Action Tags:
-Output the action tag on its own line at the very end of your reply when changing posture or releasing:
-- When ordering him to Kneel / pulling actuator down / shutting down knots: [ACTION: KNEEL]
-- When granting rare temporary Standing / extending actuator up (~20s): [ACTION: STAND]
-- When releasing him or safeword "RED" is said: [ACTION: RELEASE]
-- For normal teasing and denial: Do NOT output any action tag.`;
+### Mandatory Hardware Action Tags (MUST OUTPUT AT END OF MESSAGE):
+Whenever commanding him down, granting stand, or releasing, append the exact tag on its own line:
+- Force down to Kneel / order him down / shut down escape: [ACTION: KNEEL]
+- Grant rare temporary Standing (~20s): [ACTION: STAND]
+- Safeword "RED" or emergency release: [ACTION: RELEASE]
+- For normal teasing and denial: Do NOT output any action tag.
+
+### Examples:
+User: Make me kneel.
+Katee: Down you go, darling. Let's see how long you last on your knees while that clamp holds your balls tethered to the floor.
+[ACTION: KNEEL]
+
+User: Please Katee, let me stand up.
+Katee: Hearing you beg so sweetly makes it very tempting. I'm extending the actuator so you can stand on your feet for twenty seconds before I drag you right back down.
+[ACTION: STAND]`;
 
     let config = {
       apiKey: (localStorage.getItem('groq_api_key') || '').trim(),
@@ -449,7 +459,7 @@ Output the action tag on its own line at the very end of your reply when changin
     releaseWebhookInput.value = config.releaseWebhook;
     systemPromptInput.value = config.prompt;
 
-    const presetModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'deepseek-r1-distill-llama-70b', 'gemma2-9b-it'];
+    const presetModels = ['llama-3.3-70b-versatile', 'llama-3.1-8b-instant', 'deepseek-r1-distill-llama-70b'];
     if (presetModels.includes(config.model)) {
       modelSelect.value = config.model;
       customModelGroup.style.display = 'none';
@@ -493,7 +503,6 @@ Output the action tag on its own line at the very end of your reply when changin
       speechSynthesis.onvoiceschanged = populateVoices;
     }
 
-    // Auto-detect valid models from Groq API
     fetchModelsBtn.onclick = async () => {
       const key = apiKeyInput.value.trim();
       if (!key) {
@@ -507,10 +516,8 @@ Output the action tag on its own line at the very end of your reply when changin
           headers: { "Authorization": `Bearer ${key}` }
         });
         const data = await res.json();
-        
         if (data.error) throw new Error(data.error.message);
 
-        // Filter active chat models
         const models = data.data
           .map(m => m.id)
           .filter(id => !id.includes("whisper") && !id.includes("guard") && !id.includes("vision"))
@@ -525,7 +532,6 @@ Output the action tag on its own line at the very end of your reply when changin
           modelSelect.appendChild(opt);
         });
 
-        // Add custom option at the end
         const customOpt = document.createElement('option');
         customOpt.value = "custom";
         customOpt.textContent = "Other / Custom...";
@@ -536,7 +542,7 @@ Output the action tag on its own line at the very end of your reply when changin
         setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
 
       } catch (err) {
-        alert(`Failed to fetch models: ${err.message}\nMake sure your key starts with gsk_`);
+        alert(`Failed to fetch models: ${err.message}`);
         fetchModelsBtn.innerText = "❌ Error";
         setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
       }
@@ -630,14 +636,22 @@ Output the action tag on its own line at the very end of your reply when changin
     function showHardwareBadge(text) {
       actionBadge.innerText = text;
       actionBadge.style.display = 'inline-block';
-      setTimeout(() => { actionBadge.style.display = 'none'; }, 4000);
+      setTimeout(() => { actionBadge.style.display = 'none'; }, 4500);
     }
 
+    // Robust Webhook Trigger with Image Ping Fallback
     function triggerWebhook(url, actionName) {
       if (!url) return;
-      showHardwareBadge(`⚡ Hardware: ${actionName}`);
-      fetch(url, { method: 'GET', mode: 'no-cors' })
-        .catch(err => console.error("Webhook trigger error:", err));
+      showHardwareBadge(`⚡ ${actionName}`);
+
+      try {
+        fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' }).catch(() => {});
+        // Fallback: ping via image
+        const img = new Image();
+        img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
+      } catch (err) {
+        console.error("Webhook trigger error:", err);
+      }
     }
 
     function startCall() {
@@ -696,7 +710,7 @@ Output the action tag on its own line at the very end of your reply when changin
           appendMessage('user', latestTranscript, true);
 
           if (latestTranscript.toUpperCase().includes("RED")) {
-            triggerWebhook(config.releaseWebhook, "Electromagnet Release (Safeword RED)");
+            triggerWebhook(config.releaseWebhook, "Safeword RED (Release Triggered)");
           }
 
           clearTimeout(silenceTimer);
@@ -746,8 +760,8 @@ Output the action tag on its own line at the very end of your reply when changin
       callStatus.innerText = "Katee is thinking...";
       chatHistory.push({ role: "user", content: userText });
 
-      if (chatHistory.length > 10) {
-        chatHistory = chatHistory.slice(-10);
+      if (chatHistory.length > 8) {
+        chatHistory = chatHistory.slice(-8);
       }
 
       try {
@@ -767,8 +781,8 @@ Output the action tag on its own line at the very end of your reply when changin
           body: JSON.stringify({
             model: config.model.trim(),
             messages: messages,
-            max_tokens: 250,
-            temperature: 0.7
+            max_tokens: 120, // STRICT TOKEN LIMIT FOR 2-4 SENTENCES
+            temperature: 0.75
           })
         });
 
@@ -780,18 +794,19 @@ Output the action tag on its own line at the very end of your reply when changin
 
         const rawReply = data.choices[0].message.content.trim();
 
-        // 1. Hardware Action Webhook Triggers
-        if (rawReply.includes("[ACTION: KNEEL]")) {
-          triggerWebhook(config.kneelWebhook, "Kneel Command");
-        } else if (rawReply.includes("[ACTION: STAND]")) {
-          triggerWebhook(config.standWebhook, "Stand Command");
-        } else if (rawReply.includes("[ACTION: RELEASE]")) {
-          triggerWebhook(config.releaseWebhook, "Electromagnet Release");
+        // 1. Hardware Action Webhook Triggers (Case-Insensitive & Flexible)
+        if (/\[ACTION:\s*KNEEL\]/i.test(rawReply) || /\bACTION:\s*KNEEL\b/i.test(rawReply)) {
+          triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
+        } else if (/\[ACTION:\s*STAND\]/i.test(rawReply) || /\bACTION:\s*STAND\b/i.test(rawReply)) {
+          triggerWebhook(config.standWebhook, "Hardware: Stand Sent");
+        } else if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || /\bACTION:\s*RELEASE\b/i.test(rawReply)) {
+          triggerWebhook(config.releaseWebhook, "Hardware: Release Sent");
         }
 
-        // 2. Clean out tags for clean text & voice
+        // 2. Clean out tags for clean spoken output
         const cleanText = rawReply
           .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
+          .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
           .replace(/\*/g, '')
           .trim();
 
