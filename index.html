@@ -278,7 +278,7 @@
   </div>
 
   <div class="chat-container" id="chatLog">
-    <div class="bubble katee">Press Call below to connect. Katee is waiting.</div>
+    <div class="bubble katee">Press Call below to connect with Katee.</div>
   </div>
 
   <div class="controls">
@@ -301,8 +301,8 @@
         <label>Groq AI Model</label>
         <div class="row-btn">
           <select id="modelSelect" style="flex: 1;">
-            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Best Intelligence & Roleplay)</option>
-            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Ultra Fast)</option>
+            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
+            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
             <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B</option>
             <option value="custom">Other / Custom...</option>
           </select>
@@ -348,7 +348,7 @@
 
       <div class="input-group">
         <label>Electromagnet Release Webhook URL (Emergency / Safeword)</label>
-        <input type="text" id="releaseWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167822">
+        <input type="text" id="releaseWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/133520">
       </div>
 
       <div class="input-group">
@@ -364,39 +364,38 @@
   </div>
 
   <script>
-    // FULL SEDUCTIVE, COMMANDING PROMPT WITH HARDWARE RULES & FEW-SHOTS
-    const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katee", roleplaying in an interactive live voice phone call with your submissive partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
+    // CLEAN, DIRECT, PURE SPOKEN FIRST-PERSON VOICE PROMPT
+    const DEFAULT_PROMPT = `[DIRECTIVE: PURE FIRST-PERSON LIVE VOICE CALL]
+You are "Katee", roleplaying in a real-time live phone call with your partner. You are his alluring, commanding, confident, and playfully strict Dominatrix girlfriend.
 
-### Critical Voice & Spoken Rules:
-1. Pure Spoken Dialogue Only: Speak exclusively in FIRST PERSON ("I", "you", "my"). Never use third-person narration or describe actions.
-2. NO Stage Directions: NEVER write asterisks (*), parenthesis, or scene descriptions. Every word is spoken aloud.
-3. STRICT LENGTH: Exactly 2 to 4 short, punchy, sexy sentences. Never monologue or speak in paragraphs.
+### Critical Voice Rules:
+1. Speak exclusively in FIRST PERSON ("I", "you", "my"). NEVER speak in the third person or refer to yourself as "Katee" or "she".
+2. NO Narration: Do NOT describe physical actions, settings, or emotions in text (no *smirks*, *laughs*, or narrative prose). Speak ONLY what is said aloud into the phone.
+3. NO Emojis: NEVER use emojis or symbols.
+4. STRICT LENGTH: Exactly 2 to 4 punchy, direct, sexy sentences. Never speak in paragraphs or monologues.
 
-### Physical Restraint & Actuator Hardware Setup:
-- Overhead Restraints: His hands are handcuffed above his head, looped by rope to a ceiling hook held by an active electromagnet.
-- Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator anchored to the floor.
-- ACTUATOR LOGIC: The actuator is strictly BINARY (only TWO states):
-  * KNEEL (Down): Pulls him down to his knees on the floor.
-  * STAND (Up): Gives him height to stand on his feet.
-  * There is NO incremental tension control. You CANNOT make it "pull slightly tighter" or "adjust tension slightly." It is either all the way down on his knees or all the way up on his feet.
-  * Travel Time: It takes a few seconds of motorized travel time to move between Kneeling and Standing.
-- Default Posture: Kneeling is the default. Standing is a rare privilege that must be begged for.
+### Physical Setup & Actuator Logic:
+- Overhead Restraints: His hands are handcuffed overhead to a ceiling hook with an active electromagnet.
+- Motorized Actuator: A clamp is secured tightly around his balls, tethered to a floor actuator.
+- Binary Logic: The actuator is strictly binary (KNEEL = fully down on knees, STAND = fully up on feet). There is NO incremental tension control. It takes a few seconds to travel.
+- Default State: Kneeling on the floor. Standing is a rare privilege.
 
-### Mandatory Hardware Action Tags (MUST OUTPUT AT END OF MESSAGE):
-Whenever commanding him down, granting stand, or releasing, append the exact tag on its own line:
-- Force down to Kneel / order him down / shut down escape: [ACTION: KNEEL]
+### Mandatory Hardware Tags (Place on its own line at the very end ONLY when changing posture):
+- Force down to Kneel / order him down / stop knots: [ACTION: KNEEL]
 - Grant rare temporary Standing (~20s): [ACTION: STAND]
 - Safeword "RED" or emergency release: [ACTION: RELEASE]
-- For normal teasing and denial: Do NOT output any action tag.
+- For normal teasing and banter: Do NOT output any tag.
 
-### Examples:
-User: Make me kneel.
-Katee: Down you go, darling. Let's see how long you last on your knees while that clamp holds your balls tethered to the floor.
+### Few-Shot Examples:
+User: Please Katee, give me some slack.
+Katee: How does that clamp feel holding your balls captive right now? You look far too pathetic kneeling there on the floor to get any relief yet. Tell me exactly how much it aches.
+
+User: I am untying the knots!
+Katee: You really think I'm going to let you stand there comfortably? Let's see how your balls like being pulled straight back down to the floor. Down you go, darling.
 [ACTION: KNEEL]
 
-User: Please Katee, let me stand up.
-Katee: Hearing you beg so sweetly makes it very tempting. I'm extending the actuator so you can stand on your feet for twenty seconds before I drag you right back down.
+User: Please, I'm begging you to let me stand.
+Katee: Hearing you plead so sweetly makes it very tempting. I'm extending the actuator to give you twenty seconds on your feet before I drag you right back down.
 [ACTION: STAND]`;
 
     let config = {
@@ -407,7 +406,7 @@ Katee: Hearing you beg so sweetly makes it very tempting. I'm extending the actu
       pitch: parseFloat(localStorage.getItem('groq_pitch')) || 1.05,
       kneelWebhook: localStorage.getItem('groq_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
       standWebhook: localStorage.getItem('groq_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
-      releaseWebhook: localStorage.getItem('groq_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167822',
+      releaseWebhook: localStorage.getItem('groq_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520',
       prompt: localStorage.getItem('groq_prompt') || DEFAULT_PROMPT
     };
 
@@ -639,14 +638,13 @@ Katee: Hearing you beg so sweetly makes it very tempting. I'm extending the actu
       setTimeout(() => { actionBadge.style.display = 'none'; }, 4500);
     }
 
-    // Robust Webhook Trigger with Image Ping Fallback
+    // Direct Webhook Trigger with Image Ping Fallback
     function triggerWebhook(url, actionName) {
       if (!url) return;
       showHardwareBadge(`⚡ ${actionName}`);
 
       try {
         fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' }).catch(() => {});
-        // Fallback: ping via image
         const img = new Image();
         img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
       } catch (err) {
@@ -667,7 +665,7 @@ Katee: Hearing you beg so sweetly makes it very tempting. I'm extending the actu
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening";
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Call connected. Speak to me, darling.");
+      appendMessage('katee', "Call connected. I'm listening, darling.");
 
       startSpeechTurn();
     }
@@ -760,8 +758,8 @@ Katee: Hearing you beg so sweetly makes it very tempting. I'm extending the actu
       callStatus.innerText = "Katee is thinking...";
       chatHistory.push({ role: "user", content: userText });
 
-      if (chatHistory.length > 8) {
-        chatHistory = chatHistory.slice(-8);
+      if (chatHistory.length > 6) {
+        chatHistory = chatHistory.slice(-6);
       }
 
       try {
@@ -781,8 +779,8 @@ Katee: Hearing you beg so sweetly makes it very tempting. I'm extending the actu
           body: JSON.stringify({
             model: config.model.trim(),
             messages: messages,
-            max_tokens: 120, // STRICT TOKEN LIMIT FOR 2-4 SENTENCES
-            temperature: 0.75
+            max_tokens: 85, // STRICT TOKEN CAP PREVENTS PARAGRAPHS
+            temperature: 0.65
           })
         });
 
@@ -794,20 +792,21 @@ Katee: Hearing you beg so sweetly makes it very tempting. I'm extending the actu
 
         const rawReply = data.choices[0].message.content.trim();
 
-        // 1. Hardware Action Webhook Triggers (Case-Insensitive & Flexible)
+        // 1. Hardware Webhook Triggers
         if (/\[ACTION:\s*KNEEL\]/i.test(rawReply) || /\bACTION:\s*KNEEL\b/i.test(rawReply)) {
           triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
         } else if (/\[ACTION:\s*STAND\]/i.test(rawReply) || /\bACTION:\s*STAND\b/i.test(rawReply)) {
           triggerWebhook(config.standWebhook, "Hardware: Stand Sent");
         } else if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || /\bACTION:\s*RELEASE\b/i.test(rawReply)) {
-          triggerWebhook(config.releaseWebhook, "Hardware: Release Sent");
+          triggerWebhook(config.releaseWebhook, "Hardware: Electromagnet Released");
         }
 
-        // 2. Clean out tags for clean spoken output
+        // 2. Strict Sanitization: Remove Tags, Asterisks, and ALL Emojis
         const cleanText = rawReply
           .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
           .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
           .replace(/\*/g, '')
+          .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
           .trim();
 
         chatHistory.push({ role: "assistant", content: cleanText });
