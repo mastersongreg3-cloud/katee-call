@@ -875,7 +875,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
     }
 
-    // --- SMART PROCESSOR: STRIPS ACTIONS & FORCES 1-2 SENTENCES ---
+// --- SMART PROCESSOR: STRIPS ACTIONS & FORCES 1-2 SENTENCES ---
     function processModelReply(rawReply, modelRole) {
       const lower = rawReply.toLowerCase();
       const isRefusal = /\b(not|won't|can't|cannot|never|no way|don't|haven't|refuse|not yet)\b/i.test(lower);
@@ -915,8 +915,19 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
         lower.includes("back down you go") ||
-        lower.includes("stay on your knees")
+        lower.includes("stay on your knees") ||
+        lower.includes("call me good girl") ||
+        lower.includes("patronize your mistress")
       ) {
+        // Kill the standing timer immediately if running
+        if (standingAutoKneelTimer) {
+          clearTimeout(standingAutoKneelTimer);
+          standingAutoKneelTimer = null;
+        }
+        if (countdownInterval) {
+          clearInterval(countdownInterval);
+          countdownInterval = null;
+        }
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
       }
 
