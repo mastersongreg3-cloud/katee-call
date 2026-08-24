@@ -1020,9 +1020,12 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
     }
 
-    // --- SMART PROCESSOR & HARDWARE INTENT FALLBACK ---
+   // --- SMART PROCESSOR & HARDWARE INTENT FALLBACK (FIXED NEGATION CHECK) ---
     function processModelReply(rawReply, modelRole) {
       const lower = rawReply.toLowerCase();
+
+      // Check if she is explicitly refusing or saying NO
+      const isRefusal = /\b(not|won't|can't|cannot|never|no way|don't|haven't|refuse|not yet)\b/i.test(lower);
 
       // 1. SMART WEBHOOK DETECTION
       if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
@@ -1030,19 +1033,25 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         timerBanner.className = "timer-banner expired";
         timerBanner.style.display = "block";
         timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
-      } else if (
-        /\[ACTION:\s*STAND\]/i.test(rawReply) ||
-        lower.includes("extending the actuator") ||
-        lower.includes("thirty seconds on your feet") ||
-        lower.includes("let you stand for thirty seconds") ||
-        lower.includes("on your feet")
+      } 
+      // ONLY trigger STAND if she explicitly outputs the tag OR positively agrees without saying 'no/not/won't'
+      else if (
+        /\[ACTION:\s*STAND\]/i.test(rawReply) || 
+        (!isRefusal && (
+          lower.includes("extending the actuator") ||
+          lower.includes("i'll let you stand") ||
+          lower.includes("i'm letting you stand") ||
+          lower.includes("get up on your feet")
+        ))
       ) {
         triggerStandWithTimer();
-      } else if (
+      } 
+      else if (
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
         lower.includes("back down you go") ||
-        lower.includes("stay on your knees")
+        lower.includes("stay on your knees") ||
+        lower.includes("stay right there on your knees")
       ) {
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
       }
