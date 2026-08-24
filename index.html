@@ -228,23 +228,6 @@
       font-size: 14px;
     }
 
-    .row-btn {
-      display: flex;
-      gap: 8px;
-    }
-
-    .btn-small {
-      background: #38bdf8;
-      border: none;
-      color: #0f172a;
-      font-weight: 600;
-      padding: 0 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 12px;
-      white-space: nowrap;
-    }
-
     .slider-container { display: flex; align-items: center; gap: 10px; }
     .slider-container span { font-size: 13px; min-width: 35px; }
 
@@ -295,26 +278,15 @@
       <div class="input-group">
         <label>AI Engine Provider</label>
         <select id="providerSelect">
-          <option value="groq">Groq (High-Speed / Llama 3.3 70B)</option>
-          <option value="gemini">Google Gemini (Original Engine)</option>
+          <option value="lmstudio">LM Studio (Local PC via ngrok)</option>
+          <option value="groq">Groq (High-Speed Cloud)</option>
+          <option value="gemini">Google Gemini (Cloud)</option>
         </select>
       </div>
 
       <div class="input-group">
-        <label id="apiKeyLabel">API Key</label>
-        <input type="password" id="apiKeyInput" placeholder="Paste API Key here...">
-      </div>
-
-      <div class="input-group" id="modelGroup">
-        <label>Groq Model</label>
-        <div class="row-btn">
-          <select id="modelSelect" style="flex: 1;">
-            <option value="llama-3.3-70b-versatile">Llama 3.3 70B (Recommended)</option>
-            <option value="llama-3.1-8b-instant">Llama 3.1 8B (Fast)</option>
-            <option value="deepseek-r1-distill-llama-70b">DeepSeek R1 70B</option>
-          </select>
-          <button class="btn-small" id="fetchModelsBtn">🔄 Detect</button>
-        </div>
+        <label id="apiOrUrlLabel">LM Studio ngrok URL</label>
+        <input type="text" id="apiOrUrlInput" placeholder="https://xxxx.ngrok-free.app">
       </div>
 
       <div class="input-group">
@@ -411,9 +383,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 [ACTION: RELEASE]`;
 
     let config = {
-      provider: localStorage.getItem('katee_provider') || 'groq',
-      apiKey: (localStorage.getItem('katee_api_key') || '').trim(),
-      model: (localStorage.getItem('katee_model') || 'llama-3.3-70b-versatile').trim(),
+      provider: localStorage.getItem('katee_provider') || 'lmstudio',
+      apiOrUrl: (localStorage.getItem('katee_api_url') || '').trim(),
       voiceURI: localStorage.getItem('katee_voice_uri') || '',
       rate: parseFloat(localStorage.getItem('katee_rate')) || 0.95,
       pitch: parseFloat(localStorage.getItem('katee_pitch')) || 1.05,
@@ -446,12 +417,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
     const resetPromptBtn = document.getElementById('resetPromptBtn');
-    const fetchModelsBtn = document.getElementById('fetchModelsBtn');
     const providerSelect = document.getElementById('providerSelect');
-    const apiKeyLabel = document.getElementById('apiKeyLabel');
-    const apiKeyInput = document.getElementById('apiKeyInput');
-    const modelGroup = document.getElementById('modelGroup');
-    const modelSelect = document.getElementById('modelSelect');
+    const apiOrUrlLabel = document.getElementById('apiOrUrlLabel');
+    const apiOrUrlInput = document.getElementById('apiOrUrlInput');
     const voiceSelect = document.getElementById('voiceSelect');
     const rateSlider = document.getElementById('rateSlider');
     const rateVal = document.getElementById('rateVal');
@@ -464,8 +432,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
     providerSelect.value = config.provider;
     updateProviderUI();
-    apiKeyInput.value = config.apiKey;
-    modelSelect.value = config.model;
+    apiOrUrlInput.value = config.apiOrUrl;
     rateSlider.value = config.rate;
     rateVal.innerText = `${config.rate}x`;
     pitchSlider.value = config.pitch;
@@ -476,14 +443,15 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     systemPromptInput.value = config.prompt;
 
     function updateProviderUI() {
-      if (providerSelect.value === 'groq') {
-        apiKeyLabel.innerText = "Groq API Key (starts with gsk_)";
-        apiKeyInput.placeholder = "gsk_...";
-        modelGroup.style.display = "block";
+      if (providerSelect.value === 'lmstudio') {
+        apiOrUrlLabel.innerText = "LM Studio ngrok URL (from terminal)";
+        apiOrUrlInput.placeholder = "https://xxxx.ngrok-free.app";
+      } else if (providerSelect.value === 'groq') {
+        apiOrUrlLabel.innerText = "Groq API Key (starts with gsk_)";
+        apiOrUrlInput.placeholder = "gsk_...";
       } else {
-        apiKeyLabel.innerText = "Google AI Studio API Key (starts with AIzaSy)";
-        apiKeyInput.placeholder = "AIzaSy...";
-        modelGroup.style.display = "none";
+        apiOrUrlLabel.innerText = "Google AI Studio API Key (starts with AIzaSy)";
+        apiOrUrlInput.placeholder = "AIzaSy...";
       }
     }
 
@@ -518,45 +486,6 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       speechSynthesis.onvoiceschanged = populateVoices;
     }
 
-    fetchModelsBtn.onclick = async () => {
-      const key = apiKeyInput.value.trim();
-      if (!key) {
-        alert("Please paste your Groq API Key first.");
-        return;
-      }
-      fetchModelsBtn.innerText = "⏳...";
-
-      try {
-        const res = await fetch("https://api.groq.com/openai/v1/models", {
-          headers: { "Authorization": `Bearer ${key}` }
-        });
-        const data = await res.json();
-        if (data.error) throw new Error(data.error.message);
-
-        const models = data.data
-          .map(m => m.id)
-          .filter(id => !id.includes("whisper") && !id.includes("guard") && !id.includes("vision"))
-          .sort();
-
-        modelSelect.innerHTML = '';
-        models.forEach(m => {
-          const opt = document.createElement('option');
-          opt.value = m;
-          opt.textContent = m;
-          if (m.includes("70b")) opt.textContent += " (Recommended)";
-          modelSelect.appendChild(opt);
-        });
-
-        fetchModelsBtn.innerText = "✅ Done";
-        setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
-
-      } catch (err) {
-        alert(`Failed to fetch models: ${err.message}`);
-        fetchModelsBtn.innerText = "❌ Error";
-        setTimeout(() => { fetchModelsBtn.innerText = "🔄 Detect"; }, 2000);
-      }
-    };
-
     resetPromptBtn.onclick = () => {
       systemPromptInput.value = DEFAULT_PROMPT;
     };
@@ -564,8 +493,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     openSettings.onclick = () => settingsModal.classList.add('open');
     saveSettingsBtn.onclick = () => {
       config.provider = providerSelect.value;
-      config.apiKey = apiKeyInput.value.trim();
-      config.model = modelSelect.value.trim();
+      config.apiOrUrl = apiOrUrlInput.value.trim();
       config.voiceURI = voiceSelect.value;
       config.rate = parseFloat(rateSlider.value);
       config.pitch = parseFloat(pitchSlider.value);
@@ -575,8 +503,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       config.prompt = systemPromptInput.value.trim();
 
       localStorage.setItem('katee_provider', config.provider);
-      localStorage.setItem('katee_api_key', config.apiKey);
-      localStorage.setItem('katee_model', config.model);
+      localStorage.setItem('katee_api_url', config.apiOrUrl);
       localStorage.setItem('katee_voice_uri', config.voiceURI);
       localStorage.setItem('katee_rate', config.rate);
       localStorage.setItem('katee_pitch', config.pitch);
@@ -588,9 +515,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     };
 
     callBtn.onclick = () => {
-      if (!config.apiKey) {
+      if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
-        alert('Please enter your API key in settings.');
+        alert('Please enter your URL / API key in settings.');
         return;
       }
       startCall();
@@ -676,7 +603,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening";
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Call connected. Speak to me, darling.");
+      appendMessage('katee', "Call connected. I'm listening, darling.");
 
       startSpeechTurn();
     }
@@ -762,14 +689,60 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
       appendMessage('user', text, false);
 
-      if (config.provider === 'gemini') {
+      if (config.provider === 'lmstudio') {
+        sendToLMStudio(text);
+      } else if (config.provider === 'gemini') {
         sendToGemini(text);
       } else {
         sendToGroq(text);
       }
     }
 
-    // --- GROQ API ENGINE (Strict Max Tokens & Stop Sequences) ---
+    // --- LM STUDIO (LOCAL PC VIA NGROK) ENGINE ---
+    async function sendToLMStudio(userText) {
+      callCard.className = "call-card";
+      callStatus.innerText = "Katee is thinking...";
+      chatHistory.push({ role: "user", content: userText });
+
+      if (chatHistory.length > 6) chatHistory = chatHistory.slice(-6);
+
+      try {
+        let baseUrl = config.apiOrUrl.replace(/\/+$/, '');
+        if (!baseUrl.includes('/v1')) baseUrl += '/v1';
+        const url = `${baseUrl}/chat/completions`;
+
+        const messages = [
+          { role: "system", content: config.prompt },
+          ...chatHistory
+        ];
+
+        const res = await fetch(url, {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "ngrok-skip-browser-warning": "true"
+          },
+          body: JSON.stringify({
+            messages: messages,
+            max_tokens: 85,
+            temperature: 0.7,
+            stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
+          })
+        });
+
+        const data = await res.json();
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+        processModelReply(data.choices[0].message.content.trim(), "assistant");
+
+      } catch (err) {
+        console.error("LM Studio Error:", err);
+        appendMessage('system', `LM Studio Error: ${err.message}\nMake sure ngrok & LM Studio server are running.`);
+        resumeListeningWithDelay(2500);
+      }
+    }
+
+    // --- GROQ API ENGINE ---
     async function sendToGroq(userText) {
       callCard.className = "call-card";
       callStatus.innerText = "Katee is thinking...";
@@ -788,14 +761,14 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           method: "POST",
           headers: {
             "Content-Type": "application/json",
-            "Authorization": `Bearer ${config.apiKey}`
+            "Authorization": `Bearer ${config.apiOrUrl}`
           },
           body: JSON.stringify({
-            model: config.model || "llama-3.3-70b-versatile",
+            model: "llama-3.3-70b-versatile",
             messages: messages,
-            max_tokens: 80, // HARD LIMIT PREVENTS PARAGRAPHS
+            max_tokens: 85,
             temperature: 0.65,
-            stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
+            stop: ["User:", "Human:", "Input:", "input your response", "\nUser", "\nHuman"]
           })
         });
 
@@ -820,7 +793,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       if (chatHistory.length > 6) chatHistory = chatHistory.slice(-6);
 
       try {
-        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.apiKey}`;
+        const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.apiOrUrl}`;
         const payload = {
           systemInstruction: { parts: [{ text: config.prompt }] },
           contents: chatHistory,
