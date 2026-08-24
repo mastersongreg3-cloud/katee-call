@@ -755,7 +755,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           },
           body: JSON.stringify({
             messages: messages,
-            max_tokens: 120, // STRICT: 1 TO 2 SENTENCES ONLY
+            max_tokens: 250, // STRICT: 1 TO 2 SENTENCES ONLY
             temperature: 0.65,
             stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
@@ -798,7 +798,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
             messages: messages,
-            max_tokens: 120, // STRICT LIMIT
+            max_tokens: 250, // STRICT LIMIT
             temperature: 0.65,
             stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
@@ -910,10 +910,11 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
         .trim();
 
-      // 4. HARD 2-SENTENCE ENFORCER (Cuts off any 3rd sentence)
-      const sentences = cleanText.match(/[^.!?]+[.!?]+/g);
-      if (sentences && sentences.length > 2) {
-        cleanText = sentences.slice(0, 2).join(' ').trim();
+      // SMART SENTENCE TRIMMER (Guarantees exactly 1 to 2 complete sentences)
+      const completeSentences = cleanText.match(/[^.!?]+[.!?]+/g);
+      if (completeSentences && completeSentences.length > 0) {
+        // Take ONLY the first 2 full sentences and throw away the rest
+        cleanText = completeSentences.slice(0, 2).join(' ').trim();
       }
 
       if (!cleanText || cleanText.length === 0) {
