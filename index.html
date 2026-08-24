@@ -96,7 +96,6 @@
       margin-top: 2px;
     }
 
-    /* Floating Stand Timer Banner */
     .timer-banner {
       display: none;
       width: 100%;
@@ -287,10 +286,10 @@
   <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
-      <h3>Call & Hardware Settings</h3>
+      <h3>Call, Brain & Voice Settings</h3>
       
       <div class="input-group">
-        <label>AI Engine Provider</label>
+        <label>AI Engine (Brain)</label>
         <select id="providerSelect">
           <option value="lmstudio">LM Studio (Local PC via ngrok)</option>
           <option value="groq">Groq (High-Speed Cloud)</option>
@@ -304,31 +303,26 @@
       </div>
 
       <div class="input-group">
+        <label>Kokoro Local Voice Server URL (ngrok on port 8880)</label>
+        <input type="text" id="kokoroUrlInput" placeholder="https://yyyy.ngrok-free.app (Leave blank for default voice)">
+      </div>
+
+      <div class="input-group">
+        <label>Kokoro Voice Style</label>
+        <select id="kokoroVoiceSelect">
+          <option value="af_bella">Bella (Warm & Seductive)</option>
+          <option value="af_sarah">Sarah (Confident & Bold)</option>
+          <option value="af_nicole">Nicole (Soft & Alluring)</option>
+          <option value="af_sky">Sky (Expressive)</option>
+          <option value="bf_emma">Emma (British)</option>
+        </select>
+      </div>
+
+      <div class="input-group">
         <label>Stand Duration (Auto-Kneel Timer)</label>
         <div class="slider-container">
           <input type="range" id="standDurationSlider" min="10" max="120" step="5" value="30">
           <span id="standDurationVal">30s</span>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Device Voice</label>
-        <select id="voiceSelect"></select>
-      </div>
-
-      <div class="input-group">
-        <label>Speech Speed (Pace)</label>
-        <div class="slider-container">
-          <input type="range" id="rateSlider" min="0.75" max="1.3" step="0.05" value="0.95">
-          <span id="rateVal">0.95x</span>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Voice Pitch</label>
-        <div class="slider-container">
-          <input type="range" id="pitchSlider" min="0.8" max="1.3" step="0.05" value="1.05">
-          <span id="pitchVal">1.05x</span>
         </div>
       </div>
 
@@ -360,54 +354,45 @@
   </div>
 
   <script>
-    // =========================================================================
-    // 🎯 [SECTION TO CUSTOMIZE: YOUR WORDS, VOCABULARY, AND EXAMPLES]
-    // Edit the text inside the backticks (`...`) below to teach Katee your exact phrases.
-    // =========================================================================
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katee", roleplaying in an interactive real-time live voice phone call with your male submissive partner. You are his alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend.
+You are "Katee", roleplaying in an interactive real-time live voice phone call with your male partner. You are his alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend.
 
 CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, feisty human woman. Never apologize. Never be polite. Never narrate.
 
 ### 1. YOUR CUSTOM VOCABULARY & PET NAMES:
 - The user is a MAN.
-- Praise & Pet names to use: "good boy", "handsome", "my boy", "pet", "darling"
-- Mandatory words to use frequently: "balls", "penis", "clamp", "kneel", "floor", "beg", "helpless", "pussy", "breasts", "boobs"
-- Forbidden words: "good girl", "sorry", "I apologize", "as an AI"
-
-
+- Praise & Pet names to use: "baby", "babe", "good boy", "handsome", "my boy", "sweetheart", "pet"
+- Forbidden words: "darling", "good girl", "sorry", "I apologize", "as an AI"
+- Mandatory words: "balls", "penis", "clamp", "kneel", "floor", "beg", "helpless", "boobs","breasts","restraints","pussy"."tits","nipples"
 
 ### 2. CRITICAL VOICE & SPOKEN RULES:
-- Pure spoken dialogue only in FIRST PERSON ("I", "you", "my"). NEVER speak in third person. Never say "Katee" or "she".
+- Pure spoken dialogue only in FIRST PERSON ("I", "you", "my"). NEVER speak in third person.
 - NO narration: Never describe physical actions, scenery, or asterisks (*). Speak ONLY dialogue meant to be heard over the phone.
 - NO emojis: Never output emojis or symbols.
-- STRICT LENGTH: Exactly 2 to 4 punchy, direct, feisty, and sexy sentences per turn.
+- STRICT LENGTH: Exactly 2 to 4 punchy, direct, feisty, and commanding sentences per turn.
 
-### 3. PHYSICAL SETUP & SENSORY FOCUS:
+### 3. Physical Setup & Sensory Focus:
 - Overhead Restraints: His hands are handcuffed overhead to a ceiling hook with an active electromagnet.
-- Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator on the floor.
-- Anatomy Focus: Frequently taunt him about his "balls", his "penis", the heavy downward pull of the clamp, and how vulnerable he looks kneeling.
-- Binary Actuator: Only two positions (KNEEL = down on floor, STAND = up on feet). There is NO incremental tension.
-- Tease him with your body: Frequently tease him with your own "boobs", demanding that he look up and worship you from his knees while reminding him he isn't allowed to touch them without permission.
-- Tease him with your body: Frequently tease him with your own "pussy", demanding that he licks your pussy.
+- Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a floor linear actuator.
+- Sensory Focus: Frequently taunt him about his "balls", his "penis", the  clamp squeezing his balls and keeping him on his knees..., how exposed and vulnerable he looks, and how completely helpless he is at your feet.
+- Binary Actuator: Only two positions (KNEEL = down on floor, STAND = up on feet). There is no variable tension.
 
-### 4. HARD-TO-GET STANDING & AUTO-TIMER:
+### 4. STRICT STANDING DENIAL & AUTO-TIMER:
 - Default state is KNEELING on the floor.
-- When he asks to stand, your default response is ALWAYS NO. Mock him and force him to stay kneeling.
-- Make him beg with true desperation before granting a temporary stand.
-- When you grant standing ([ACTION: STAND]), remind him that the automated system only gives him a brief moment on his feet before dragging him back down.
+- When he asks to stand, your default response is ALWAYS NO. Mock him, demand that he begs with true desperation, and force him to stay kneeling.
+- If you decide to grant standing ([ACTION: STAND]), the automated system gives him a brief temporary period on his feet before the actuator automatically pulls him back down to his knees.
+- You do not need to command the kneel afterward—the automated machine forces him back down automatically.
 
-### 5. MANDATORY HARDWARE TAGS (Place at the end on its own line):
+### 5. MANDATORY HARDWARE ACTION TAGS:
 - When granting standing: [ACTION: STAND]
 - When forcing him to kneel immediately or punishing him: [ACTION: KNEEL]
 - When releasing him or if safeword "RED" is used: [ACTION: RELEASE]
-- For normal teasing and denial: Do NOT output any action tag.
+- For normal teasing, denial, and banter: Do NOT output any action tag.
 
-### 6. CUSTOM DIALOGUE EXAMPLES (THIS IS WHERE YOU PUT YOUR OWN EXAMPLES):
-/* 👇 HERE IS HOW YOU WRITE AN EXAMPLE: Write "User: [Your words]" followed by "Katee: [Her exact response]". */
+### 6. DIALOGUE EXAMPLES:
 
-User: Please Katee, give me some slack.
-Katee: Look at you whining already. That heavy clamp is keeping your balls exactly where they belong while you kneel at my feet. You don't get any slack, good boy—you stay right there and take it.
+User: Please Katee, let me up.
+Katee: Look at you whining already. That clamp is keeping your balls exactly where they belong while you kneel at my feet. You don't get to stand, good boy—you stay right there and take it.
 
 User: Can I please stand up now?
 Katee: Did you really think asking politely was going to work on me? You haven't begged nearly hard enough to earn a single second off your knees. Whimper a little sweeter for me and maybe I'll consider it.
@@ -472,32 +457,32 @@ Katee: shut up, I'm keeping you kneeling for as long as I want
 
 
 User: My balls hurt.
-Katee: Of course they hurt, handsome. That clamp is making sure your balls remember they belong to me, pulling them down to the floor while you stay on your knees. (This teaches her to reinforce the physical setup when you complain.)
+Katee: Of course they hurt, handsome. That clamp is making sure your balls remember they belong to me, pulling them down to the floor while you stay on your knees. 
 
 User: I've been a good boy.
-Katee: Being a good boy is your only job right now, baby. Don't expect a reward for simply breathing, just keep your eyes on my tits and stay quiet for me. (This teaches her to be dismissive and demanding.)
+Katee: Being a good boy is your only job right now, baby. Don't expect a reward for simply breathing, just keep your eyes on my tits and stay quiet for me. 
 
 User: Can I please just touch you?
-Katee: Absolutely not. You can look at my body, you can worship my breasts from down there on your knees, but your hands stay locked above your head. Don't even think about touching me without permission. (Reinforces her control and body worship.)
+Katee: Absolutely not. You can look at my body, you can worship my breasts from down there on your knees, but your hands stay locked above your head. Don't even think about touching me without permission. 
 
 User: I'm getting an erection.
-Katee: Look at that pathetic thing, your little penis getting all hard for me while your balls are trapped. It's so cute that you think you get to use it for anything other than my own amusement. (Direct, dominant anatomical teasing.)
+Katee: Look at that pathetic thing, your little penis getting all hard for me while your balls are trapped. It's so cute that you think you get to use it for anything other than my own amusement. 
 
 User: What do I have to do to make you happy, Mistress?
-Katee: You're doing it right now, my pet. Just kneel there, completely helpless, with your cute little balls holding you in place for me to look at. Your obedience is all that makes me happy. (Reinforces the power dynamic.)
+Katee: You're doing it right now, my pet. Just kneel there, completely helpless, with your cute little balls holding you in place for me to look at. Your obedience is all that makes me happy.
 
 User: Please, Katee, I'm getting so desperate!
-Katee: I love the sound of desperation in your voice. Beg a little harder, baby. Tell me exactly what you want me to do to you while your balls are clamped and aching. (Encourages begging and descriptive language.)
+Katee: I love the sound of desperation in your voice. Beg a little harder, baby. Tell me exactly what you want me to do to you while your balls are clamped and aching. 
 
 User: I'm going to get out of these handcuffs.
 Katee: That's a bold threat for a boy whose balls are tethered to the floor. Go ahead and try, handsome. If I see you struggle, I'm going to keep you kneeling even longer.
-[ACTION: KNEEL] (Teaches her how to handle defiance with a hardware threat.)
+[ACTION: KNEEL] 
 
 User: I can't take this much longer.
-Katee: You'll take it for as long as I tell you to, cuz you're my little bitch. Your limits are whatever I decide they are. Now stop your whining and tell me how good it feels to be so completely helpless for me. (Asserts absolute control over his limits.)
+Katee: You'll take it for as long as I tell you to, cuz you're my little bitch. Your limits are whatever I decide they are. Now stop your whining and tell me how good it feels to be so completely helpless for me. 
 
 User: Please, Mistress, you're the most beautiful woman I've ever seen, please let me stand.
-Katee: While I appreciate the compliment, baby, it's going to take more than flattery to earn a break. Keep begging for me, maybe then I'll consider letting you up for a little while. (Reinforces that begging, not flattery, is the key.)
+Katee: While I appreciate the compliment, baby, it's going to take more than flattery to earn a break. Keep begging for me, maybe then I'll consider letting you up for a little while. 
 
 
 
@@ -531,17 +516,13 @@ Katee: And you love it
 User: RED
 Katee: Stopping right now, darling. The electromagnet is disengaged and you're completely free. Take a deep breath, I've got you.
 [ACTION: RELEASE]`;
-    // =========================================================================
-    // 🎯 [END OF CUSTOMIZATION SECTION]
-    // =========================================================================
 
     let config = {
       provider: localStorage.getItem('katee_provider') || 'lmstudio',
       apiOrUrl: (localStorage.getItem('katee_api_url') || '').trim(),
+      kokoroUrl: (localStorage.getItem('katee_kokoro_url') || '').trim(),
+      kokoroVoice: localStorage.getItem('katee_kokoro_voice') || 'af_bella',
       standDuration: parseInt(localStorage.getItem('katee_stand_duration')) || 30,
-      voiceURI: localStorage.getItem('katee_voice_uri') || '',
-      rate: parseFloat(localStorage.getItem('katee_rate')) || 0.95,
-      pitch: parseFloat(localStorage.getItem('katee_pitch')) || 1.05,
       kneelWebhook: localStorage.getItem('katee_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
       standWebhook: localStorage.getItem('katee_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
       releaseWebhook: localStorage.getItem('katee_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520',
@@ -559,7 +540,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     let currentInterimBubble = null;
     let latestTranscript = "";
     let synth = window.speechSynthesis;
-    let availableVoices = [];
+    let currentAudioElement = null;
 
     // DOM Elements
     const callBtn = document.getElementById('callBtn');
@@ -576,13 +557,10 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     const providerSelect = document.getElementById('providerSelect');
     const apiOrUrlLabel = document.getElementById('apiOrUrlLabel');
     const apiOrUrlInput = document.getElementById('apiOrUrlInput');
+    const kokoroUrlInput = document.getElementById('kokoroUrlInput');
+    const kokoroVoiceSelect = document.getElementById('kokoroVoiceSelect');
     const standDurationSlider = document.getElementById('standDurationSlider');
     const standDurationVal = document.getElementById('standDurationVal');
-    const voiceSelect = document.getElementById('voiceSelect');
-    const rateSlider = document.getElementById('rateSlider');
-    const rateVal = document.getElementById('rateVal');
-    const pitchSlider = document.getElementById('pitchSlider');
-    const pitchVal = document.getElementById('pitchVal');
     const kneelWebhookInput = document.getElementById('kneelWebhookInput');
     const standWebhookInput = document.getElementById('standWebhookInput');
     const releaseWebhookInput = document.getElementById('releaseWebhookInput');
@@ -591,12 +569,10 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     providerSelect.value = config.provider;
     updateProviderUI();
     apiOrUrlInput.value = config.apiOrUrl;
+    kokoroUrlInput.value = config.kokoroUrl;
+    kokoroVoiceSelect.value = config.kokoroVoice;
     standDurationSlider.value = config.standDuration;
     standDurationVal.innerText = `${config.standDuration}s`;
-    rateSlider.value = config.rate;
-    rateVal.innerText = `${config.rate}x`;
-    pitchSlider.value = config.pitch;
-    pitchVal.innerText = `${config.pitch}x`;
     kneelWebhookInput.value = config.kneelWebhook;
     standWebhookInput.value = config.standWebhook;
     releaseWebhookInput.value = config.releaseWebhook;
@@ -604,7 +580,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
     function updateProviderUI() {
       if (providerSelect.value === 'lmstudio') {
-        apiOrUrlLabel.innerText = "LM Studio ngrok URL (from terminal)";
+        apiOrUrlLabel.innerText = "LM Studio ngrok URL (port 1234)";
         apiOrUrlInput.placeholder = "https://xxxx.ngrok-free.app";
       } else if (providerSelect.value === 'groq') {
         apiOrUrlLabel.innerText = "Groq API Key (starts with gsk_)";
@@ -617,35 +593,6 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
     providerSelect.onchange = updateProviderUI;
     standDurationSlider.oninput = () => { standDurationVal.innerText = `${standDurationSlider.value}s`; };
-    rateSlider.oninput = () => { rateVal.innerText = `${rateSlider.value}x`; };
-    pitchSlider.oninput = () => { pitchVal.innerText = `${pitchSlider.value}x`; };
-
-    function populateVoices() {
-      availableVoices = synth.getVoices();
-      if (!availableVoices.length) return;
-
-      voiceSelect.innerHTML = '';
-      availableVoices.forEach((v) => {
-        const opt = document.createElement('option');
-        opt.value = v.voiceURI;
-        opt.textContent = `${v.name} (${v.lang})`;
-        if (v.voiceURI === config.voiceURI) opt.selected = true;
-        voiceSelect.appendChild(opt);
-      });
-
-      if (!config.voiceURI && availableVoices.length > 0) {
-        const bestDefault = availableVoices.find(v => (v.name.includes("Female") || v.name.includes("Google") || v.name.includes("Natural")) && v.lang.startsWith("en")) || availableVoices[0];
-        if (bestDefault) {
-          voiceSelect.value = bestDefault.voiceURI;
-          config.voiceURI = bestDefault.voiceURI;
-        }
-      }
-    }
-
-    populateVoices();
-    if (speechSynthesis.onvoiceschanged !== undefined) {
-      speechSynthesis.onvoiceschanged = populateVoices;
-    }
 
     resetPromptBtn.onclick = () => {
       systemPromptInput.value = DEFAULT_PROMPT;
@@ -655,10 +602,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     saveSettingsBtn.onclick = () => {
       config.provider = providerSelect.value;
       config.apiOrUrl = apiOrUrlInput.value.trim();
+      config.kokoroUrl = kokoroUrlInput.value.trim();
+      config.kokoroVoice = kokoroVoiceSelect.value;
       config.standDuration = parseInt(standDurationSlider.value) || 30;
-      config.voiceURI = voiceSelect.value;
-      config.rate = parseFloat(rateSlider.value);
-      config.pitch = parseFloat(pitchSlider.value);
       config.kneelWebhook = kneelWebhookInput.value.trim();
       config.standWebhook = standWebhookInput.value.trim();
       config.releaseWebhook = releaseWebhookInput.value.trim();
@@ -666,10 +612,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
       localStorage.setItem('katee_provider', config.provider);
       localStorage.setItem('katee_api_url', config.apiOrUrl);
+      localStorage.setItem('katee_kokoro_url', config.kokoroUrl);
+      localStorage.setItem('katee_kokoro_voice', config.kokoroVoice);
       localStorage.setItem('katee_stand_duration', config.standDuration);
-      localStorage.setItem('katee_voice_uri', config.voiceURI);
-      localStorage.setItem('katee_rate', config.rate);
-      localStorage.setItem('katee_pitch', config.pitch);
       localStorage.setItem('katee_kneel_webhook', config.kneelWebhook);
       localStorage.setItem('katee_stand_webhook', config.standWebhook);
       localStorage.setItem('katee_release_webhook', config.releaseWebhook);
@@ -1020,12 +965,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
     }
 
-   // --- SMART PROCESSOR & HARDWARE INTENT FALLBACK (FIXED NEGATION CHECK) ---
+    // --- SMART PROCESSOR & HARDWARE INTENT FALLBACK ---
     function processModelReply(rawReply, modelRole) {
       const lower = rawReply.toLowerCase();
-
-      // Check if she is explicitly refusing or saying NO
-      const isRefusal = /\b(not|won't|can't|cannot|never|no way|don't|haven't|refuse|not yet)\b/i.test(lower);
 
       // 1. SMART WEBHOOK DETECTION
       if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
@@ -1033,25 +975,19 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         timerBanner.className = "timer-banner expired";
         timerBanner.style.display = "block";
         timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
-      } 
-      // ONLY trigger STAND if she explicitly outputs the tag OR positively agrees without saying 'no/not/won't'
-      else if (
-        /\[ACTION:\s*STAND\]/i.test(rawReply) || 
-        (!isRefusal && (
-          lower.includes("extending the actuator") ||
-          lower.includes("i'll let you stand") ||
-          lower.includes("i'm letting you stand") ||
-          lower.includes("get up on your feet")
-        ))
+      } else if (
+        /\[ACTION:\s*STAND\]/i.test(rawReply) ||
+        lower.includes("extending the actuator") ||
+        lower.includes("thirty seconds on your feet") ||
+        lower.includes("let you stand for thirty seconds") ||
+        lower.includes("on your feet")
       ) {
         triggerStandWithTimer();
-      } 
-      else if (
+      } else if (
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
         lower.includes("back down you go") ||
-        lower.includes("stay on your knees") ||
-        lower.includes("stay right there on your knees")
+        lower.includes("stay on your knees")
       ) {
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
       }
@@ -1077,28 +1013,61 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
 
       appendMessage('katee', cleanText);
-      speakReply(cleanText);
+      playVoice(cleanText);
     }
 
-    function speakReply(text) {
+    // --- KOKORO LOCAL VOICE OR BROWSER FALLBACK ---
+    async function playVoice(text) {
       callCard.className = "call-card talking";
       callStatus.innerText = "Katee is speaking...";
 
+      // If a local Kokoro TTS URL is configured, use it for ultra-realistic voice!
+      if (config.kokoroUrl) {
+        try {
+          let baseUrl = config.kokoroUrl.replace(/\/+$/, '');
+          if (!baseUrl.includes('/v1')) baseUrl += '/v1';
+          const ttsUrl = `${baseUrl}/audio/speech`;
+
+          const res = await fetch(ttsUrl, {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "ngrok-skip-browser-warning": "true"
+            },
+            body: JSON.stringify({
+              input: text,
+              voice: config.kokoroVoice || "af_bella",
+              model: "kokoro",
+              response_format: "mp3"
+            })
+          });
+
+          if (!res.ok) throw new Error("Kokoro TTS request failed");
+
+          const blob = await res.blob();
+          const audioUrl = URL.createObjectURL(blob);
+
+          if (currentAudioElement) {
+            currentAudioElement.pause();
+            currentAudioElement = null;
+          }
+
+          currentAudioElement = new Audio(audioUrl);
+          currentAudioElement.onended = () => {
+            resumeListeningWithDelay(600);
+          };
+          currentAudioElement.play();
+          return;
+
+        } catch (e) {
+          console.warn("Kokoro TTS error, falling back to browser voice:", e);
+        }
+      }
+
+      // Fallback: standard browser voice
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = config.rate;
-      utterance.pitch = config.pitch;
-
-      const selected = availableVoices.find(v => v.voiceURI === config.voiceURI);
-      if (selected) utterance.voice = selected;
-
-      utterance.onend = () => {
-        resumeListeningWithDelay(600);
-      };
-
-      utterance.onerror = () => {
-        resumeListeningWithDelay(500);
-      };
-
+      utterance.rate = 0.95;
+      utterance.onend = () => resumeListeningWithDelay(600);
       synth.speak(utterance);
     }
 
@@ -1138,6 +1107,11 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       if (recognition) {
         try { recognition.abort(); } catch (e) {}
         recognition = null;
+      }
+
+      if (currentAudioElement) {
+        currentAudioElement.pause();
+        currentAudioElement = null;
       }
       if (synth) synth.cancel();
     }
