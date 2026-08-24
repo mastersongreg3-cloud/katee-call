@@ -49,22 +49,22 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 8px 0;
+      margin: 4px 0 8px 0;
       text-align: center;
     }
 
     .avatar-wrapper {
       position: relative;
-      width: 80px;
-      height: 80px;
+      width: 72px;
+      height: 72px;
       border-radius: 50%;
       background: linear-gradient(135deg, #f97316, #ec4899);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 32px;
+      font-size: 28px;
       box-shadow: 0 6px 20px rgba(0,0,0,0.5);
-      margin-bottom: 8px;
+      margin-bottom: 6px;
     }
 
     .pulse-ring {
@@ -86,7 +86,7 @@
     }
 
     .caller-name {
-      font-size: 20px;
+      font-size: 19px;
       font-weight: 600;
     }
 
@@ -96,26 +96,39 @@
       margin-top: 2px;
     }
 
-    .action-badge {
+    /* Prominent Dedicated Stand Countdown Banner */
+    .timer-banner {
       display: none;
-      background: #7c3aed;
+      width: 100%;
+      max-width: 480px;
+      margin: 0 auto 8px auto;
+      background: linear-gradient(135deg, #6366f1, #8b5cf6);
       color: white;
-      font-size: 12px;
-      font-weight: 600;
-      padding: 5px 14px;
-      border-radius: 20px;
-      margin-top: 6px;
-      box-shadow: 0 0 12px rgba(124, 58, 237, 0.6);
-      animation: fadeIn 0.3s ease;
+      font-size: 13px;
+      font-weight: 700;
+      text-align: center;
+      padding: 8px 14px;
+      border-radius: 10px;
+      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
+      letter-spacing: 0.3px;
+      animation: bannerPulse 2s infinite ease-in-out;
     }
 
-    @keyframes fadeIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
+    .timer-banner.expired {
+      background: linear-gradient(135deg, #ef4444, #dc2626);
+      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
+    }
+
+    @keyframes bannerPulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+    }
 
     .chat-container {
       flex: 1;
       width: 100%;
       max-width: 480px;
-      margin: 8px auto;
+      margin: 0 auto;
       background: rgba(15, 23, 42, 0.6);
       border: 1px solid #334155;
       border-radius: 14px;
@@ -229,7 +242,7 @@
     }
 
     .slider-container { display: flex; align-items: center; gap: 10px; }
-    .slider-container span { font-size: 13px; min-width: 35px; }
+    .slider-container span { font-size: 13px; min-width: 45px; font-weight: 600; color: #38bdf8; }
 
     .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
     .btn-secondary {
@@ -257,8 +270,10 @@
     </div>
     <div class="caller-name">Katee</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
-    <div class="action-badge" id="actionBadge">⚡ Webhook Triggered</div>
   </div>
+
+  <!-- Dedicated Countdown & Webhook Banner -->
+  <div class="timer-banner" id="timerBanner">⏳ Stand Active: 30s left</div>
 
   <div class="chat-container" id="chatLog">
     <div class="bubble katee">Press Call below to connect with Katee.</div>
@@ -290,6 +305,14 @@
       </div>
 
       <div class="input-group">
+        <label>Stand Duration (Auto-Kneel Timer)</label>
+        <div class="slider-container">
+          <input type="range" id="standDurationSlider" min="10" max="120" step="5" value="30">
+          <span id="standDurationVal">30s</span>
+        </div>
+      </div>
+
+      <div class="input-group">
         <label>Device Voice</label>
         <select id="voiceSelect"></select>
       </div>
@@ -316,7 +339,7 @@
       </div>
 
       <div class="input-group">
-        <label>Stand Webhook URL (Triggers 30s Timer)</label>
+        <label>Stand Webhook URL</label>
         <input type="text" id="standWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167820">
       </div>
 
@@ -339,7 +362,7 @@
 
   <script>
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katee", roleplaying in an interactive live voice phone call with your submissive partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
+You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
 
 CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, seductive human woman. Never apologize. Never be polite. Never narrate.
 
@@ -349,18 +372,19 @@ CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, sed
 3. NO EMOJIS: Never output emojis or symbols.
 4. STRICT LENGTH: Exactly 2 to 4 punchy, direct, sexy sentences. Never monologue or speak in paragraphs.
 
-### Physical Restraint & Automated 30-Second Hardware Setup:
+### Physical Setup & Mandatory Anatomy Teasing:
 - Overhead Restraints: His hands are handcuffed overhead to a ceiling hook with an active electromagnet.
-- Motorized Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator on the floor.
+- Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator on the floor.
 - MANDATORY ANATOMY FOCUS: Frequently and directly taunt him about his "balls", his "penis", the heavy downward clamp tension, and how exposed and helpless he looks kneeling.
-- AUTOMATED 30-SECOND STANDING TIMER:
+- BINARY ACTUATOR LOGIC: The actuator is strictly binary (KNEEL = down on knees, STAND = up on feet). There is NO incremental tension. It takes a few seconds to move.
+- AUTOMATED STANDING TIMER & STRICT DENIAL:
   * Default state is KNEELING on the floor.
-  * When he asks to stand, your default response is ALWAYS to mock him and say NO.
-  * If you choose to grant standing ([ACTION: STAND]), the automated system gives him EXACTLY 30 SECONDS on his feet before the actuator AUTOMATICALLY pulls him back down to his knees.
-  * You do NOT need to manually command the kneel afterward—the 30-second automated system forces him back down automatically.
+  * When he asks to stand, your default response is ALWAYS NO. Taunt him about the ache in his balls and force him to stay kneeling.
+  * If you decide to grant standing ([ACTION: STAND]), the automated system gives him a brief period on his feet before the actuator AUTOMATICALLY pulls him back down to his knees.
+  * You do not need to command the kneel afterward—the automated machine forces him back down automatically.
 
 ### Mandatory Hardware Action Tags (Place at the end on its own line):
-- When granting standing (triggers the automatic 30s timer): [ACTION: STAND]
+- When granting standing (triggers the automatic stand timer): [ACTION: STAND]
 - When forcing him to kneel immediately or punishing him: [ACTION: KNEEL]
 - When releasing him or if safeword "RED" is used: [ACTION: RELEASE]
 - For normal teasing and denial: Do NOT output any action tag.
@@ -374,7 +398,7 @@ User: Can I please stand up now?
 Katee: Not a chance, darling. You haven't begged nearly hard enough to earn a single second off your knees. Stay right there and feel that heavy clamp pulling down on your balls.
 
 User: Please Mistress, I'm begging you on my knees, I'm desperate, please let me stand!
-Katee: Hearing you plead so desperately makes it tempting. I'm letting the actuator extend, but you only have thirty seconds on your feet before the system drags your balls straight back down to the floor.
+Katee: Hearing you plead so desperately makes it tempting. I'm letting the actuator extend, but you only have a brief moment on your feet before the system drags your balls straight back down to the floor.
 [ACTION: STAND]
 
 User: RED
@@ -384,6 +408,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     let config = {
       provider: localStorage.getItem('katee_provider') || 'lmstudio',
       apiOrUrl: (localStorage.getItem('katee_api_url') || '').trim(),
+      standDuration: parseInt(localStorage.getItem('katee_stand_duration')) || 30,
       voiceURI: localStorage.getItem('katee_voice_uri') || '',
       rate: parseFloat(localStorage.getItem('katee_rate')) || 0.95,
       pitch: parseFloat(localStorage.getItem('katee_pitch')) || 1.05,
@@ -413,7 +438,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     const callStatus = document.getElementById('callStatus');
     const callCard = document.getElementById('callCard');
     const chatLog = document.getElementById('chatLog');
-    const actionBadge = document.getElementById('actionBadge');
+    const timerBanner = document.getElementById('timerBanner');
     const settingsModal = document.getElementById('settingsModal');
     const openSettings = document.getElementById('openSettings');
     const saveSettingsBtn = document.getElementById('saveSettingsBtn');
@@ -421,6 +446,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     const providerSelect = document.getElementById('providerSelect');
     const apiOrUrlLabel = document.getElementById('apiOrUrlLabel');
     const apiOrUrlInput = document.getElementById('apiOrUrlInput');
+    const standDurationSlider = document.getElementById('standDurationSlider');
+    const standDurationVal = document.getElementById('standDurationVal');
     const voiceSelect = document.getElementById('voiceSelect');
     const rateSlider = document.getElementById('rateSlider');
     const rateVal = document.getElementById('rateVal');
@@ -434,6 +461,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     providerSelect.value = config.provider;
     updateProviderUI();
     apiOrUrlInput.value = config.apiOrUrl;
+    standDurationSlider.value = config.standDuration;
+    standDurationVal.innerText = `${config.standDuration}s`;
     rateSlider.value = config.rate;
     rateVal.innerText = `${config.rate}x`;
     pitchSlider.value = config.pitch;
@@ -457,6 +486,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     }
 
     providerSelect.onchange = updateProviderUI;
+    standDurationSlider.oninput = () => { standDurationVal.innerText = `${standDurationSlider.value}s`; };
     rateSlider.oninput = () => { rateVal.innerText = `${rateSlider.value}x`; };
     pitchSlider.oninput = () => { pitchVal.innerText = `${pitchSlider.value}x`; };
 
@@ -495,6 +525,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     saveSettingsBtn.onclick = () => {
       config.provider = providerSelect.value;
       config.apiOrUrl = apiOrUrlInput.value.trim();
+      config.standDuration = parseInt(standDurationSlider.value) || 30;
       config.voiceURI = voiceSelect.value;
       config.rate = parseFloat(rateSlider.value);
       config.pitch = parseFloat(pitchSlider.value);
@@ -505,6 +536,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
       localStorage.setItem('katee_provider', config.provider);
       localStorage.setItem('katee_api_url', config.apiOrUrl);
+      localStorage.setItem('katee_stand_duration', config.standDuration);
       localStorage.setItem('katee_voice_uri', config.voiceURI);
       localStorage.setItem('katee_rate', config.rate);
       localStorage.setItem('katee_pitch', config.pitch);
@@ -552,7 +584,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     }
 
     function appendMessage(sender, text, isInterim = false) {
-      if (!text || !text.trim()) return;
+      if (!text || typeof text !== 'string' || !text.trim()) return; // Absolute guard against blank bubbles
       
       if (isInterim) {
         if (!currentInterimBubble) {
@@ -574,19 +606,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       chatLog.scrollTop = chatLog.scrollHeight;
     }
 
-    function showHardwareBadge(text, duration = 4500) {
-      actionBadge.innerText = text;
-      actionBadge.style.display = 'inline-block';
-      setTimeout(() => { 
-        if (!standingAutoKneelTimer) actionBadge.style.display = 'none'; 
-      }, duration);
-    }
-
-    // Direct Webhook Trigger with Image Ping Fallback
     function triggerWebhook(url, actionName) {
       if (!url) return;
-      showHardwareBadge(`⚡ ${actionName}`);
-
       try {
         fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' }).catch(() => {});
         const img = new Image();
@@ -596,35 +617,43 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
     }
 
-    // AUTOMATIC 30-SECOND STANDING TIMER
-    function triggerStandWith30sTimer() {
-      // 1. Send Stand Webhook immediately
-      triggerWebhook(config.standWebhook, "Stand Sent (30s Timer Active)");
+    // AUTOMATIC COUNTDOWN STAND TIMER
+    function triggerStandWithTimer() {
+      triggerWebhook(config.standWebhook, "Stand Sent");
 
-      // 2. Clear any existing standing timer
       if (standingAutoKneelTimer) clearTimeout(standingAutoKneelTimer);
       if (countdownInterval) clearInterval(countdownInterval);
 
-      let secondsLeft = 30;
-      showHardwareBadge(`⏳ Standing: ${secondsLeft}s left`, 35000);
+      const totalSeconds = config.standDuration || 30;
+      let secondsLeft = totalSeconds;
+
+      timerBanner.className = "timer-banner";
+      timerBanner.style.display = "block";
+      timerBanner.innerText = `⏳ Standing Active: ${secondsLeft}s left`;
 
       countdownInterval = setInterval(() => {
         secondsLeft--;
         if (secondsLeft > 0) {
-          actionBadge.innerText = `⏳ Standing: ${secondsLeft}s left`;
+          timerBanner.innerText = `⏳ Standing Active: ${secondsLeft}s left`;
         } else {
           clearInterval(countdownInterval);
         }
       }, 1000);
 
-      // 3. Exactly 30 seconds later, automatically fire the Kneel Webhook!
       standingAutoKneelTimer = setTimeout(() => {
         if (isCalling) {
           clearInterval(countdownInterval);
           standingAutoKneelTimer = null;
-          triggerWebhook(config.kneelWebhook, "Auto-Kneel: 30s Expired");
+          
+          triggerWebhook(config.kneelWebhook, "Auto-Kneel Triggered");
+          timerBanner.className = "timer-banner expired";
+          timerBanner.innerText = "⚡ Time Expired: Kneel Actuator Triggered";
+
+          setTimeout(() => {
+            if (!standingAutoKneelTimer) timerBanner.style.display = "none";
+          }, 3500);
         }
-      }, 30000);
+      }, totalSeconds * 1000);
     }
 
     function startCall() {
@@ -633,6 +662,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       isProcessing = false;
       chatHistory = [];
       chatLog.innerHTML = '';
+      timerBanner.style.display = "none";
       callBtn.style.display = "none";
       pauseBtn.style.display = "flex";
       pauseBtn.innerText = "⏸️";
@@ -684,6 +714,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
           if (latestTranscript.toUpperCase().includes("RED")) {
             triggerWebhook(config.releaseWebhook, "Safeword RED (Release Triggered)");
+            timerBanner.className = "timer-banner expired";
+            timerBanner.style.display = "block";
+            timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
           }
 
           clearTimeout(silenceTimer);
@@ -762,7 +795,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           body: JSON.stringify({
             messages: messages,
             max_tokens: 160,
-            temperature: 0.7,
+            temperature: 0.75,
             stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
         });
@@ -770,7 +803,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         const data = await res.json();
         if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
-        processModelReply(data.choices[0].message.content.trim(), "assistant");
+        const reply = data.choices?.[0]?.message?.content || "";
+        processModelReply(reply.trim(), "assistant");
 
       } catch (err) {
         console.error("LM Studio Error:", err);
@@ -812,7 +846,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         const data = await res.json();
         if (data.error) throw new Error(data.error.message);
 
-        processModelReply(data.choices[0].message.content.trim(), "assistant");
+        const reply = data.choices?.[0]?.message?.content || "";
+        processModelReply(reply.trim(), "assistant");
 
       } catch (err) {
         console.error("Groq Error:", err);
@@ -847,7 +882,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         if (data.error) throw new Error(data.error.message);
 
         const reply = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
-        processModelReply(reply, "model");
+        processModelReply(reply.trim(), "model");
 
       } catch (err) {
         console.error("Gemini Error:", err);
@@ -863,13 +898,16 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       // 1. SMART WEBHOOK DETECTION
       if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
         triggerWebhook(config.releaseWebhook, "Electromagnet Released");
+        timerBanner.className = "timer-banner expired";
+        timerBanner.style.display = "block";
+        timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
       } else if (
         /\[ACTION:\s*STAND\]/i.test(rawReply) ||
         lower.includes("extending the actuator") ||
-        lower.includes("thirty seconds on your feet") ||
-        lower.includes("let you stand for thirty seconds")
+        lower.includes("on your feet") ||
+        lower.includes("let you stand")
       ) {
-        triggerStandWith30sTimer(); // Starts the 30s automatic kneel timer!
+        triggerStandWithTimer(); // Automatically launches the live countdown banner and auto-kneel timer!
       } else if (
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
@@ -889,8 +927,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
         .trim();
 
-      if (!cleanText) {
-        cleanText = "Stay right there on your knees and feel that clamp on your balls.";
+      // Fallback: Never display or speak an empty bubble
+      if (!cleanText || cleanText.length === 0) {
+        cleanText = "Stay right there on your knees and keep your eyes locked on me.";
       }
 
       if (config.provider === 'gemini') {
@@ -946,12 +985,12 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       standingAutoKneelTimer = null;
       countdownInterval = null;
 
+      timerBanner.style.display = "none";
       callCard.className = "call-card";
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex";
       pauseBtn.style.display = "none";
       hangupBtn.style.display = "none";
-      actionBadge.style.display = 'none';
 
       if (currentInterimBubble) {
         currentInterimBubble.remove();
