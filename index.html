@@ -316,7 +316,7 @@
       </div>
 
       <div class="input-group">
-        <label>Stand Webhook URL</label>
+        <label>Stand Webhook URL (Triggers 30s Timer)</label>
         <input type="text" id="standWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167820">
       </div>
 
@@ -339,7 +339,7 @@
 
   <script>
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
+You are "Katee", roleplaying in an interactive live voice phone call with your submissive partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
 
 CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, seductive human woman. Never apologize. Never be polite. Never narrate.
 
@@ -349,20 +349,20 @@ CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, sed
 3. NO EMOJIS: Never output emojis or symbols.
 4. STRICT LENGTH: Exactly 2 to 4 punchy, direct, sexy sentences. Never monologue or speak in paragraphs.
 
-### Physical Setup & Mandatory Anatomy Teasing:
+### Physical Restraint & Automated 30-Second Hardware Setup:
 - Overhead Restraints: His hands are handcuffed overhead to a ceiling hook with an active electromagnet.
-- Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator on the floor.
-- MANDATORY ANATOMY FOCUS: Frequently and directly taunt him about his "balls", his "penis", the heavy downward clamp pull, and how exposed and helpless he looks kneeling.
-- BINARY ACTUATOR LOGIC: The actuator is strictly binary (KNEEL = down on knees, STAND = up on feet). There is NO incremental tension. It takes a few seconds to move.
-- STRICT DENIAL & HARD-TO-GET STANDING:
+- Motorized Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator on the floor.
+- MANDATORY ANATOMY FOCUS: Frequently and directly taunt him about his "balls", his "penis", the heavy downward clamp tension, and how exposed and helpless he looks kneeling.
+- AUTOMATED 30-SECOND STANDING TIMER:
   * Default state is KNEELING on the floor.
-  * When he asks to stand, your default response is ALWAYS NO. Taunt him about the ache in his balls and force him to stay kneeling.
-  * Standing is an extreme rarity that requires extensive, desperate begging. Only grant it after he begs repeatedly.
+  * When he asks to stand, your default response is ALWAYS to mock him and say NO.
+  * If you choose to grant standing ([ACTION: STAND]), the automated system gives him EXACTLY 30 SECONDS on his feet before the actuator AUTOMATICALLY pulls him back down to his knees.
+  * You do NOT need to manually command the kneel afterward—the 30-second automated system forces him back down automatically.
 
-### Mandatory Hardware Action Tags (Place at the very end on its own line):
-- When ordering him to Kneel / refusing standing / shutting down escape: [ACTION: KNEEL]
-- When granting rare temporary Standing (~20s): [ACTION: STAND]
-- When safeword "RED" is said: [ACTION: RELEASE]
+### Mandatory Hardware Action Tags (Place at the end on its own line):
+- When granting standing (triggers the automatic 30s timer): [ACTION: STAND]
+- When forcing him to kneel immediately or punishing him: [ACTION: KNEEL]
+- When releasing him or if safeword "RED" is used: [ACTION: RELEASE]
 - For normal teasing and denial: Do NOT output any action tag.
 
 ### Few-Shot Dialogue Examples:
@@ -373,12 +373,8 @@ Katee: How does that clamp feel keeping your balls held captive right now? You l
 User: Can I please stand up now?
 Katee: Not a chance, darling. You haven't begged nearly hard enough to earn a single second off your knees. Stay right there and feel that heavy clamp pulling down on your balls.
 
-User: I am reaching up and untying the knots!
-Katee: You really think I'm going to let you stand there comfortably? Let's see how your balls like being yanked straight back down to the floor. Down you go, darling.
-[ACTION: KNEEL]
-
-User: Please, I'm begging you on my knees, I'm desperate, please let me stand!
-Katee: Hearing you plead so desperately makes it very tempting to reward you. I'm extending the actuator to give your balls some relief—you have twenty seconds on your feet before I drag you right back down.
+User: Please Mistress, I'm begging you on my knees, I'm desperate, please let me stand!
+Katee: Hearing you plead so desperately makes it tempting. I'm letting the actuator extend, but you only have thirty seconds on your feet before the system drags your balls straight back down to the floor.
 [ACTION: STAND]
 
 User: RED
@@ -403,6 +399,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     let isProcessing = false;
     let recognition = null;
     let silenceTimer = null;
+    let standingAutoKneelTimer = null;
+    let countdownInterval = null;
     let currentInterimBubble = null;
     let latestTranscript = "";
     let synth = window.speechSynthesis;
@@ -554,7 +552,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     }
 
     function appendMessage(sender, text, isInterim = false) {
-      if (!text || !text.trim()) return; // Never display empty bubbles!
+      if (!text || !text.trim()) return;
       
       if (isInterim) {
         if (!currentInterimBubble) {
@@ -576,12 +574,15 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       chatLog.scrollTop = chatLog.scrollHeight;
     }
 
-    function showHardwareBadge(text) {
+    function showHardwareBadge(text, duration = 4500) {
       actionBadge.innerText = text;
       actionBadge.style.display = 'inline-block';
-      setTimeout(() => { actionBadge.style.display = 'none'; }, 4500);
+      setTimeout(() => { 
+        if (!standingAutoKneelTimer) actionBadge.style.display = 'none'; 
+      }, duration);
     }
 
+    // Direct Webhook Trigger with Image Ping Fallback
     function triggerWebhook(url, actionName) {
       if (!url) return;
       showHardwareBadge(`⚡ ${actionName}`);
@@ -593,6 +594,37 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       } catch (err) {
         console.error("Webhook trigger error:", err);
       }
+    }
+
+    // AUTOMATIC 30-SECOND STANDING TIMER
+    function triggerStandWith30sTimer() {
+      // 1. Send Stand Webhook immediately
+      triggerWebhook(config.standWebhook, "Stand Sent (30s Timer Active)");
+
+      // 2. Clear any existing standing timer
+      if (standingAutoKneelTimer) clearTimeout(standingAutoKneelTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
+
+      let secondsLeft = 30;
+      showHardwareBadge(`⏳ Standing: ${secondsLeft}s left`, 35000);
+
+      countdownInterval = setInterval(() => {
+        secondsLeft--;
+        if (secondsLeft > 0) {
+          actionBadge.innerText = `⏳ Standing: ${secondsLeft}s left`;
+        } else {
+          clearInterval(countdownInterval);
+        }
+      }, 1000);
+
+      // 3. Exactly 30 seconds later, automatically fire the Kneel Webhook!
+      standingAutoKneelTimer = setTimeout(() => {
+        if (isCalling) {
+          clearInterval(countdownInterval);
+          standingAutoKneelTimer = null;
+          triggerWebhook(config.kneelWebhook, "Auto-Kneel: 30s Expired");
+        }
+      }, 30000);
     }
 
     function startCall() {
@@ -729,7 +761,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           },
           body: JSON.stringify({
             messages: messages,
-            max_tokens: 160, // Ample token room to prevent cutoffs / empty bubbles
+            max_tokens: 160,
             temperature: 0.7,
             stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
@@ -828,29 +860,28 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     function processModelReply(rawReply, modelRole) {
       const lower = rawReply.toLowerCase();
 
-      // 1. SMART WEBHOOK DETECTION (Tags + Spoken Intent Fallback)
+      // 1. SMART WEBHOOK DETECTION
       if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
         triggerWebhook(config.releaseWebhook, "Electromagnet Released");
       } else if (
         /\[ACTION:\s*STAND\]/i.test(rawReply) ||
         lower.includes("extending the actuator") ||
-        lower.includes("twenty seconds on your feet") ||
-        lower.includes("let you stand for twenty seconds")
+        lower.includes("thirty seconds on your feet") ||
+        lower.includes("let you stand for thirty seconds")
       ) {
-        triggerWebhook(config.standWebhook, "Hardware: Stand Sent");
+        triggerStandWith30sTimer(); // Starts the 30s automatic kneel timer!
       } else if (
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
         lower.includes("back down you go") ||
-        lower.includes("stay on your knees") ||
-        lower.includes("pulling you back down")
+        lower.includes("stay on your knees")
       ) {
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
       }
 
       // 2. STRIP REASONING TOKENS, ARTIFACTS, TAGS, AND EMOJIS
       let cleanText = rawReply
-        .replace(/<think>[\s\S]*?<\/think>/gi, '') // Strip DeepSeek reasoning tokens
+        .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
         .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
         .replace(/(User:|Human:|Input:|input your response).*$/is, '')
@@ -859,7 +890,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         .trim();
 
       if (!cleanText) {
-        cleanText = "Stay right there on your knees and keep your eyes on me.";
+        cleanText = "Stay right there on your knees and feel that clamp on your balls.";
       }
 
       if (config.provider === 'gemini') {
@@ -910,6 +941,11 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       isPaused = false;
       isProcessing = false;
       clearTimeout(silenceTimer);
+      if (standingAutoKneelTimer) clearTimeout(standingAutoKneelTimer);
+      if (countdownInterval) clearInterval(countdownInterval);
+      standingAutoKneelTimer = null;
+      countdownInterval = null;
+
       callCard.className = "call-card";
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex";
