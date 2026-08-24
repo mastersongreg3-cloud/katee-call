@@ -692,23 +692,25 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
     }
 
-    function triggerStandWithTimer() {
+   // DYNAMIC STANDING TIMER (Reads the seconds Katee decided)
+    function triggerStandWithTimer(chosenSeconds = 30) {
       triggerWebhook(config.standWebhook, "Stand Sent");
 
       if (standingAutoKneelTimer) clearTimeout(standingAutoKneelTimer);
       if (countdownInterval) clearInterval(countdownInterval);
 
-      const totalSeconds = config.standDuration || 30;
+      // Clamps between 10 and 30 seconds
+      const totalSeconds = Math.max(10, Math.min(30, chosenSeconds));
       let secondsLeft = totalSeconds;
 
       timerBanner.className = "timer-banner";
       timerBanner.style.display = "block";
-      timerBanner.innerText = `⏳ Standing Active: ${secondsLeft}s left`;
+      timerBanner.innerText = `⏳ Standing Active: ${secondsLeft}s left (Katee granted ${totalSeconds}s)`;
 
       countdownInterval = setInterval(() => {
         secondsLeft--;
         if (secondsLeft > 0) {
-          timerBanner.innerText = `⏳ Standing Active: ${secondsLeft}s left`;
+          timerBanner.innerText = `⏳ Standing Active: ${secondsLeft}s left (Katee granted ${totalSeconds}s)`;
         } else {
           clearInterval(countdownInterval);
         }
@@ -719,9 +721,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           clearInterval(countdownInterval);
           standingAutoKneelTimer = null;
           
-          triggerWebhook(config.kneelWebhook, "Auto-Kneel Triggered");
+          triggerWebhook(config.kneelWebhook, `Auto-Kneel Triggered (${totalSeconds}s Expired)`);
           timerBanner.className = "timer-banner expired";
-          timerBanner.innerText = "⚡ Time Expired: Kneel Actuator Triggered";
+          timerBanner.innerText = `⚡ ${totalSeconds}s Expired: Kneel Actuator Triggered`;
 
           setTimeout(() => {
             if (!standingAutoKneelTimer) timerBanner.style.display = "none";
@@ -729,7 +731,6 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         }
       }, totalSeconds * 1000);
     }
-
     function startCall() {
       isCalling = true;
       isPaused = false;
@@ -965,24 +966,37 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
     }
 
-    // --- SMART PROCESSOR & HARDWARE INTENT FALLBACK ---
-    function processModelReply(rawReply, modelRole) {
-      const lower = rawReply.toLowerCase();
+// Detect Stand Tag with seconds: e.g. [ACTION: STAND:20] or extract seconds from spoken words
+      const standMatch = rawReply.match(/\[ACTION:\s*STAND(?::\s*(\d+))?\]/i);
+      let detectedSeconds = 20; // Default if unspecified
 
-      // 1. SMART WEBHOOK DETECTION
+      if (standMatch && standMatch[1]) {
+        detectedSeconds = parseInt(standMatch[1]);
+      } else {
+        // Fallback: look for spoken numbers like "15 seconds", "twenty seconds", etc.
+        const numMatch = lower.match(/\b(1[0-9]|2[0-9]|30)\s*seconds?\b/);
+        if (numMatch) detectedSeconds = parseInt(numMatch[1]);
+        else if (lower.includes("ten seconds")) detectedSeconds = 10;
+        else if (lower.includes("fifteen seconds")) detectedSeconds = 15;
+        else if (lower.includes("twenty seconds")) detectedSeconds = 20;
+        else if (lower.includes("twenty-five seconds") || lower.includes("twenty five seconds")) detectedSeconds = 25;
+        else if (lower.includes("thirty seconds")) detectedSeconds = 30;
+      }
+
       if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
         triggerWebhook(config.releaseWebhook, "Electromagnet Released");
         timerBanner.className = "timer-banner expired";
         timerBanner.style.display = "block";
         timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
       } else if (
-        /\[ACTION:\s*STAND\]/i.test(rawReply) ||
-        lower.includes("extending the actuator") ||
-        lower.includes("thirty seconds on your feet") ||
-        lower.includes("let you stand for thirty seconds") ||
-        lower.includes("on your feet")
+        standMatch || 
+        (!isRefusal && (
+          lower.includes("extending the actuator") ||
+          lower.includes("let you stand") ||
+          lower.includes("on your feet")
+        ))
       ) {
-        triggerStandWithTimer();
+        triggerStandWithTimer(detectedSeconds); // Runs the exact timer she decided!
       } else if (
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
