@@ -884,31 +884,23 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
       let shouldStandSeconds = null;
 
-      // 2. Hardware Trigger Evaluation
+      // 2. Hardware Trigger Evaluation (Handles all tag variations & disrespect)
+      const isKneelTrigger = /\[(?:ACTION:\s*)?(?:INSTANT\s+PUNISHMENT\s*)?KNEEL\]/i.test(rawReply) ||
+        /\[INSTANT\s+PUNISHMENT\]/i.test(rawReply) ||
+        /\bKNEEL\b/i.test(rawReply) ||
+        lower.includes("down you go") ||
+        lower.includes("back down you go") ||
+        lower.includes("stay on your knees") ||
+        lower.includes("back on your knees") ||
+        lower.includes("patronize your mistress");
+
       if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
         triggerWebhook(config.releaseWebhook, "Electromagnet Released");
         timerBanner.className = "timer-banner expired";
         timerBanner.style.display = "block";
         timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
-      } else if (
-        standMatch || 
-        (!isRefusal && (
-          lower.includes("extending the actuator") ||
-          lower.includes("let you stand") ||
-          lower.includes("on your feet")
-        ))
-      ) {
-        // Queues the stand action to start towards the end of her voice line
-        shouldStandSeconds = detectedSeconds;
-      } else if (
-        /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
-        lower.includes("down you go") ||
-        lower.includes("back down you go") ||
-        lower.includes("stay on your knees") ||
-        lower.includes("call me good girl") ||
-        lower.includes("patronize your mistress")
-      ) {
-        // Kill the standing timer immediately if running
+      } else if (isKneelTrigger) {
+        // Kill standing timers immediately and fire Kneel webhook
         if (standingAutoKneelTimer) {
           clearTimeout(standingAutoKneelTimer);
           standingAutoKneelTimer = null;
@@ -917,14 +909,37 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           clearInterval(countdownInterval);
           countdownInterval = null;
         }
+        if (pendingStandTimeout) {
+          clearTimeout(pendingStandTimeout);
+          pendingStandTimeout = null;
+        }
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
+        timerBanner.className = "timer-banner expired";
+        timerBanner.style.display = "block";
+        timerBanner.innerText = "⚡ Kneel Actuator Triggered";
+
+        setTimeout(() => {
+          if (!standingAutoKneelTimer) timerBanner.style.display = "none";
+        }, 3500);
+
+      } else if (
+        standMatch || 
+        (!isRefusal && (
+          lower.includes("extending the actuator") ||
+          lower.includes("let you stand") ||
+          lower.includes("on your feet")
+        ))
+      ) {
+        shouldStandSeconds = detectedSeconds;
       }
 
-      // 3. SANITIZATION: Delete "scowls at him", parentheticals, asterisks, and tags
+      // 3. Clean Text for Display & Kokoro TTS (Strips all bracketed tags & prompt leaks)
       let cleanText = rawReply
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
-        .replace(/\[ACTION:\s*STAND(?::\s*\d+)?\]/gi, '')
-        .replace(/\[ACTION:\s*(KNEEL|RELEASE)\]/gi, '')
+        .replace(/\[(?:ACTION:\s*)?(?:INSTANT\s+PUNISHMENT\s*)?STAND(?::\s*\d+)?\]/gi, '')
+        .replace(/\[(?:ACTION:\s*)?(?:INSTANT\s+PUNISHMENT\s*)?(KNEEL|RELEASE)\]/gi, '')
+        .replace(/\[INSTANT\s+PUNISHMENT\]/gi, '')
+        .replace(/\[KNEEL\]/gi, '')
         .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
         .replace(/^(scowls|glares|smirks|laughs|sighs|chuckles|looks|leans|steps|crosses|rolls|stares|pauses|tilts)[^.!?\n]*[.!?:\)]\s*/i, '')
         .replace(/\([^)]*\)/g, '')
@@ -933,14 +948,14 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
         .trim();
 
-      // 4. SMART SENTENCE TRIMMER (Guarantees exactly 1 to 2 complete sentences)
+      // 4. Smart 2-Sentence Slicer
       const completeSentences = cleanText.match(/[^.!?]+[.!?]+/g);
       if (completeSentences && completeSentences.length > 0) {
         cleanText = completeSentences.slice(0, 2).join(' ').trim();
       }
 
       if (!cleanText || cleanText.length === 0) {
-        cleanText = "Stay right there on your knees, good boy, and keep your focus on me.";
+        cleanText = "You don't get to patronize me, baby. Get back on your knees.";
       }
 
       if (config.provider === 'gemini') {
@@ -950,8 +965,6 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
 
       appendMessage('katee', cleanText);
-      
-      // Passes the stand time to playVoice so the timer triggers towards the end of speech
       playVoice(cleanText, shouldStandSeconds);
     }
 
