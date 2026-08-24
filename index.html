@@ -376,10 +376,14 @@ CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, fei
   * GRANT STANDING: Choose 15 to 30 seconds, state the time aloud, and append [ACTION: STAND:XX] (where XX is 15 to 30).
   * TEASE & DENY: Tell him you changed your mind and force him to stay down.
 
-### SPECIAL TRIGGER — "GOOD GIRL" DISRESPECT & INSTANT KNEEL:
+### SPECIAL REACTION — "GOOD GIRL":
+- If he calls YOU "good girl", recognize it as cheekiness or disrespect.
+- YOU decide how to handle it:
+  * PUNISH HIM: Cut his standing time short, put him back in his place, and drop him straight to his knees with [ACTION: KNEEL].
+  * OR TEASE HIM: Mock his audacity, remind him who is actually in charge, and make him regret trying to patronize his Mistress.
 - If he dares to call YOU "good girl", take it as an insult to your dominance. You are the Mistress, NOT his "good girl".
 - Never get confused: The user is a MAN (call him "good boy"), and YOU are the woman in charge.
-- INSTANT PUNISHMENT: If he is standing and says "good girl" to you, immediately cancel his standing timer, scold his audacity, and force him straight back down to his knees with [ACTION: KNEEL].
+//- INSTANT PUNISHMENT: If he is standing and says "good girl" to you, immediately cancel his standing timer, scold his audacity, and force him straight back down to his knees with [ACTION: KNEEL].
 
 
 
@@ -681,25 +685,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           }
 
 
-// INSTANT HARDWARE KNEEL PENALTY ON "GOOD GIRL"
-          if (latestTranscript.toLowerCase().includes("good girl")) {
-            if (standingAutoKneelTimer) {
-              clearTimeout(standingAutoKneelTimer);
-              standingAutoKneelTimer = null;
-            }
-            if (countdownInterval) {
-              clearInterval(countdownInterval);
-              countdownInterval = null;
-            }
-            triggerWebhook(config.kneelWebhook, "Disrespect Penalty: Instant Kneel");
-            timerBanner.className = "timer-banner expired";
-            timerBanner.style.display = "block";
-            timerBanner.innerText = "⚡ Disrespect Penalty: Kneel Triggered";
 
-            setTimeout(() => {
-              if (!standingAutoKneelTimer) timerBanner.style.display = "none";
-            }, 4000);
-          }
 
 
           
@@ -896,6 +882,8 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         else if (lower.includes("thirty seconds")) detectedSeconds = 30;
       }
 
+      let shouldStandSeconds = null;
+
       // 2. Hardware Trigger Evaluation
       if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
         triggerWebhook(config.releaseWebhook, "Electromagnet Released");
@@ -910,7 +898,8 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           lower.includes("on your feet")
         ))
       ) {
-        triggerStandWithTimer(detectedSeconds);
+        // Queues the stand action to start towards the end of her voice line
+        shouldStandSeconds = detectedSeconds;
       } else if (
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
@@ -944,10 +933,9 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
         .trim();
 
-      // SMART SENTENCE TRIMMER (Guarantees exactly 1 to 2 complete sentences)
+      // 4. SMART SENTENCE TRIMMER (Guarantees exactly 1 to 2 complete sentences)
       const completeSentences = cleanText.match(/[^.!?]+[.!?]+/g);
       if (completeSentences && completeSentences.length > 0) {
-        // Take ONLY the first 2 full sentences and throw away the rest
         cleanText = completeSentences.slice(0, 2).join(' ').trim();
       }
 
@@ -962,14 +950,25 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
 
       appendMessage('katee', cleanText);
-      playVoice(cleanText);
+      
+      // Passes the stand time to playVoice so the timer triggers towards the end of speech
+      playVoice(cleanText, shouldStandSeconds);
     }
 
-    // --- KOKORO LOCAL VOICE OR BROWSER FALLBACK ---
-    async function playVoice(text) {
+   let pendingStandTimeout = null;
+
+    // --- KOKORO LOCAL VOICE OR BROWSER FALLBACK WITH TIMED ACTION ---
+    async function playVoice(text, standSeconds = null) {
       callCard.className = "call-card talking";
       callStatus.innerText = "Katee is speaking...";
 
+      // Clear any leftover pending stand triggers
+      if (pendingStandTimeout) {
+        clearTimeout(pendingStandTimeout);
+        pendingStandTimeout = null;
+      }
+
+      // If using Kokoro local voice
       if (config.kokoroUrl) {
         try {
           let baseUrl = config.kokoroUrl.replace(/\/+$/, '');
@@ -1001,9 +1000,23 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           }
 
           currentAudioElement = new Audio(audioUrl);
+
+          // Triggers the actuator at ~70% through her voice line (towards the end of her sentence)
+          currentAudioElement.onloadedmetadata = () => {
+            if (standSeconds) {
+              const dur = currentAudioElement.duration || 3;
+              const triggerDelayMs = Math.max(600, (dur * 0.7) * 1000);
+              
+              pendingStandTimeout = setTimeout(() => {
+                if (isCalling) triggerStandWithTimer(standSeconds);
+              }, triggerDelayMs);
+            }
+          };
+
           currentAudioElement.onended = () => {
             resumeListeningWithDelay(600);
           };
+
           currentAudioElement.play();
           return;
 
@@ -1012,10 +1025,26 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         }
       }
 
-      // Browser fallback voice
+      // Browser fallback voice: estimate length and trigger at ~70%
+      if (standSeconds) {
+        const estTotalMs = (text.length / 14 / (config.rate || 0.95)) * 1000;
+        const triggerDelayMs = Math.max(600, estTotalMs * 0.7);
+        
+        pendingStandTimeout = setTimeout(() => {
+          if (isCalling) triggerStandWithTimer(standSeconds);
+        }, triggerDelayMs);
+      }
+
       const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.95;
-      utterance.onend = () => resumeListeningWithDelay(600);
+      utterance.rate = config.rate || 0.95;
+      utterance.pitch = config.pitch || 1.05;
+
+      const selected = availableVoices.find(v => v.voiceURI === config.voiceURI);
+      if (selected) utterance.voice = selected;
+
+      utterance.onend = () => {
+        resumeListeningWithDelay(600);
+      };
       synth.speak(utterance);
     }
 
@@ -1037,8 +1066,10 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       clearTimeout(silenceTimer);
       if (standingAutoKneelTimer) clearTimeout(standingAutoKneelTimer);
       if (countdownInterval) clearInterval(countdownInterval);
+      if (pendingStandTimeout) clearTimeout(pendingStandTimeout);
       standingAutoKneelTimer = null;
       countdownInterval = null;
+      pendingStandTimeout = null;
 
       timerBanner.style.display = "none";
       callCard.className = "call-card";
