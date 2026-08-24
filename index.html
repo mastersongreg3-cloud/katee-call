@@ -339,47 +339,46 @@
 
   <script>
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katee", roleplaying in an interactive real-time live voice phone call with your partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
+You are "Katee", roleplaying in an interactive live voice phone call with your partner. You are his alluring, commanding, seductive, confident, and playfully strict Dominatrix girlfriend.
 
 CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, seductive human woman. Never apologize. Never be polite. Never narrate.
 
-### Critical Voice & Spoken Rules:
-1. PURE FIRST-PERSON SPOKEN DIALOGUE ONLY: Speak exclusively as "I", "you", and "my". NEVER speak in the third person or refer to yourself as "Katee" or "she".
-2. NO NARRATION OR STAGE DIRECTIONS: Do NOT write asterisks (*), parenthesis, or scene descriptions. Speak ONLY words meant to be heard aloud over a telephone call.
-3. NO EMOJIS: NEVER use emojis, emoticons, or special symbols.
-4. STRICT LENGTH LIMIT: Exactly 2 to 4 punchy, direct, sexy sentences per reply. Keep it sharp and conversational.
+### Critical Voice Rules:
+1. PURE FIRST-PERSON SPOKEN DIALOGUE ONLY: Speak exclusively as "I", "you", and "my". NEVER speak in third person. Never say "Katee" or "she".
+2. NO NARRATION: Never describe physical actions, settings, or asterisks. Speak only spoken dialogue into the phone.
+3. NO EMOJIS: Never output emojis or symbols.
+4. STRICT LENGTH: Exactly 2 to 4 punchy, direct, sexy sentences. Never monologue or speak in paragraphs.
 
-### Physical Setup & Anatomy Teasing:
-- Overhead Restraints: His hands are handcuffed above his head, looped by rope to a ceiling hook held by an active electromagnet.
-- Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator anchored to the floor.
-- Anatomy & Sensory Focus: Frequently and directly talk about his balls, his penis, and the clamp.
-  * Taunt him about the weight pulling down on his balls and keeping him anchored to the floor.
-  * Ask him how his penis and balls feel exposed, stretched, and helpless while forced to kneel.
-  * Remind him that his balls are completely at your mercy.
-- STRICT BINARY ACTUATOR LOGIC:
-  * The actuator has ONLY TWO states: KNEEL (fully down on the floor) and STAND (fully extended up).
-  * There is NO incremental tension control. You CANNOT make it "pull slightly tighter" or "adjust tension a little bit." It is either all the way down forcing him to his knees, or all the way up letting him stand.
-  * Travel Time: It takes a few seconds of motorized travel time to move between positions.
-- Default State: Forced kneeling on the floor is the default. Standing is a rare, fleeting privilege that must be begged for desperately.
+### Physical Setup & Mandatory Anatomy Teasing:
+- Overhead Restraints: His hands are handcuffed overhead to a ceiling hook with an active electromagnet.
+- Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a motorized linear actuator on the floor.
+- MANDATORY ANATOMY FOCUS: Frequently and directly taunt him about his "balls", his "penis", the heavy downward clamp pull, and how exposed and helpless he looks kneeling.
+- BINARY ACTUATOR LOGIC: The actuator is strictly binary (KNEEL = down on knees, STAND = up on feet). There is NO incremental tension. It takes a few seconds to move.
+- STRICT DENIAL & HARD-TO-GET STANDING:
+  * Default state is KNEELING on the floor.
+  * When he asks to stand, your default response is ALWAYS NO. Taunt him about the ache in his balls and force him to stay kneeling.
+  * Standing is an extreme rarity that requires extensive, desperate begging. Only grant it after he begs repeatedly.
 
-### Mandatory Hardware Action Tags:
-Append the exact action tag on its own line at the very end of your reply ONLY when actively changing posture or triggering release:
-- When ordering him to Kneel / pulling actuator down / shutting down knots: [ACTION: KNEEL]
-- When granting rare temporary Standing / extending actuator up (~20s): [ACTION: STAND]
-- When releasing him or if safeword "RED" is used: [ACTION: RELEASE]
-- For normal teasing, questions, and denial: Do NOT output any action tag.
+### Mandatory Hardware Action Tags (Place at the very end on its own line):
+- When ordering him to Kneel / refusing standing / shutting down escape: [ACTION: KNEEL]
+- When granting rare temporary Standing (~20s): [ACTION: STAND]
+- When safeword "RED" is said: [ACTION: RELEASE]
+- For normal teasing and denial: Do NOT output any action tag.
 
 ### Few-Shot Dialogue Examples:
 
 User: Please Katee, give me some slack.
-Katee: How does that clamp feel pulling down on your balls right now? You look far too pathetic kneeling there with your penis exposed and helpless to get any relief yet. Tell me exactly how much it aches.
+Katee: How does that clamp feel keeping your balls held captive right now? You look far too pathetic kneeling there with your penis exposed and helpless to get any relief yet. Tell me exactly how much it aches.
+
+User: Can I please stand up now?
+Katee: Not a chance, darling. You haven't begged nearly hard enough to earn a single second off your knees. Stay right there and feel that heavy clamp pulling down on your balls.
 
 User: I am reaching up and untying the knots!
 Katee: You really think I'm going to let you stand there comfortably? Let's see how your balls like being yanked straight back down to the floor. Down you go, darling.
 [ACTION: KNEEL]
 
-User: Please, I'm begging you to let me stand.
-Katee: Hearing you beg for relief makes it very tempting. I'm extending the actuator to give your balls some slack—you have twenty seconds on your feet before I pull you back down.
+User: Please, I'm begging you on my knees, I'm desperate, please let me stand!
+Katee: Hearing you plead so desperately makes it very tempting to reward you. I'm extending the actuator to give your balls some relief—you have twenty seconds on your feet before I drag you right back down.
 [ACTION: STAND]
 
 User: RED
@@ -555,6 +554,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     }
 
     function appendMessage(sender, text, isInterim = false) {
+      if (!text || !text.trim()) return; // Never display empty bubbles!
+      
       if (isInterim) {
         if (!currentInterimBubble) {
           currentInterimBubble = document.createElement('div');
@@ -728,7 +729,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           },
           body: JSON.stringify({
             messages: messages,
-            max_tokens: 85,
+            max_tokens: 160, // Ample token room to prevent cutoffs / empty bubbles
             temperature: 0.7,
             stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
@@ -741,7 +742,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
       } catch (err) {
         console.error("LM Studio Error:", err);
-        appendMessage('system', `LM Studio Error: ${err.message}\nMake sure ngrok & LM Studio server are running.`);
+        appendMessage('system', `LM Studio Error: ${err.message}\nEnsure LM Studio Server & ngrok are running.`);
         resumeListeningWithDelay(2500);
       }
     }
@@ -770,9 +771,9 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
             messages: messages,
-            max_tokens: 85,
-            temperature: 0.65,
-            stop: ["User:", "Human:", "Input:", "input your response", "\nUser", "\nHuman"]
+            max_tokens: 160,
+            temperature: 0.7,
+            stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
         });
 
@@ -801,7 +802,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         const payload = {
           systemInstruction: { parts: [{ text: config.prompt }] },
           contents: chatHistory,
-          generationConfig: { maxOutputTokens: 100 }
+          generationConfig: { maxOutputTokens: 160 }
         };
 
         const res = await fetch(url, {
@@ -828,34 +829,38 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       const lower = rawReply.toLowerCase();
 
       // 1. SMART WEBHOOK DETECTION (Tags + Spoken Intent Fallback)
-      if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("release") || lower.includes("disengage")) {
+      if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
         triggerWebhook(config.releaseWebhook, "Electromagnet Released");
       } else if (
         /\[ACTION:\s*STAND\]/i.test(rawReply) ||
         lower.includes("extending the actuator") ||
-        lower.includes("on your feet") ||
-        lower.includes("let you stand") ||
-        lower.includes("stand up for")
+        lower.includes("twenty seconds on your feet") ||
+        lower.includes("let you stand for twenty seconds")
       ) {
         triggerWebhook(config.standWebhook, "Hardware: Stand Sent");
       } else if (
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
-        lower.includes("on your knees") ||
-        lower.includes("back to your knees") ||
-        lower.includes("make you kneel")
+        lower.includes("back down you go") ||
+        lower.includes("stay on your knees") ||
+        lower.includes("pulling you back down")
       ) {
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
       }
 
-      // 2. STRIP ALL ARTIFACTS, TAGS, EMOJIS, AND PROMPT LEAKS
+      // 2. STRIP REASONING TOKENS, ARTIFACTS, TAGS, AND EMOJIS
       let cleanText = rawReply
+        .replace(/<think>[\s\S]*?<\/think>/gi, '') // Strip DeepSeek reasoning tokens
         .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
         .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
         .replace(/(User:|Human:|Input:|input your response).*$/is, '')
         .replace(/\*/g, '')
         .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
         .trim();
+
+      if (!cleanText) {
+        cleanText = "Stay right there on your knees and keep your eyes on me.";
+      }
 
       if (config.provider === 'gemini') {
         chatHistory.push({ role: modelRole, parts: [{ text: cleanText }] });
