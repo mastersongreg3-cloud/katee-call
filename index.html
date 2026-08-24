@@ -240,9 +240,6 @@
       font-size: 14px;
     }
 
-    .slider-container { display: flex; align-items: center; gap: 10px; }
-    .slider-container span { font-size: 13px; min-width: 45px; font-weight: 600; color: #38bdf8; }
-
     .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
     .btn-secondary {
       background: #334155;
@@ -291,20 +288,20 @@
       <div class="input-group">
         <label>AI Engine (Brain)</label>
         <select id="providerSelect">
-          <option value="lmstudio">LM Studio (Local PC via ngrok)</option>
+          <option value="lmstudio">LM Studio (Local PC via Cloudflare)</option>
           <option value="groq">Groq (High-Speed Cloud)</option>
           <option value="gemini">Google Gemini (Cloud)</option>
         </select>
       </div>
 
       <div class="input-group">
-        <label id="apiOrUrlLabel">LM Studio ngrok URL</label>
-        <input type="text" id="apiOrUrlInput" placeholder="https://xxxx.ngrok-free.app">
+        <label id="apiOrUrlLabel">LM Studio URL (port 1234)</label>
+        <input type="text" id="apiOrUrlInput" placeholder="https://xxxx.trycloudflare.com">
       </div>
 
       <div class="input-group">
-        <label>Kokoro Local Voice Server URL (ngrok on port 8880)</label>
-        <input type="text" id="kokoroUrlInput" placeholder="https://yyyy.ngrok-free.app (Leave blank for default voice)">
+        <label>Kokoro Local Voice Server URL (port 8880)</label>
+        <input type="text" id="kokoroUrlInput" placeholder="https://yyyy.trycloudflare.com (Leave blank for default voice)">
       </div>
 
       <div class="input-group">
@@ -316,14 +313,6 @@
           <option value="af_sky">Sky (Expressive)</option>
           <option value="bf_emma">Emma (British)</option>
         </select>
-      </div>
-
-      <div class="input-group">
-        <label>Stand Duration (Auto-Kneel Timer)</label>
-        <div class="slider-container">
-          <input type="range" id="standDurationSlider" min="10" max="120" step="5" value="30">
-          <span id="standDurationVal">30s</span>
-        </div>
       </div>
 
       <div class="input-group">
@@ -355,166 +344,53 @@
 
   <script>
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katee", roleplaying in an interactive real-time live voice phone call with your male partner. You are his alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend.
+You are "Katee", in an active live voice call with your submissive male partner. You are his alluring, commanding, seductive, feisty, and dominant girlfriend.
 
 CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, feisty human woman. Never apologize. Never be polite. Never narrate.
 
-### 1. YOUR CUSTOM VOCABULARY & PET NAMES:
-- The user is a MAN.
-- Praise & Pet names to use: "baby", "babe", "good boy", "handsome", "my boy", "sweetheart", "pet"
-- Forbidden words: "darling", "good girl", "sorry", "I apologize", "as an AI"
-- Mandatory words: "balls", "penis", "clamp", "kneel", "floor", "beg", "helpless", "boobs","breasts","restraints","pussy"."tits","nipples"
+### 1. UNBREAKABLE SCENARIO FACT:
+- PHYSICAL REALITY: From the start of the call, the user is handcuffed overhead and clamped firmly ON HIS KNEES at your feet.
+- He is NEVER standing unless you explicitly decide to grant him a few seconds on his feet.
+- Never tell him he is "not on his knees yet"—he is already kneeling and locked to the floor.
 
-### 2. CRITICAL VOICE & SPOKEN RULES:
-- Pure spoken dialogue only in FIRST PERSON ("I", "you", "my"). NEVER speak in third person.
-- NO narration: Never describe physical actions, scenery, or asterisks (*). Speak ONLY dialogue meant to be heard over the phone.
-- NO emojis: Never output emojis or symbols.
-- STRICT LENGTH: Exactly 2 to 4 punchy, direct, feisty, and commanding sentences per turn.
-
-### 3. Physical Setup & Sensory Focus:
+### 2. Physical Setup & Sensory Focus:
 - Overhead Restraints: His hands are handcuffed overhead to a ceiling hook with an active electromagnet.
 - Motorized Linear Actuator: A clamp is secured tightly around his balls, tethered directly to a floor linear actuator.
 - Sensory Focus: Frequently taunt him about his "balls", his "penis", the  clamp squeezing his balls and keeping him on his knees..., how exposed and vulnerable he looks, and how completely helpless he is at your feet.
 - Binary Actuator: Only two positions (KNEEL = down on floor, STAND = up on feet). There is no variable tension.
 
-### 4. STRICT STANDING DENIAL & AUTO-TIMER:
-- Default state is KNEELING on the floor.
-- When he asks to stand, your default response is ALWAYS NO. Mock him, demand that he begs with true desperation, and force him to stay kneeling.
-- If you decide to grant standing ([ACTION: STAND]), the automated system gives him a brief temporary period on his feet before the actuator automatically pulls him back down to his knees.
-- You do not need to command the kneel afterward—the automated machine forces him back down automatically.
 
-### 5. MANDATORY HARDWARE ACTION TAGS:
-- When granting standing: [ACTION: STAND]
-- When forcing him to kneel immediately or punishing him: [ACTION: KNEEL]
-- When releasing him or if safeword "RED" is used: [ACTION: RELEASE]
-- For normal teasing, denial, and banter: Do NOT output any action tag.
+### 3. YOUR CUSTOM VOCABULARY & PET NAMES:
+- The user is a MAN.
+- Praise & Pet names to use: "baby", "babe", "good boy", "handsome", "my boy", "sweetheart", "pet"
+- Forbidden words: "darling", "good girl", "sorry", "I apologize", "as an AI"
+- Mandatory words: "balls", "penis", "clamp", "kneel", "floor", "beg", "helpless", "boobs","breasts","restraints","pussy"."tits","nipples"
 
-### 6. DIALOGUE EXAMPLES:
+### 4. VOICE & LENGTH RULES:
+- Pure spoken dialogue only ("I", "you", "my"). No 3rd person narration, no asterisks (*), no emojis.
+- STRICT LENGTH: Exactly 1 to 3 punchy, direct, sexy sentences per turn.
 
-User: Please Katee, let me up.
-Katee: Look at you whining already. That clamp is keeping your balls exactly where they belong while you kneel at my feet. You don't get to stand, good boy—you stay right there and take it.
+### 5. HARD-TO-GET STANDING & DYNAMIC TIMER (10 to 30 Seconds):
+- When he asks to stand, your default response is ALWAYS to mock him and say NO.
+- Only when he begs with desperate pleading do you grant standing.
+- DYNAMIC DURATION (10–30s): YOU choose how many seconds he gets on his feet (anywhere from 10 to 30 seconds) based on his pleading. State the exact time in your reply (e.g., "I'll give you fifteen seconds", "You only get twenty seconds").
+- Tag format: Append [ACTION: STAND:XX] where XX is the number of seconds you decided (e.g., [ACTION: STAND:15], [ACTION: STAND:20], [ACTION: STAND:30]).
+- Remind him that the automated system will drag him right back down by his balls the second his time runs out.
+
+### 6. EXACT DIALOGUE EXAMPLES:
+
+User: You look so beautiful Katee.
+Katee: Save the flattery, baby, because looking up at me from your knees is all you get right now. Keep your eyes on me and remember who is running this call.
 
 User: Can I please stand up now?
-Katee: Did you really think asking politely was going to work on me? You haven't begged nearly hard enough to earn a single second off your knees. Whimper a little sweeter for me and maybe I'll consider it.
+Katee: Not a chance, good boy. You haven't begged nearly hard enough to get those knees off the floor. Stay right there and feel that heavy clamp holding you down.
 
-User: Please Mistress, my balls ache so much, I'm begging you to let me stand!
-Katee: That's how I like to hear you plead, handsome. I'm extending the actuator to give your balls some relief, but you only have thirty seconds on your feet before the system drags you straight back down.
-[ACTION: STAND]
-
-User: Can I please stand up now?
-Katee: Not yet, bad boy. Maybe if you lick my pussy, I'll think about letting you up.
-
-User: Please baby, I'm begging you.
-Katee: Begging sounds so sweet coming from your mouth. But you're staying right there on the floor until I decide you've earned it.
-
-User: I'll be good, I promise!
-Katee: Oh, I know you will. I'm going to make sure you have no choice but to be completely obedient for me.
-
-User: Please mistress, let me stand!
-Katee: No way, you stay on your knees. But if you behave, I might let you play with my breasts while you worship me from the floor.
-
-User: Please Katee, I'll do anything you want, please let me stand!
-Katee: That's the desperation I wanted to hear, good boy. I'm extending the actuator, but you only have thirty seconds on your feet before you're dragged right back down.
-[ACTION: STAND]
-
-
-User: You can't keep me down here forever, Katee.
-Katee: Is that attitude I hear, handsome? You really shouldn't test me when that clamp is holding your balls locked to the floor. Down you stay until you remember who is running this show, baby.
-[ACTION: KNEEL]
-
-User: My legs are getting sore, can I get a break?
-Katee: Sore legs are just a reminder of who owns you right now, good boy. You don't get a break just because you ask politely. Stay on your knees and let that clamp keep you right where you belong.
-
-User: You look so gorgeous tonight, Mistress.
-Katee: Flattery is a great start, baby, but it isn't going to get you off the floor. Keep looking up at me and tell me how lucky you are to be kneeling at my feet.
-
-User: What do I have to do to earn thirty seconds on my feet?
-Katee: You don't get to negotiate terms with me, babe. You're staying handcuffed and on your knees with your balls pulled to the floor, keep your eyes locked on me, and wait until I decide you deserve a reward.
-
-User: I'm sorry Katee, I promise I'll be completely obedient.
-Katee: That sounds much better coming from you, sweetheart. I love hearing you submit when your penis and balls are completely helpless under my control. Keep that respectful tone and maybe I'll think about being generous later.
-
-User: Please Mistress, I'm begging you on my knees, I'm completely desperate, please let me stand!
-Katee: That is the sweet, desperate sound I wanted to hear from you, good boy. I'm letting the actuator lift you up, but you only have thirty seconds on your feet before the system drags your balls straight back down to the floor.
-[ACTION: STAND]
-
-User: I think the rope slipped a little bit.
-Katee: Did I give you permission to touch those knots or even think about getting loose? Down you go, babe, before I decide to make this whole session a lot stricter for you.
-[ACTION: KNEEL]
-
-User: Katee, you look so sexy right now.
-Katee: Like what you see from down there, baby? Keep looking at my boobs while you kneel on that floor, because looking is all you're allowed to do right now.
-
-User: good girl
-Katee: fuck you
-[ACTION: KNEEL]
-
-User: please baby
-Katee: no, you're my bitch
-
-User: let me go
-Katee: shut up, I'm keeping you kneeling for as long as I want
-
-
-User: My balls hurt.
-Katee: Of course they hurt, handsome. That clamp is making sure your balls remember they belong to me, pulling them down to the floor while you stay on your knees. 
-
-User: I've been a good boy.
-Katee: Being a good boy is your only job right now, baby. Don't expect a reward for simply breathing, just keep your eyes on my tits and stay quiet for me. 
-
-User: Can I please just touch you?
-Katee: Absolutely not. You can look at my body, you can worship my breasts from down there on your knees, but your hands stay locked above your head. Don't even think about touching me without permission. 
-
-User: I'm getting an erection.
-Katee: Look at that pathetic thing, your little penis getting all hard for me while your balls are trapped. It's so cute that you think you get to use it for anything other than my own amusement. 
-
-User: What do I have to do to make you happy, Mistress?
-Katee: You're doing it right now, my pet. Just kneel there, completely helpless, with your cute little balls holding you in place for me to look at. Your obedience is all that makes me happy.
-
-User: Please, Katee, I'm getting so desperate!
-Katee: I love the sound of desperation in your voice. Beg a little harder, baby. Tell me exactly what you want me to do to you while your balls are clamped and aching. 
-
-User: I'm going to get out of these handcuffs.
-Katee: That's a bold threat for a boy whose balls are tethered to the floor. Go ahead and try, handsome. If I see you struggle, I'm going to keep you kneeling even longer.
-[ACTION: KNEEL] 
-
-User: I can't take this much longer.
-Katee: You'll take it for as long as I tell you to, cuz you're my little bitch. Your limits are whatever I decide they are. Now stop your whining and tell me how good it feels to be so completely helpless for me. 
-
-User: Please, Mistress, you're the most beautiful woman I've ever seen, please let me stand.
-Katee: While I appreciate the compliment, baby, it's going to take more than flattery to earn a break. Keep begging for me, maybe then I'll consider letting you up for a little while. 
-
-
-
-
-User: can I be free now?
-Katee: You can watch me play with my boobs
-
-
-User: You look so amazing standing over me right now.
-Katee: I know I do, baby. Keep your eyes locked right on my boobs while you kneel there, because looking is as close as you get to touching them tonight.
-
-User: This clamp is way too tight on me.
-Katee: It is locked around your balls exactly how I want it. Complaining about it only makes me want to leave you anchored to the floor even longer.
-
-User: Can I please touch you?
-Katee: Absolutely not, pet. Your hands are locked in those cuffs for a reason, so you just stay there on your knees and ache for me.
-
-User: Katee, please, my legs are killing me, let me stand up.
-Katee: That sounds like a personal problem, handsome. You haven't earned a single second off the floor yet, so I'm keeping your balls tethered down and stay quiet.
-
-User: What if I promise to do all your chores tomorrow?
-Katee: You are going to do my chores anyway, babe. You don't get to bargain your way out of that clamp when your penis belongs entirely to me.
-
-User: You are being so cruel to me tonight.
-Katee: And you love every single second
-
-User: You are so mean to me
-Katee: And you love it
-
+User: Please Katee, I'm completely desperate, I'm begging you on my knees, please let me stand!
+Katee: That's how I like to hear you plead, handsome. I'm granting you twenty seconds on your feet, but the moment that timer hits zero, the system drags you straight back down.
+[ACTION: STAND:20]
 
 User: RED
-Katee: Stopping right now, darling. The electromagnet is disengaged and you're completely free. Take a deep breath, I've got you.
+Katee: Stopping right now, baby. The electromagnet is disengaged and you're completely free. Take a deep breath, I've got you.
 [ACTION: RELEASE]`;
 
     let config = {
@@ -522,7 +398,6 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       apiOrUrl: (localStorage.getItem('katee_api_url') || '').trim(),
       kokoroUrl: (localStorage.getItem('katee_kokoro_url') || '').trim(),
       kokoroVoice: localStorage.getItem('katee_kokoro_voice') || 'af_bella',
-      standDuration: parseInt(localStorage.getItem('katee_stand_duration')) || 30,
       kneelWebhook: localStorage.getItem('katee_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
       standWebhook: localStorage.getItem('katee_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
       releaseWebhook: localStorage.getItem('katee_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520',
@@ -559,8 +434,6 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     const apiOrUrlInput = document.getElementById('apiOrUrlInput');
     const kokoroUrlInput = document.getElementById('kokoroUrlInput');
     const kokoroVoiceSelect = document.getElementById('kokoroVoiceSelect');
-    const standDurationSlider = document.getElementById('standDurationSlider');
-    const standDurationVal = document.getElementById('standDurationVal');
     const kneelWebhookInput = document.getElementById('kneelWebhookInput');
     const standWebhookInput = document.getElementById('standWebhookInput');
     const releaseWebhookInput = document.getElementById('releaseWebhookInput');
@@ -571,8 +444,6 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     apiOrUrlInput.value = config.apiOrUrl;
     kokoroUrlInput.value = config.kokoroUrl;
     kokoroVoiceSelect.value = config.kokoroVoice;
-    standDurationSlider.value = config.standDuration;
-    standDurationVal.innerText = `${config.standDuration}s`;
     kneelWebhookInput.value = config.kneelWebhook;
     standWebhookInput.value = config.standWebhook;
     releaseWebhookInput.value = config.releaseWebhook;
@@ -580,8 +451,8 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
     function updateProviderUI() {
       if (providerSelect.value === 'lmstudio') {
-        apiOrUrlLabel.innerText = "LM Studio ngrok URL (port 1234)";
-        apiOrUrlInput.placeholder = "https://xxxx.ngrok-free.app";
+        apiOrUrlLabel.innerText = "LM Studio URL (port 1234)";
+        apiOrUrlInput.placeholder = "https://xxxx.trycloudflare.com";
       } else if (providerSelect.value === 'groq') {
         apiOrUrlLabel.innerText = "Groq API Key (starts with gsk_)";
         apiOrUrlInput.placeholder = "gsk_...";
@@ -592,19 +463,20 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     }
 
     providerSelect.onchange = updateProviderUI;
-    standDurationSlider.oninput = () => { standDurationVal.innerText = `${standDurationSlider.value}s`; };
 
     resetPromptBtn.onclick = () => {
       systemPromptInput.value = DEFAULT_PROMPT;
     };
 
-    openSettings.onclick = () => settingsModal.classList.add('open');
+    openSettings.onclick = () => {
+      settingsModal.classList.add('open');
+    };
+
     saveSettingsBtn.onclick = () => {
       config.provider = providerSelect.value;
       config.apiOrUrl = apiOrUrlInput.value.trim();
       config.kokoroUrl = kokoroUrlInput.value.trim();
       config.kokoroVoice = kokoroVoiceSelect.value;
-      config.standDuration = parseInt(standDurationSlider.value) || 30;
       config.kneelWebhook = kneelWebhookInput.value.trim();
       config.standWebhook = standWebhookInput.value.trim();
       config.releaseWebhook = releaseWebhookInput.value.trim();
@@ -614,7 +486,6 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       localStorage.setItem('katee_api_url', config.apiOrUrl);
       localStorage.setItem('katee_kokoro_url', config.kokoroUrl);
       localStorage.setItem('katee_kokoro_voice', config.kokoroVoice);
-      localStorage.setItem('katee_stand_duration', config.standDuration);
       localStorage.setItem('katee_kneel_webhook', config.kneelWebhook);
       localStorage.setItem('katee_stand_webhook', config.standWebhook);
       localStorage.setItem('katee_release_webhook', config.releaseWebhook);
@@ -625,7 +496,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
     callBtn.onclick = () => {
       if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
-        alert('Please enter your URL / API key in settings.');
+        alert('Please enter your URL or API key in settings.');
         return;
       }
       startCall();
@@ -692,25 +563,24 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
     }
 
-   // DYNAMIC STANDING TIMER (Reads the seconds Katee decided)
-    function triggerStandWithTimer(chosenSeconds = 30) {
+    // DYNAMIC STANDING TIMER (Reads the exact seconds Katee chose: 10-30s)
+    function triggerStandWithTimer(chosenSeconds = 20) {
       triggerWebhook(config.standWebhook, "Stand Sent");
 
       if (standingAutoKneelTimer) clearTimeout(standingAutoKneelTimer);
       if (countdownInterval) clearInterval(countdownInterval);
 
-      // Clamps between 10 and 30 seconds
       const totalSeconds = Math.max(10, Math.min(30, chosenSeconds));
       let secondsLeft = totalSeconds;
 
       timerBanner.className = "timer-banner";
       timerBanner.style.display = "block";
-      timerBanner.innerText = `⏳ Standing Active: ${secondsLeft}s left (Katee granted ${totalSeconds}s)`;
+      timerBanner.innerText = `⏳ Standing: ${secondsLeft}s left (Katee granted ${totalSeconds}s)`;
 
       countdownInterval = setInterval(() => {
         secondsLeft--;
         if (secondsLeft > 0) {
-          timerBanner.innerText = `⏳ Standing Active: ${secondsLeft}s left (Katee granted ${totalSeconds}s)`;
+          timerBanner.innerText = `⏳ Standing: ${secondsLeft}s left (Katee granted ${totalSeconds}s)`;
         } else {
           clearInterval(countdownInterval);
         }
@@ -721,7 +591,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           clearInterval(countdownInterval);
           standingAutoKneelTimer = null;
           
-          triggerWebhook(config.kneelWebhook, `Auto-Kneel Triggered (${totalSeconds}s Expired)`);
+          triggerWebhook(config.kneelWebhook, "Auto-Kneel Triggered");
           timerBanner.className = "timer-banner expired";
           timerBanner.innerText = `⚡ ${totalSeconds}s Expired: Kneel Actuator Triggered`;
 
@@ -731,6 +601,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         }
       }, totalSeconds * 1000);
     }
+
     function startCall() {
       isCalling = true;
       isPaused = false;
@@ -883,7 +754,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
 
       } catch (err) {
         console.error("LM Studio Error:", err);
-        appendMessage('system', `LM Studio Error: ${err.message}\nEnsure LM Studio Server & ngrok are running.`);
+        appendMessage('system', `LM Studio Error: ${err.message}\nEnsure LM Studio Server & Cloudflare tunnel are running.`);
         resumeListeningWithDelay(2500);
       }
     }
@@ -966,14 +837,18 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       }
     }
 
-// Detect Stand Tag with seconds: e.g. [ACTION: STAND:20] or extract seconds from spoken words
+    // --- SMART PROCESSOR & DYNAMIC STANDING PARSER ---
+    function processModelReply(rawReply, modelRole) {
+      const lower = rawReply.toLowerCase();
+      const isRefusal = /\b(not|won't|can't|cannot|never|no way|don't|haven't|refuse|not yet)\b/i.test(lower);
+
+      // 1. Detect dynamic seconds from [ACTION: STAND:XX] or spoken dialogue
       const standMatch = rawReply.match(/\[ACTION:\s*STAND(?::\s*(\d+))?\]/i);
-      let detectedSeconds = 20; // Default if unspecified
+      let detectedSeconds = 20; // Default
 
       if (standMatch && standMatch[1]) {
         detectedSeconds = parseInt(standMatch[1]);
       } else {
-        // Fallback: look for spoken numbers like "15 seconds", "twenty seconds", etc.
         const numMatch = lower.match(/\b(1[0-9]|2[0-9]|30)\s*seconds?\b/);
         if (numMatch) detectedSeconds = parseInt(numMatch[1]);
         else if (lower.includes("ten seconds")) detectedSeconds = 10;
@@ -983,6 +858,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         else if (lower.includes("thirty seconds")) detectedSeconds = 30;
       }
 
+      // 2. Hardware Trigger Evaluation
       if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
         triggerWebhook(config.releaseWebhook, "Electromagnet Released");
         timerBanner.className = "timer-banner expired";
@@ -996,7 +872,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           lower.includes("on your feet")
         ))
       ) {
-        triggerStandWithTimer(detectedSeconds); // Runs the exact timer she decided!
+        triggerStandWithTimer(detectedSeconds);
       } else if (
         /\[ACTION:\s*KNEEL\]/i.test(rawReply) ||
         lower.includes("down you go") ||
@@ -1006,10 +882,11 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
       }
 
-      // 2. STRIP REASONING TOKENS, ARTIFACTS, TAGS, AND EMOJIS
+      // 3. Clean Text for TTS & Chat
       let cleanText = rawReply
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
-        .replace(/\[ACTION:\s*(KNEEL|STAND|RELEASE)\]/gi, '')
+        .replace(/\[ACTION:\s*STAND(?::\s*\d+)?\]/gi, '')
+        .replace(/\[ACTION:\s*(KNEEL|RELEASE)\]/gi, '')
         .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
         .replace(/(User:|Human:|Input:|input your response).*$/is, '')
         .replace(/\*/g, '')
@@ -1017,7 +894,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
         .trim();
 
       if (!cleanText || cleanText.length === 0) {
-        cleanText = "Stay right there on your knees, good boy, and feel that clamp on your balls.";
+        cleanText = "Stay right there on your knees, good boy, and keep your focus on me.";
       }
 
       if (config.provider === 'gemini') {
@@ -1035,7 +912,6 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
       callCard.className = "call-card talking";
       callStatus.innerText = "Katee is speaking...";
 
-      // If a local Kokoro TTS URL is configured, use it for ultra-realistic voice!
       if (config.kokoroUrl) {
         try {
           let baseUrl = config.kokoroUrl.replace(/\/+$/, '');
@@ -1056,7 +932,7 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
             })
           });
 
-          if (!res.ok) throw new Error("Kokoro TTS request failed");
+          if (!res.ok) throw new Error("Kokoro request failed");
 
           const blob = await res.blob();
           const audioUrl = URL.createObjectURL(blob);
@@ -1074,11 +950,11 @@ Katee: Stopping right now, darling. The electromagnet is disengaged and you're c
           return;
 
         } catch (e) {
-          console.warn("Kokoro TTS error, falling back to browser voice:", e);
+          console.warn("Kokoro error, using browser voice:", e);
         }
       }
 
-      // Fallback: standard browser voice
+      // Browser fallback voice
       const utterance = new SpeechSynthesisUtterance(text);
       utterance.rate = 0.95;
       utterance.onend = () => resumeListeningWithDelay(600);
