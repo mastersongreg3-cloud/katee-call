@@ -680,6 +680,29 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
             timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
           }
 
+
+// INSTANT HARDWARE KNEEL PENALTY ON "GOOD GIRL"
+          if (latestTranscript.toLowerCase().includes("good girl")) {
+            if (standingAutoKneelTimer) {
+              clearTimeout(standingAutoKneelTimer);
+              standingAutoKneelTimer = null;
+            }
+            if (countdownInterval) {
+              clearInterval(countdownInterval);
+              countdownInterval = null;
+            }
+            triggerWebhook(config.kneelWebhook, "Disrespect Penalty: Instant Kneel");
+            timerBanner.className = "timer-banner expired";
+            timerBanner.style.display = "block";
+            timerBanner.innerText = "⚡ Disrespect Penalty: Kneel Triggered";
+
+            setTimeout(() => {
+              if (!standingAutoKneelTimer) timerBanner.style.display = "none";
+            }, 4000);
+          }
+
+
+          
           clearTimeout(silenceTimer);
           silenceTimer = setTimeout(() => {
             if (latestTranscript && isCalling && !isPaused && !isProcessing) {
