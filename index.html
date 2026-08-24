@@ -755,7 +755,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           },
           body: JSON.stringify({
             messages: messages,
-            max_tokens: 50, // STRICT: 1 TO 2 SENTENCES ONLY
+            max_tokens: 120, // STRICT: 1 TO 2 SENTENCES ONLY
             temperature: 0.65,
             stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
@@ -798,7 +798,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           body: JSON.stringify({
             model: "llama-3.3-70b-versatile",
             messages: messages,
-            max_tokens: 50, // STRICT LIMIT
+            max_tokens: 120, // STRICT LIMIT
             temperature: 0.65,
             stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
           })
