@@ -760,21 +760,59 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
     function updateKateeMood(userSpeech) {
       const lower = userSpeech.toLowerCase();
 
-      // Actions that spike her temper
-      if (lower.includes("good girl")) {
-        kateeTemper = Math.min(100, kateeTemper + 40);
-      } else if (lower.includes("let me up") || lower.includes("let me stand") || lower.includes("hurry up")) {
-        kateeTemper = Math.min(100, kateeTemper + 15);
-      } 
-      // Actions that calm her down
-      else if (lower.includes("sorry") || lower.includes("mistress") || lower.includes("forgive me") || lower.includes("yes mistress") || lower.includes("please mistress")) {
-        kateeTemper = Math.max(0, kateeTemper - 20);
-      } else {
-        // Natural gentle cooling for regular submissive chat
-        kateeTemper = Math.max(0, kateeTemper - 5);
-      }
+      // 1. DEFIANCE, SARCASM & DISRESPECT DETECTOR (Heavy anger spike)
+      const isDisrespectful = 
+        lower.includes("good girl") ||
+        lower.includes("good mistress") ||
+        lower.includes("no way") ||
+        lower.includes("not begging") ||
+        lower.includes("won't beg") ||
+        lower.includes("wont beg") ||
+        lower.includes("not going to beg") ||
+        lower.includes("never") ||
+        lower.includes("make me") ||
+        lower.includes("refuse") ||
+        lower.includes("hate") ||
+        lower.includes("shut up") ||
+        lower.includes("screw you") ||
+        lower.includes("fuck you") ||
+        lower.includes("bitch") ||
+        lower.includes("untie") ||
+        lower.includes("getting loose") ||
+        lower.includes("escape") ||
+        lower.includes("let me up") ||
+        lower.includes("let me stand") ||
+        lower.includes("hurry up") ||
+        (lower.includes("not") && (lower.includes("sorry") || lower.includes("begging") || lower.includes("kneeling") || lower.includes("obedient")));
 
-      // Update the visual badge on screen if present
+      // 2. SINCERE SUBMISSION DETECTOR (Requires genuine apologies/respect)
+      const isSubmissive = 
+        !isDisrespectful && (
+          lower.includes("yes mistress") ||
+          lower.includes("please mistress") ||
+          lower.includes("i'm sorry") ||
+          lower.includes("im sorry") ||
+          lower.includes("forgive me") ||
+          lower.includes("i beg you") ||
+          lower.includes("i'll be good") ||
+          lower.includes("ill be good") ||
+          lower.includes("i am begging") ||
+          lower.includes("im begging")
+        );
+
+      // 3. CALCULATE HER TEMPER
+      if (isDisrespectful) {
+        if (lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way") || lower.includes("not begging")) {
+          kateeTemper = Math.min(100, kateeTemper + 40); // Massive spike on patronizing sarcasm/defiance
+        } else {
+          kateeTemper = Math.min(100, kateeTemper + 25);
+        }
+      } else if (isSubmissive) {
+        kateeTemper = Math.max(0, kateeTemper - 25); // Calms down when you genuinely grovel
+      }
+      // Note: She does NOT cool down automatically if you are neutral or talking back!
+
+      // 4. UPDATE VISUAL BADGE
       const moodBadge = document.getElementById('moodBadge');
       if (moodBadge) {
         if (kateeTemper <= 30) {
@@ -795,14 +833,14 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         }
       }
 
-      // Dynamic mood directive injected into the prompt
+      // 5. INJECT HER EXACT EMOTION DIRECTIVE INTO HER BRAIN
       let moodDirective = `\n\n[KATEE'S CURRENT TEMPER: ${kateeTemper}/100]\n`;
       if (kateeTemper <= 30) {
-        moodDirective += `Current State: Pleased and playful. You are dominant, sensual, and open to offering him 10-30s standing if he pleases you.`;
+        moodDirective += `Current State: Pleased and sensual. You are confident, playful, and open to offering him 10-30s standing if he pleases you.`;
       } else if (kateeTemper <= 65) {
-        moodDirective += `Current State: Irritated & Strict. You are annoyed by his impatience or attitude. Mock him, demand deeper respect, and DO NOT allow standing yet.`;
+        moodDirective += `Current State: Irritated & Strict. You are annoyed by his defiance. Mock his audacity, demand deeper submission, and DO NOT allow standing.`;
       } else {
-        moodDirective += `Current State: FURIOUS & RUTHLESS. The user has disrespected you. Your tone must be cold, harsh, and cutting. Standing is 100% FORBIDDEN. Force him to stay kneeling and make him grovel to earn your favor back.`;
+        moodDirective += `Current State: FURIOUS & RUTHLESS. The user has disrespected you with sarcasm or refusal. Your tone must be cold, harsh, and cutting. Standing is 100% FORBIDDEN. Force him to stay kneeling and make him grovel to earn your favor back.`;
       }
       return moodDirective;
     }
