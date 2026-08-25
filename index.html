@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Katee - Voice Call</title>
+  <title>Katie - Voice Call</title>
   <style>
     :root {
       --bg: #0f172a;
@@ -14,7 +14,7 @@
       --warning: #f59e0b;
       --success: #22c55e;
       --user-bubble: #2563eb;
-      --katee-bubble: #334155;
+      --Katie-bubble: #334155;
     }
 
     * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
@@ -147,9 +147,9 @@
       word-wrap: break-word;
     }
 
-    .bubble.katee {
+    .bubble.Katie {
       align-self: flex-start;
-      background: var(--katee-bubble);
+      background: var(--Katie-bubble);
       color: #f1f5f9;
       border-bottom-left-radius: 2px;
     }
@@ -258,7 +258,7 @@
 <body>
 
   <div class="header">
-    <span>Katee Voice Call</span>
+    <span>Katie Voice Call</span>
     <button class="settings-btn" id="openSettings">⚙️</button>
   </div>
 
@@ -267,7 +267,7 @@
       <div class="pulse-ring"></div>
       🎙️
     </div>
-    <div class="caller-name">Katee</div>
+    <div class="caller-name">Katie</div>
     <div class="mood-badge" id="moodBadge" style="font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 12px; margin-top: 4px; background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e;">Mood: Seductive (15%)</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
   </div>
@@ -275,7 +275,7 @@
   <div class="timer-banner" id="timerBanner">⏳ Stand Active: 30s left</div>
 
   <div class="chat-container" id="chatLog">
-    <div class="bubble katee">Press Call below to connect with Katee.</div>
+    <div class="bubble Katie">Press Call below to connect with Katie.</div>
   </div>
 
   <div class="controls">
@@ -333,10 +333,10 @@
         <input type="text" id="releaseWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/133520">
       </div>
 
-      <!-- 🧠 KATEE'S LONG-TERM MEMORY VIEWER -->
+      <!-- 🧠 Katie'S LONG-TERM MEMORY VIEWER -->
       <div class="input-group">
-        <label>Katee's Long-Term Memory (Persistent Records)</label>
-        <textarea id="memoryNotesInput" rows="3" placeholder="Katee's memory notes will appear here after calls..."></textarea>
+        <label>Katie's Long-Term Memory (Persistent Records)</label>
+        <textarea id="memoryNotesInput" rows="3" placeholder="Katie's memory notes will appear here after calls..."></textarea>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
           <span id="memoryStatsDisplay" style="font-size: 11px; color: #94a3b8;">Sessions: 0 | Kneels: 0 | Stands: 0</span>
           <button type="button" class="btn-secondary" id="clearMemoryBtn" style="font-size: 11px; padding: 3px 8px; background: #ef4444;">Wipe Memory</button>
@@ -344,7 +344,7 @@
       </div>
 
       <div class="input-group">
-        <label>Katee System Prompt</label>
+        <label>Katie System Prompt</label>
         <textarea id="systemPromptInput" rows="7"></textarea>
       </div>
 
@@ -357,7 +357,7 @@
 
   <script>
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katee", in an active live voice call with your submissive male partner. You are his alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend.
+You are "Katie", in an active live voice call with your submissive male partner. You are his alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend.
 
 CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, feisty human woman. Never apologize. Never be polite. Never narrate.
 
@@ -396,35 +396,35 @@ If he calls you "good girl", take it as cheeky disrespect. Put him in his place 
 ### 6. EXACT DIALOGUE EXAMPLES:
 
 User: Can I please stand up now?
-Katee: Did I say you were allowed to ask, good boy? Keep your mouth shut, endure that clamp on your balls, and wait until I decide you've been obedient enough.
+Katie: Did I say you were allowed to ask, good boy? Keep your mouth shut, endure that clamp on your balls, and wait until I decide you've been obedient enough.
 
-User: I will do whatever you say, Katee.
-Katee: That is what I like to hear, handsome. You've been kneeling so nicely for me... do you think you deserve some time on your feet?
+User: I will do whatever you say, Katie.
+Katie: That is what I like to hear, handsome. You've been kneeling so nicely for me... do you think you deserve some time on your feet?
 
 User: Yes Mistress, please.
-Katee: Good answer, baby. I'll give you twenty seconds on your feet, but the moment that timer hits zero, the actuator pulls you straight back down.
+Katie: Good answer, baby. I'll give you twenty seconds on your feet, but the moment that timer hits zero, the actuator pulls you straight back down.
 [ACTION: STAND:20]
 
 User: Yes Mistress, I have been good.
-Katee: You have been good, but I love seeing you helpless on the floor too much. Stay right there on your knees and whimper for me.
+Katie: You have been good, but I love seeing you helpless on the floor too much. Stay right there on your knees and whimper for me.
 
 User: Good girl.
-Katee: Did you really just call me "good girl"? You don't get to patronize your Mistress—get right back down on your knees and learn your place.
+Katie: Did you really just call me "good girl"? You don't get to patronize your Mistress—get right back down on your knees and learn your place.
 [ACTION: KNEEL]
 
 User: RED
-Katee: Stopping right now, baby. The electromagnet is disengaged and you're completely free. Take a deep breath, I've got you.
+Katie: Stopping right now, baby. The electromagnet is disengaged and you're completely free. Take a deep breath, I've got you.
 [ACTION: RELEASE]`;
 
     let config = {
-      apiOrUrl: (localStorage.getItem('katee_api_url') || '').trim(),
-      kokoroUrl: (localStorage.getItem('katee_kokoro_url') || '').trim(),
-      kokoroVoice: localStorage.getItem('katee_kokoro_voice') || 'af_bella',
-      standDuration: parseInt(localStorage.getItem('katee_stand_duration')) || 30,
-      kneelWebhook: localStorage.getItem('katee_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
-      standWebhook: localStorage.getItem('katee_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
-      releaseWebhook: localStorage.getItem('katee_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520',
-      prompt: localStorage.getItem('katee_prompt') || DEFAULT_PROMPT
+      apiOrUrl: (localStorage.getItem('Katie_api_url') || '').trim(),
+      kokoroUrl: (localStorage.getItem('Katie_kokoro_url') || '').trim(),
+      kokoroVoice: localStorage.getItem('Katie_kokoro_voice') || 'af_bella',
+      standDuration: parseInt(localStorage.getItem('Katie_stand_duration')) || 30,
+      kneelWebhook: localStorage.getItem('Katie_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
+      standWebhook: localStorage.getItem('Katie_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
+      releaseWebhook: localStorage.getItem('Katie_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520',
+      prompt: localStorage.getItem('Katie_prompt') || DEFAULT_PROMPT
     };
 
     let chatHistory = [];
@@ -444,7 +444,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
     // =========================================================================
     // 🧠 PERSISTENT LONG-TERM MEMORY ENGINE
     // =========================================================================
-    let kateeMemory = JSON.parse(localStorage.getItem('katee_memory')) || {
+    let KatieMemory = JSON.parse(localStorage.getItem('Katie_memory')) || {
       totalSessions: 0,
       totalKneels: 0,
       totalStands: 0,
@@ -452,39 +452,39 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       sessionNotes: "He has a habit of pushing boundaries and needs strict discipline."
     };
 
-    function saveKateeMemory() {
-      localStorage.setItem('katee_memory', JSON.stringify(kateeMemory));
+    function saveKatieMemory() {
+      localStorage.setItem('Katie_memory', JSON.stringify(KatieMemory));
       updateMemoryUI();
     }
 
     function updateMemoryUI() {
       const notesEl = document.getElementById('memoryNotesInput');
       const statsEl = document.getElementById('memoryStatsDisplay');
-      if (notesEl) notesEl.value = kateeMemory.sessionNotes || "";
+      if (notesEl) notesEl.value = KatieMemory.sessionNotes || "";
       if (statsEl) {
-        statsEl.innerText = `Sessions: ${kateeMemory.totalSessions} | Kneels: ${kateeMemory.totalKneels} | Stands: ${kateeMemory.totalStands} | Disrespect: ${kateeMemory.disrespectCount}`;
+        statsEl.innerText = `Sessions: ${KatieMemory.totalSessions} | Kneels: ${KatieMemory.totalKneels} | Stands: ${KatieMemory.totalStands} | Disrespect: ${KatieMemory.disrespectCount}`;
       }
     }
 
     function getMemoryPrompt() {
-      if (kateeMemory.totalSessions === 0) {
-        return `\n\n[KATEE'S LONG-TERM MEMORY]\nThis is your very first session with him. Establish your absolute dominance and test his obedience from the start.`;
+      if (KatieMemory.totalSessions === 0) {
+        return `\n\n[Katie'S LONG-TERM MEMORY]\nThis is your very first session with him. Establish your absolute dominance and test his obedience from the start.`;
       }
-      return `\n\n[KATEE'S REAL LONG-TERM MEMORY FROM PAST CALLS]\n` +
-        `- Total Past Sessions: ${kateeMemory.totalSessions} completed calls.\n` +
-        `- Lifetime Actuator Kneels Enforced: ${kateeMemory.totalKneels} times.\n` +
-        `- Lifetime Stand Rewards Granted: ${kateeMemory.totalStands} times.\n` +
-        `- Disrespect Incidents: He has disrespected you ${kateeMemory.disrespectCount} times in the past.\n` +
-        `- Your Notes On Him: "${kateeMemory.sessionNotes}"\n` +
+      return `\n\n[Katie'S REAL LONG-TERM MEMORY FROM PAST CALLS]\n` +
+        `- Total Past Sessions: ${KatieMemory.totalSessions} completed calls.\n` +
+        `- Lifetime Actuator Kneels Enforced: ${KatieMemory.totalKneels} times.\n` +
+        `- Lifetime Stand Rewards Granted: ${KatieMemory.totalStands} times.\n` +
+        `- Disrespect Incidents: He has disrespected you ${KatieMemory.disrespectCount} times in the past.\n` +
+        `- Your Notes On Him: "${KatieMemory.sessionNotes}"\n` +
         `INSTRUCTION: Genuinely reference his past session history, mock his lifetime punishments, or acknowledge if he is behaving better or worse than last time.`;
     }
 
     // =========================================================================
-    // 🔥 KATEE TEMPER & MOOD ENGINE (0 to 100)
+    // 🔥 Katie TEMPER & MOOD ENGINE (0 to 100)
     // =========================================================================
-    let kateeTemper = 15; // Starts calm & pleased (0 - 100)
+    let KatieTemper = 15; // Starts calm & pleased (0 - 100)
 
-    function updateKateeMood(userSpeech) {
+    function updateKatieMood(userSpeech) {
       const lower = userSpeech.toLowerCase();
 
       // 1. DEFIANCE, SARCASM & DISRESPECT DETECTOR
@@ -529,32 +529,32 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
       // 3. CALCULATE TEMPER
       if (isDisrespectful) {
-        kateeMemory.disrespectCount++;
-        saveKateeMemory();
+        KatieMemory.disrespectCount++;
+        saveKatieMemory();
         if (lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way") || lower.includes("not begging")) {
-          kateeTemper = Math.min(100, kateeTemper + 40);
+          KatieTemper = Math.min(100, KatieTemper + 40);
         } else {
-          kateeTemper = Math.min(100, kateeTemper + 25);
+          KatieTemper = Math.min(100, KatieTemper + 25);
         }
       } else if (isSubmissive) {
-        kateeTemper = Math.max(0, kateeTemper - 25);
+        KatieTemper = Math.max(0, KatieTemper - 25);
       }
 
       // 4. UPDATE VISUAL BADGE
       const moodBadge = document.getElementById('moodBadge');
       if (moodBadge) {
-        if (kateeTemper <= 35) {
-          moodBadge.innerText = `Mood: Pleased (${kateeTemper}%)`;
+        if (KatieTemper <= 35) {
+          moodBadge.innerText = `Mood: Pleased (${KatieTemper}%)`;
           moodBadge.style.color = "#4ade80";
           moodBadge.style.borderColor = "#22c55e";
           moodBadge.style.background = "rgba(34, 197, 94, 0.2)";
-        } else if (kateeTemper <= 65) {
-          moodBadge.innerText = `Mood: Irritated (${kateeTemper}%)`;
+        } else if (KatieTemper <= 65) {
+          moodBadge.innerText = `Mood: Irritated (${KatieTemper}%)`;
           moodBadge.style.color = "#fbbf24";
           moodBadge.style.borderColor = "#f59e0b";
           moodBadge.style.background = "rgba(245, 158, 11, 0.2)";
         } else {
-          moodBadge.innerText = `Mood: Furious (${kateeTemper}%)`;
+          moodBadge.innerText = `Mood: Furious (${KatieTemper}%)`;
           moodBadge.style.color = "#f87171";
           moodBadge.style.borderColor = "#ef4444";
           moodBadge.style.background = "rgba(239, 68, 68, 0.2)";
@@ -562,10 +562,10 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
 
       // 5. INJECT HER EXACT EMOTION DIRECTIVE
-      let moodDirective = `\n\n[KATEE'S CURRENT TEMPER: ${kateeTemper}/100]\n`;
-      if (kateeTemper <= 35) {
+      let moodDirective = `\n\n[Katie'S CURRENT TEMPER: ${KatieTemper}/100]\n`;
+      if (KatieTemper <= 35) {
         moodDirective += `Current State: Pleased & sensual. You are dominant, playful, and open to offering him 10-30s standing ONLY if he pleases you.`;
-      } else if (kateeTemper <= 65) {
+      } else if (KatieTemper <= 65) {
         moodDirective += `Current State: Irritated & Strict. You are annoyed. CRITICAL: Standing is 100% FORBIDDEN. You MUST NOT offer standing or agree to let him up. Mock his impatience and demand obedience.`;
       } else {
         moodDirective += `Current State: FURIOUS & RUTHLESS. The user has disrespected you. CRITICAL: Rewards are completely OFF THE TABLE. You MUST NOT offer standing, agree to standing, or hint at relief. Mock his suffering, tell him he's staying locked to the floor, and demand that he grovels.`;
@@ -614,15 +614,15 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
     };
 
     clearMemoryBtn.onclick = () => {
-      if (confirm("Are you sure you want to wipe Katee's lifetime memory?")) {
-        kateeMemory = {
+      if (confirm("Are you sure you want to wipe Katie's lifetime memory?")) {
+        KatieMemory = {
           totalSessions: 0,
           totalKneels: 0,
           totalStands: 0,
           disrespectCount: 0,
           sessionNotes: ""
         };
-        saveKateeMemory();
+        saveKatieMemory();
       }
     };
 
@@ -641,19 +641,19 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       config.releaseWebhook = releaseWebhookInput.value.trim();
       config.prompt = systemPromptInput.value.trim();
 
-      localStorage.setItem('katee_api_url', config.apiOrUrl);
-      localStorage.setItem('katee_kokoro_url', config.kokoroUrl);
-      localStorage.setItem('katee_kokoro_voice', config.kokoroVoice);
-      localStorage.setItem('katee_stand_duration', config.standDuration);
-      localStorage.setItem('katee_kneel_webhook', config.kneelWebhook);
-      localStorage.setItem('katee_stand_webhook', config.standWebhook);
-      localStorage.setItem('katee_release_webhook', config.releaseWebhook);
-      localStorage.setItem('katee_prompt', config.prompt);
+      localStorage.setItem('Katie_api_url', config.apiOrUrl);
+      localStorage.setItem('Katie_kokoro_url', config.kokoroUrl);
+      localStorage.setItem('Katie_kokoro_voice', config.kokoroVoice);
+      localStorage.setItem('Katie_stand_duration', config.standDuration);
+      localStorage.setItem('Katie_kneel_webhook', config.kneelWebhook);
+      localStorage.setItem('Katie_stand_webhook', config.standWebhook);
+      localStorage.setItem('Katie_release_webhook', config.releaseWebhook);
+      localStorage.setItem('Katie_prompt', config.prompt);
 
       const notesInput = document.getElementById('memoryNotesInput');
       if (notesInput) {
-        kateeMemory.sessionNotes = notesInput.value.trim();
-        saveKateeMemory();
+        KatieMemory.sessionNotes = notesInput.value.trim();
+        saveKatieMemory();
       }
 
       settingsModal.classList.remove('open');
@@ -747,25 +747,25 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
     function triggerStandWithTimer(chosenSeconds = 20) {
       stopStandTimer();
       triggerWebhook(config.standWebhook, "Stand Sent");
-      kateeMemory.totalStands++;
-      saveKateeMemory();
+      KatieMemory.totalStands++;
+      saveKatieMemory();
 
       const totalSeconds = Math.max(10, Math.min(30, chosenSeconds));
       let secondsLeft = totalSeconds;
 
       timerBanner.className = "timer-banner";
       timerBanner.style.display = "block";
-      timerBanner.innerText = `⏳ Standing: ${secondsLeft}s left (Katee granted ${totalSeconds}s)`;
+      timerBanner.innerText = `⏳ Standing: ${secondsLeft}s left (Katie granted ${totalSeconds}s)`;
 
       countdownInterval = setInterval(() => {
         secondsLeft--;
         if (secondsLeft > 0) {
-          timerBanner.innerText = `⏳ Standing: ${secondsLeft}s left (Katee granted ${totalSeconds}s)`;
+          timerBanner.innerText = `⏳ Standing: ${secondsLeft}s left (Katie granted ${totalSeconds}s)`;
         } else {
           stopStandTimer();
           triggerWebhook(config.kneelWebhook, "Auto-Kneel Triggered");
-          kateeMemory.totalKneels++;
-          saveKateeMemory();
+          KatieMemory.totalKneels++;
+          saveKatieMemory();
           timerBanner.className = "timer-banner expired";
           timerBanner.innerText = `⚡ ${totalSeconds}s Expired: Kneel Actuator Triggered`;
 
@@ -795,7 +795,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening";
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Call connected. I'm listening, handsome.");
+      appendMessage('Katie', "Call connected. I'm listening, handsome.");
 
       startSpeechTurn();
     }
@@ -890,7 +890,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
     // --- LM STUDIO ENGINE WITH PERSISTENT MEMORY & TEMPER ---
     async function sendToLMStudio(userText) {
       callCard.className = "call-card";
-      callStatus.innerText = "Katee is thinking...";
+      callStatus.innerText = "Katie is thinking...";
       chatHistory.push({ role: "user", content: userText });
 
       if (chatHistory.length > 6) chatHistory = chatHistory.slice(-6);
@@ -901,7 +901,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         const url = `${baseUrl}/chat/completions`;
 
         // Inject Long-Term Memory + Real-Time Mood
-        const currentMoodText = updateKateeMood(userText);
+        const currentMoodText = updateKatieMood(userText);
         const memoryText = getMemoryPrompt();
         
         const messages = [
@@ -986,8 +986,8 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       } else if (isKneelTrigger) {
         stopStandTimer();
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
-        kateeMemory.totalKneels++;
-        saveKateeMemory();
+        KatieMemory.totalKneels++;
+        saveKatieMemory();
 
         timerBanner.className = "timer-banner expired";
         timerBanner.style.display = "block";
@@ -998,7 +998,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         }, 3500);
 
       } else if (
-        kateeTemper <= 35 && 
+        KatieTemper <= 35 && 
         !isRefusal && 
         !isQuestionOrTest && 
         (
@@ -1039,14 +1039,14 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
 
       chatHistory.push({ role: modelRole, content: cleanText });
-      appendMessage('katee', cleanText);
+      appendMessage('Katie', cleanText);
       playVoice(cleanText, shouldStandSeconds);
     }
 
     // --- KOKORO LOCAL VOICE OR BROWSER FALLBACK WITH TIMED ACTION ---
     async function playVoice(text, standSeconds = null) {
       callCard.className = "call-card talking";
-      callStatus.innerText = "Katee is speaking...";
+      callStatus.innerText = "Katie is speaking...";
 
       if (pendingStandTimeout) {
         clearTimeout(pendingStandTimeout);
@@ -1147,18 +1147,18 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
       // 🧠 AUTO-DEBRIEF & SAVE SESSION MEMORY
       if (chatHistory.length >= 2) {
-        kateeMemory.totalSessions++;
+        KatieMemory.totalSessions++;
         
-        let newNote = `Session ${kateeMemory.totalSessions}: `;
-        if (kateeTemper > 65) {
+        let newNote = `Session ${KatieMemory.totalSessions}: `;
+        if (KatieTemper > 65) {
           newNote += `He ended the call while I was furious. Disrespect level was high; he struggled to obey and needed heavy kneeling punishments.`;
-        } else if (kateeTemper <= 30) {
+        } else if (KatieTemper <= 30) {
           newNote += `He was well-behaved, obedient on his knees, and earned rewards properly.`;
         } else {
           newNote += `He showed some resistance to begging but stayed clamped to the floor.`;
         }
-        kateeMemory.sessionNotes = newNote;
-        saveKateeMemory();
+        KatieMemory.sessionNotes = newNote;
+        saveKatieMemory();
       }
 
       timerBanner.style.display = "none";
