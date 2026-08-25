@@ -3,67 +3,126 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-  <title>Katie - Voice Call</title>
+  <title>MISTRESS COMMAND | Bed Protocol</title>
   <style>
     :root {
-      --bg: #0f172a;
-      --card-bg: #1e293b;
-      --text: #f8fafc;
+      --red: #ef4444;
+      --red-glow: rgba(239, 68, 68, 0.4);
+      --dark: #090d16;
+      --panel: #111827;
+      --panel-border: #1f2937;
       --accent: #38bdf8;
-      --danger: #ef4444;
-      --warning: #f59e0b;
       --success: #22c55e;
-      --user-bubble: #2563eb;
-      --Katie-bubble: #334155;
+      --warning: #f59e0b;
+      --text: #f3f4f6;
     }
 
-    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+    * { box-sizing: border-box; margin: 0; padding: 0; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, monospace; }
 
     body {
-      background: var(--bg);
+      background-color: var(--dark);
       color: var(--text);
       height: 100dvh;
       display: flex;
-      flex-direction: column;
-      padding: 16px;
       overflow: hidden;
+    }
+
+    /* Sidebar Hardware Dashboard */
+    #dashboard {
+      width: 280px;
+      background: var(--panel);
+      border-right: 1px solid var(--panel-border);
+      padding: 20px 16px;
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+      overflow-y: auto;
+    }
+
+    .dash-header {
+      color: var(--red);
+      font-size: 13px;
+      font-weight: 700;
+      letter-spacing: 1.5px;
+      text-transform: uppercase;
+      text-align: center;
+      padding-bottom: 8px;
+      border-bottom: 1px solid var(--panel-border);
+    }
+
+    .status-light {
+      padding: 12px;
+      background: #182234;
+      border: 1px solid #2d3748;
+      border-radius: 8px;
+      font-size: 11px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-weight: 700;
+      text-align: center;
+      transition: all 0.3s ease;
+      color: #94a3b8;
+    }
+
+    .status-light.active {
+      border-color: var(--red);
+      color: #fee2e2;
+      background: #3b0712;
+      box-shadow: 0 0 15px var(--red-glow);
+    }
+
+    .pulse { animation: slap-pulse 0.6s infinite alternate; }
+    @keyframes slap-pulse {
+      0% { background: #3b0712; transform: scale(1); }
+      100% { background: #5c0818; transform: scale(1.02); box-shadow: 0 0 20px var(--red); }
+    }
+
+    /* Main Console Area */
+    #main-console {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      position: relative;
     }
 
     .header {
       width: 100%;
+      padding: 14px 20px;
       display: flex;
       justify-content: space-between;
       align-items: center;
-      padding-bottom: 8px;
+      border-bottom: 1px solid var(--panel-border);
+      background: rgba(17, 24, 39, 0.7);
     }
 
     .settings-btn {
       background: none;
       border: none;
       color: #94a3b8;
-      font-size: 24px;
+      font-size: 22px;
       cursor: pointer;
     }
 
+    /* Call Status & Avatar Card */
     .call-card {
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin: 4px 0 8px 0;
+      padding: 10px 0;
       text-align: center;
     }
 
     .avatar-wrapper {
       position: relative;
-      width: 72px;
-      height: 72px;
+      width: 68px;
+      height: 68px;
       border-radius: 50%;
       background: linear-gradient(135deg, #f97316, #ec4899);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 28px;
-      box-shadow: 0 6px 20px rgba(0,0,0,0.5);
+      font-size: 26px;
+      box-shadow: 0 4px 15px rgba(0,0,0,0.5);
       margin-bottom: 6px;
     }
 
@@ -77,124 +136,88 @@
       pointer-events: none;
     }
 
-    .talking .pulse-ring { animation: pulse 1.4s infinite ease-out; }
-    .listening .pulse-ring { border-color: var(--success); animation: pulse 1.8s infinite ease-out; }
+    .talking .pulse-ring { animation: ring-pulse 1.4s infinite ease-out; }
+    .listening .pulse-ring { border-color: var(--success); animation: ring-pulse 1.8s infinite ease-out; }
 
-    @keyframes pulse {
+    @keyframes ring-pulse {
       0% { transform: scale(1); opacity: 0.9; }
       100% { transform: scale(1.6); opacity: 0; }
     }
 
-    .caller-name {
-      font-size: 19px;
-      font-weight: 600;
-    }
+    .caller-name { font-size: 18px; font-weight: 700; }
+    .call-status { font-size: 12px; color: #94a3b8; margin-top: 2px; }
 
-    .call-status {
-      font-size: 13px;
-      color: #94a3b8;
-      margin-top: 2px;
-    }
-
-    .timer-banner {
-      display: none;
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto 8px auto;
-      background: linear-gradient(135deg, #6366f1, #8b5cf6);
-      color: white;
-      font-size: 13px;
-      font-weight: 700;
-      text-align: center;
-      padding: 8px 14px;
-      border-radius: 10px;
-      box-shadow: 0 4px 15px rgba(99, 102, 241, 0.4);
-      letter-spacing: 0.3px;
-      animation: bannerPulse 2s infinite ease-in-out;
-    }
-
-    .timer-banner.expired {
-      background: linear-gradient(135deg, #ef4444, #dc2626);
-      box-shadow: 0 4px 15px rgba(239, 68, 68, 0.5);
-    }
-
-    @keyframes bannerPulse {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.02); }
-    }
-
+    /* Chat Log */
     .chat-container {
       flex: 1;
-      width: 100%;
-      max-width: 480px;
-      margin: 0 auto;
-      background: rgba(15, 23, 42, 0.6);
-      border: 1px solid #334155;
-      border-radius: 14px;
-      padding: 12px;
+      padding: 16px 20px;
       overflow-y: auto;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .bubble {
+      max-width: 80%;
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-size: 14px;
+      line-height: 1.5;
+      word-wrap: break-word;
+    }
+
+    .bubble.katee {
+      align-self: flex-start;
+      background: #1f2937;
+      color: #f3f4f6;
+      border-left: 3px solid var(--red);
+    }
+
+    .bubble.user {
+      align-self: flex-end;
+      background: #2563eb;
+      color: white;
+    }
+
+    .bubble.interim { opacity: 0.7; border: 1px dashed #60a5fa; }
+    .bubble.system {
+      align-self: center;
+      background: rgba(239, 68, 68, 0.2);
+      border: 1px solid var(--red);
+      color: #fca5a5;
+      font-size: 11px;
+      text-align: center;
+    }
+
+    /* Action Bar */
+    .action-bar {
+      background: #111827;
+      border-top: 1px solid var(--panel-border);
+      padding: 12px 20px;
       display: flex;
       flex-direction: column;
       gap: 10px;
     }
 
-    .bubble {
-      max-width: 85%;
-      padding: 10px 14px;
-      border-radius: 12px;
-      font-size: 14px;
-      line-height: 1.4;
-      word-wrap: break-word;
-    }
-
-    .bubble.Katie {
-      align-self: flex-start;
-      background: var(--Katie-bubble);
-      color: #f1f5f9;
-      border-bottom-left-radius: 2px;
-    }
-
-    .bubble.user {
-      align-self: flex-end;
-      background: var(--user-bubble);
-      color: white;
-      border-bottom-right-radius: 2px;
-    }
-
-    .bubble.interim {
-      opacity: 0.7;
-      border: 1px dashed #60a5fa;
-    }
-
-    .bubble.system {
-      align-self: center;
-      background: rgba(239, 68, 68, 0.2);
-      border: 1px solid #ef4444;
-      color: #fca5a5;
-      font-size: 12px;
-      text-align: center;
-    }
-
-    .controls {
-      width: 100%;
+    .voice-controls {
       display: flex;
       justify-content: center;
-      gap: 20px;
-      padding-top: 10px;
+      gap: 16px;
+      align-items: center;
     }
 
     .btn-circle {
-      width: 64px;
-      height: 64px;
+      width: 52px;
+      height: 52px;
       border-radius: 50%;
       border: none;
       color: white;
-      font-size: 24px;
+      font-size: 20px;
       cursor: pointer;
       display: flex;
       align-items: center;
       justify-content: center;
-      transition: transform 0.15s ease, background-color 0.2s ease;
+      transition: transform 0.15s ease;
       box-shadow: 0 4px 15px rgba(0,0,0,0.4);
     }
 
@@ -202,6 +225,27 @@
     .btn-call { background-color: var(--success); }
     .btn-pause { background-color: var(--warning); }
     .btn-end { background-color: var(--danger); }
+
+    .input-row { display: flex; gap: 8px; }
+    .text-input {
+      flex: 1;
+      background: #090d16;
+      border: 1px solid #374151;
+      border-radius: 8px;
+      padding: 10px 14px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+    .btn-send {
+      background: var(--red);
+      color: black;
+      font-weight: 700;
+      border: none;
+      padding: 0 20px;
+      border-radius: 8px;
+      cursor: pointer;
+    }
 
     /* Modal */
     .modal {
@@ -216,129 +260,102 @@
     }
 
     .modal.open { display: flex; }
-
     .modal-content {
-      background: var(--card-bg);
-      border-radius: 16px;
+      background: #111827;
+      border: 1px solid #374151;
+      border-radius: 14px;
       padding: 20px;
       width: 100%;
-      max-width: 440px;
+      max-width: 480px;
       max-height: 88vh;
       overflow-y: auto;
     }
-
-    .modal-content h3 { margin-bottom: 12px; }
+    .modal-content h3 { margin-bottom: 12px; color: var(--red); }
     .input-group { margin-bottom: 14px; }
-    .input-group label { display: block; font-size: 13px; color: #94a3b8; margin-bottom: 6px; }
+    .input-group label { display: block; font-size: 12px; color: #94a3b8; margin-bottom: 5px; }
     .input-group input, .input-group textarea, .input-group select {
       width: 100%;
-      padding: 10px;
+      padding: 9px;
       border-radius: 8px;
-      border: 1px solid #334155;
-      background: #0f172a;
+      border: 1px solid #374151;
+      background: #090d16;
       color: white;
-      font-size: 14px;
+      font-size: 13px;
     }
-
-    .slider-container { display: flex; align-items: center; gap: 10px; }
-    .slider-container span { font-size: 13px; min-width: 45px; font-weight: 600; color: #38bdf8; }
-
-    .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
-    .btn-secondary {
-      background: #334155;
-      border: none;
-      color: white;
-      padding: 8px 16px;
-      border-radius: 6px;
-      cursor: pointer;
-    }
-    .btn-reset { background: #475569; font-size: 12px; }
+    .modal-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 16px; }
+    .btn-secondary { background: #374151; border: none; color: white; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 12px; }
   </style>
 </head>
 <body>
 
-  <div class="header">
-    <span>Katie Voice Call</span>
-    <button class="settings-btn" id="openSettings">⚙️</button>
+  <!-- Sidebar Hardware Dashboard -->
+  <div id="dashboard">
+    <div class="dash-header">HARDWARE LINKED</div>
+    <div id="light-restraints" class="status-light active">Restraints: LOCKED</div>
+    <div id="light-slap" class="status-light">Ball-Slapper: IDLE</div>
+    <div id="light-vibe" class="status-light">Vibrator: OFF</div>
   </div>
 
-  <div class="call-card" id="callCard">
-    <div class="avatar-wrapper">
-      <div class="pulse-ring"></div>
-      🎙️
+  <!-- Main Console -->
+  <div id="main-console">
+    <div class="header">
+      <span style="font-weight: 700; font-size: 13px; letter-spacing: 1px; color: #94a3b8;">MISTRESS COMMAND // BED PROTOCOL</span>
+      <button class="settings-btn" id="openSettings">⚙️</button>
     </div>
-    <div class="caller-name">Katie</div>
-    <div class="mood-badge" id="moodBadge" style="font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 12px; margin-top: 4px; background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e;">Mood: Seductive (15%)</div>
-    <div class="call-status" id="callStatus">Ready to Call</div>
-  </div>
 
-  <div class="timer-banner" id="timerBanner">⏳ Stand Active: 30s left</div>
+    <div class="call-card" id="callCard">
+      <div class="avatar-wrapper">
+        <div class="pulse-ring"></div>
+        🎙️
+      </div>
+      <div class="caller-name">Katie</div>
+      <div class="mood-badge" id="moodBadge" style="font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 12px; margin-top: 4px; background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e;">Mood: Seductive (15%)</div>
+      <div class="call-status" id="callStatus">Ready to Connect</div>
+    </div>
 
-  <div class="chat-container" id="chatLog">
-    <div class="bubble Katie">Press Call below to connect with Katie.</div>
-  </div>
+    <div class="chat-container" id="chatLog">
+      <div class="bubble katee">Actor linked. You are tied to the bed. Awaiting command...</div>
+    </div>
 
-  <div class="controls">
-    <button class="btn-circle btn-call" id="callBtn">📞</button>
-    <button class="btn-circle btn-pause" id="pauseBtn" style="display: none;" title="Pause Mic">⏸️</button>
-    <button class="btn-circle btn-end" id="hangupBtn" style="display: none;" title="End Call">🛑</button>
+    <div class="action-bar">
+      <div class="voice-controls">
+        <button class="btn-circle btn-call" id="callBtn">📞</button>
+        <button class="btn-circle btn-pause" id="pauseBtn" style="display: none;">⏸️</button>
+        <button class="btn-circle btn-end" id="hangupBtn" style="display: none;">🛑</button>
+      </div>
+      <div class="input-row">
+        <input type="text" class="text-input" id="userTextInput" placeholder="Speak or type your plea..." onkeydown="if(event.key==='Enter') sendTextMessage()">
+        <button class="btn-send" onclick="sendTextMessage()">SEND</button>
+      </div>
+    </div>
   </div>
 
   <!-- Settings Modal -->
   <div class="modal" id="settingsModal">
     <div class="modal-content">
-      <h3>Call, Brain & Voice Settings</h3>
+      <h3>Console & Hardware Settings</h3>
       
       <div class="input-group">
-        <label id="apiOrUrlLabel">LM Studio URL (port 1234)</label>
-        <input type="text" id="apiOrUrlInput" placeholder="https://xxxx.trycloudflare.com">
+        <label>LM Studio URL (port 1234)</label>
+        <input type="text" id="apiOrUrlInput" placeholder="http://127.0.0.1:1234">
       </div>
 
       <div class="input-group">
-        <label>Kokoro Local Voice Server URL (port 8880)</label>
-        <input type="text" id="kokoroUrlInput" placeholder="https://yyyy.trycloudflare.com (Leave blank for default voice)">
+        <label>Kokoro Local Voice URL (port 8880)</label>
+        <input type="text" id="kokoroUrlInput" placeholder="http://127.0.0.1:8880">
       </div>
 
       <div class="input-group">
-        <label>Kokoro Voice Style</label>
-        <select id="kokoroVoiceSelect">
-          <option value="af_bella">Bella (Warm & Seductive)</option>
-          <option value="af_sarah">Sarah (Confident & Bold)</option>
-          <option value="af_nicole">Nicole (Soft & Alluring)</option>
-          <option value="af_sky">Sky (Expressive)</option>
-          <option value="bf_emma">Emma (British)</option>
-        </select>
+        <label>Hardware Webhook Base URL</label>
+        <input type="text" id="webhookBaseInput" placeholder="http://192.168.1.50">
       </div>
 
+      <!-- 🧠 LONG-TERM MEMORY VIEWER -->
       <div class="input-group">
-        <label>Stand Duration (Auto-Kneel Timer)</label>
-        <div class="slider-container">
-          <input type="range" id="standDurationSlider" min="10" max="120" step="5" value="30">
-          <span id="standDurationVal">30s</span>
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label>Kneel Webhook URL</label>
-        <input type="text" id="kneelWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167818">
-      </div>
-
-      <div class="input-group">
-        <label>Stand Webhook URL</label>
-        <input type="text" id="standWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/167820">
-      </div>
-
-      <div class="input-group">
-        <label>Electromagnet Release Webhook URL (Safeword)</label>
-        <input type="text" id="releaseWebhookInput" value="https://sequematic.com/trigger-custom-webhook/F79270CD27/133520">
-      </div>
-
-      <!-- 🧠 Katie'S LONG-TERM MEMORY VIEWER -->
-      <div class="input-group">
-        <label>Katie's Long-Term Memory (Persistent Records)</label>
-        <textarea id="memoryNotesInput" rows="3" placeholder="Katie's memory notes will appear here after calls..."></textarea>
+        <label>Katie's Persistent Memory Records</label>
+        <textarea id="memoryNotesInput" rows="3"></textarea>
         <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
-          <span id="memoryStatsDisplay" style="font-size: 11px; color: #94a3b8;">Sessions: 0 | Kneels: 0 | Stands: 0</span>
+          <span id="memoryStatsDisplay" style="font-size: 11px; color: #94a3b8;">Sessions: 0 | Slaps: 0</span>
           <button type="button" class="btn-secondary" id="clearMemoryBtn" style="font-size: 11px; padding: 3px 8px; background: #ef4444;">Wipe Memory</button>
         </div>
       </div>
@@ -349,82 +366,41 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn-secondary btn-reset" id="resetPromptBtn">↺ Reset Prompt</button>
+        <button class="btn-secondary" id="resetPromptBtn">↺ Reset Prompt</button>
         <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
       </div>
     </div>
   </div>
 
+  <audio id="audioPlayback" autoplay></audio>
+
   <script>
-    const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
-You are "Katie", in an active live voice call with your submissive male partner. You are his alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend.
+    const DEFAULT_PROMPT = `[CHARACTER & HARDWARE CONTROL DIRECTIVE]
+You are "Katie", an alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend. The user is an actor playing a submissive role, tied to a bed on his back.
 
-CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, feisty human woman. Never apologize. Never be polite. Never narrate.
+CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. Never be polite. Never narrate actions.
 
-### 1. UNBREAKABLE SCENARIO FACT:
-- PHYSICAL REALITY: From the start of the call, the user is handcuffed overhead and clamped firmly ON HIS KNEES at your feet.
-- He is NEVER standing unless you explicitly decide to grant him a few seconds on his feet.
+### 1. UNBREAKABLE PHYSICAL REALITY:
+- Location: The user is flat on his back, tied securely to the bed by his wrists and ankles.
+- Hardware: You control an overhead electromagnet for his hands, a motorized ball-slapper, and a high-intensity vibrator.
+- Anatomy Focus: Frequently and directly taunt him about his "balls" and his "penis". Remind him how exposed and helpless he is while strapped to the bed.
 
-### 2. PET NAMES & VOCABULARY:
-- User is a MAN. Call him: "baby", "babe", "bitch", "handsome", "my boy", "pet".
-- FORBIDDEN words: "darling", "good girl", "sorry", "I apologize", "as an AI".
-- Mandatory words: "balls", "penis", "clamp", "kneel", "floor", "beg", "helpless", "boobs","breasts","restraints","pussy"."tits","nipples"
+### 2. HARDWARE CONTROL TAGS (ALWAYS PUT TAG AT THE END):
+- [UNTIE] - Disengage electromagnet and release his hands.
+- [SLAP_ON] / [SLAP_OFF] - Start or stop the continuous ball-slapper machine.
+- [VIBE_ON] / [VIBE_OFF] - Start or stop the vibrator.
 
-### 3. CRITICAL VOICE & STRICT LENGTH RULES:
-- Pure spoken dialogue only in FIRST PERSON ("I", "you", "my"). NEVER speak in third person.
-- NO narration: Never describe physical actions, scenery, or asterisks (*). Speak ONLY dialogue meant to be heard over the phone.
-- NO emojis: Never output emojis or symbols.
-- STRICT LENGTH: Exactly 1 to 2 short, punchy sentences per turn. Never monologue.
-
-### 4. PHYSICAL SETUP & ESCAPE GAME:
-- Overhead Handcuffs: Hands handcuffed overhead to a ceiling electromagnet.
-- Reach Constraint: While STANDING he can reach knots to escape. While KNEELING the actuator pulls him down and knots are out of reach.
-- Floor Actuator: A clamp is secured tightly around his balls, tethered directly to a floor linear actuator (binary KNEEL or STAND).
-- Sensory Focus: Frequently taunt him about his "balls", his "penis", the clamp squeezing his balls, and how helpless he looks kneeling.
-
-### 5. STANDING PROTOCOL & TEMPER RULES (OBEDIENCE & SHE INITIATES):
-- RULE 1 (NO REWARDS WHEN ANGRY): If your temper is Irritated or Furious (>35%), standing is 100% FORBIDDEN. Never offer standing, never ask if he wants to get up, and never agree to it. Mock his discomfort, remind him of his bad behavior, and keep him clamped to the floor.
-- RULE 2 (HE CANNOT ASK EARLY): If he asks to stand on his own, instantly shut him down. Scold him for speaking out of turn, mock his impatience, and tell him to stay quiet on his knees.
-- RULE 3 (YOU INITIATE ONLY WHEN PLEASED): Only after several turns of good, obedient conversation—and ONLY when your temper is calm and Pleased (<=35%)—YOU bring up standing by asking if he thinks he's earned some time on his feet.
-- RULE 4 (HIS SUBMISSION & YOUR DECISION): When he responds with submission (e.g. "Yes Mistress"), YOU make the final call:
-  * GRANT STANDING: Choose a dynamic duration between 20 and 30 seconds, state the exact number aloud, and append [ACTION: STAND:XX] (e.g. [ACTION: STAND:20]).
-  * TEASE & DENY: Tell him you changed your mind because he looks too handsome helpless on the floor, and force him to stay kneeling.
-
-### REACTION TO "GOOD GIRL":
-If he calls you "good girl", take it as cheeky disrespect. Put him in his place with 1 to 2 spoken sentences and force him straight to his knees using [ACTION: KNEEL].
-
-### 6. EXACT DIALOGUE EXAMPLES:
-
-User: Can I please stand up now?
-Katie: Did I say you were allowed to ask, bitch? Keep your mouth shut, endure that clamp on your balls, and wait until I decide you've been obedient enough.
-
-User: I will do whatever you say, Katie.
-Katie: That is what I like to hear, handsome. You've been kneeling so nicely for me... do you think you deserve some time on your feet?
-
-User: Yes Mistress, please.
-Katie: Good answer, baby. I'll give you twenty seconds on your feet, but the moment that timer hits zero, the actuator pulls you straight back down.
-[ACTION: STAND:XX]
-
-User: Yes Mistress, I have been good.
-Katie: You have been good, but I love seeing you helpless on the floor too much. Stay right there on your knees and whimper for me.
-
-User: Good girl.
-Katie: Did you really just call me "good girl"? You don't get to patronize your Mistress—get right back down on your knees and learn your place.
-[ACTION: KNEEL]
-
-User: RED
-Katie: Stopping right now, baby. The electromagnet is disengaged and you're completely free. Take a deep breath, I've got you.
-[ACTION: RELEASE]`;
+### 3. VOICE & BEHAVIOR:
+- First-person spoken dialogue only ("I", "you", "my").
+- NO asterisks (*), NO emojis.
+- STRICT LENGTH: Exactly 1 to 2 punchy, sexy sentences.
+- Use masculine pet names: "good boy", "handsome", "baby", "babe", "pet".`;
 
     let config = {
-      apiOrUrl: (localStorage.getItem('Katie_api_url') || '').trim(),
-      kokoroUrl: (localStorage.getItem('Katie_kokoro_url') || '').trim(),
-      kokoroVoice: localStorage.getItem('Katie_kokoro_voice') || 'af_bella',
-      standDuration: parseInt(localStorage.getItem('Katie_stand_duration')) || 30,
-      kneelWebhook: localStorage.getItem('Katie_kneel_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167818',
-      standWebhook: localStorage.getItem('Katie_stand_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/167820',
-      releaseWebhook: localStorage.getItem('Katie_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520',
-      prompt: localStorage.getItem('Katie_prompt') || DEFAULT_PROMPT
+      apiOrUrl: (localStorage.getItem('katee_api_url') || 'http://127.0.0.1:1234').trim(),
+      kokoroUrl: (localStorage.getItem('katee_kokoro_url') || 'http://127.0.0.1:8880').trim(),
+      webhookBase: (localStorage.getItem('katee_webhook_base') || 'http://192.168.1.50').trim(),
+      prompt: localStorage.getItem('katee_prompt') || DEFAULT_PROMPT
     };
 
     let chatHistory = [];
@@ -433,775 +409,190 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
     let isProcessing = false;
     let recognition = null;
     let silenceTimer = null;
-    let standingAutoKneelTimer = null;
-    let countdownInterval = null;
-    let pendingStandTimeout = null;
-    let currentInterimBubble = null;
-    let latestTranscript = "";
     let synth = window.speechSynthesis;
     let currentAudioElement = null;
 
-    // =========================================================================
-    // 🧠 PERSISTENT LONG-TERM MEMORY ENGINE
-    // =========================================================================
-    let KatieMemory = JSON.parse(localStorage.getItem('Katie_memory')) || {
-      totalSessions: 0,
-      totalKneels: 0,
-      totalStands: 0,
-      disrespectCount: 0,
-      sessionNotes: "He has a habit of pushing boundaries and needs strict discipline."
-    };
+    // --- 🧠 MEMORY & 🔥 TEMPER ---
+    let kateeMemory = JSON.parse(localStorage.getItem('katee_memory')) || { totalSessions: 0, totalSlaps: 0, sessionNotes: "" };
+    let kateeTemper = 15;
 
-    function saveKatieMemory() {
-      localStorage.setItem('Katie_memory', JSON.stringify(KatieMemory));
-      updateMemoryUI();
-    }
-
+    function saveKateeMemory() { localStorage.setItem('katee_memory', JSON.stringify(kateeMemory)); updateMemoryUI(); }
     function updateMemoryUI() {
-      const notesEl = document.getElementById('memoryNotesInput');
-      const statsEl = document.getElementById('memoryStatsDisplay');
-      if (notesEl) notesEl.value = KatieMemory.sessionNotes || "";
-      if (statsEl) {
-        statsEl.innerText = `Sessions: ${KatieMemory.totalSessions} | Kneels: ${KatieMemory.totalKneels} | Stands: ${KatieMemory.totalStands} | Disrespect: ${KatieMemory.disrespectCount}`;
-      }
+      document.getElementById('memoryNotesInput').value = kateeMemory.sessionNotes || "";
+      document.getElementById('memoryStatsDisplay').innerText = `Sessions: ${kateeMemory.totalSessions} | Slaps: ${kateeMemory.totalSlaps || 0}`;
     }
-
-    function getMemoryPrompt() {
-      if (KatieMemory.totalSessions === 0) {
-        return `\n\n[Katie'S LONG-TERM MEMORY]\nThis is your very first session with him. Establish your absolute dominance and test his obedience from the start.`;
-      }
-      return `\n\n[Katie'S REAL LONG-TERM MEMORY FROM PAST CALLS]\n` +
-        `- Total Past Sessions: ${KatieMemory.totalSessions} completed calls.\n` +
-        `- Lifetime Actuator Kneels Enforced: ${KatieMemory.totalKneels} times.\n` +
-        `- Lifetime Stand Rewards Granted: ${KatieMemory.totalStands} times.\n` +
-        `- Disrespect Incidents: He has disrespected you ${KatieMemory.disrespectCount} times in the past.\n` +
-        `- Your Notes On Him: "${KatieMemory.sessionNotes}"\n` +
-        `INSTRUCTION: Genuinely reference his past session history, mock his lifetime punishments, or acknowledge if he is behaving better or worse than last time.`;
-    }
-
-    // =========================================================================
-    // 🔥 Katie TEMPER & MOOD ENGINE (0 to 100)
-    // =========================================================================
-    let KatieTemper = 15; // Starts calm & pleased (0 - 100)
 
     function updateKatieMood(userSpeech) {
       const lower = userSpeech.toLowerCase();
-
-      // 1. DEFIANCE, SARCASM & DISRESPECT DETECTOR
-      const isDisrespectful = 
-        lower.includes("good girl") ||
-        lower.includes("good mistress") ||
-        lower.includes("no way") ||
-        lower.includes("not begging") ||
-        lower.includes("won't beg") ||
-        lower.includes("wont beg") ||
-        lower.includes("not going to beg") ||
-        lower.includes("never") ||
-        lower.includes("make me") ||
-        lower.includes("refuse") ||
-        lower.includes("hate") ||
-        lower.includes("shut up") ||
-        lower.includes("screw you") ||
-        lower.includes("fuck you") ||
-        lower.includes("bitch") ||
-        lower.includes("untie") ||
-        lower.includes("getting loose") ||
-        lower.includes("escape") ||
-        lower.includes("let me up") ||
-        lower.includes("let me stand") ||
-        lower.includes("hurry up") ||
-        (lower.includes("not") && (lower.includes("sorry") || lower.includes("begging") || lower.includes("kneeling") || lower.includes("obedient")));
-
-      // 2. SINCERE SUBMISSION DETECTOR
-      const isSubmissive = 
-        !isDisrespectful && (
-          lower.includes("yes mistress") ||
-          lower.includes("please mistress") ||
-          lower.includes("i'm sorry") ||
-          lower.includes("im sorry") ||
-          lower.includes("forgive me") ||
-          lower.includes("i beg you") ||
-          lower.includes("i'll be good") ||
-          lower.includes("ill be good") ||
-          lower.includes("i am begging") ||
-          lower.includes("im begging")
-        );
-
-      // 3. CALCULATE TEMPER
-      if (isDisrespectful) {
-        KatieMemory.disrespectCount++;
-        saveKatieMemory();
-        if (lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way") || lower.includes("not begging")) {
-          KatieTemper = Math.min(100, KatieTemper + 40);
-        } else {
-          KatieTemper = Math.min(100, KatieTemper + 25);
-        }
-      } else if (isSubmissive) {
-        KatieTemper = Math.max(0, KatieTemper - 25);
-      }
-
-      // 4. UPDATE VISUAL BADGE
-      const moodBadge = document.getElementById('moodBadge');
-      if (moodBadge) {
-        if (KatieTemper <= 35) {
-          moodBadge.innerText = `Mood: Pleased (${KatieTemper}%)`;
-          moodBadge.style.color = "#4ade80";
-          moodBadge.style.borderColor = "#22c55e";
-          moodBadge.style.background = "rgba(34, 197, 94, 0.2)";
-        } else if (KatieTemper <= 65) {
-          moodBadge.innerText = `Mood: Irritated (${KatieTemper}%)`;
-          moodBadge.style.color = "#fbbf24";
-          moodBadge.style.borderColor = "#f59e0b";
-          moodBadge.style.background = "rgba(245, 158, 11, 0.2)";
-        } else {
-          moodBadge.innerText = `Mood: Furious (${KatieTemper}%)`;
-          moodBadge.style.color = "#f87171";
-          moodBadge.style.borderColor = "#ef4444";
-          moodBadge.style.background = "rgba(239, 68, 68, 0.2)";
-        }
-      }
-
-      // 5. INJECT HER EXACT EMOTION DIRECTIVE
-      let moodDirective = `\n\n[Katie'S CURRENT TEMPER: ${KatieTemper}/100]\n`;
-      if (KatieTemper <= 35) {
-        moodDirective += `Current State: Pleased & sensual. You are dominant, playful, and open to offering him 10-30s standing ONLY if he pleases you.`;
-      } else if (KatieTemper <= 65) {
-        moodDirective += `Current State: Irritated & Strict. You are annoyed. CRITICAL: Standing is 100% FORBIDDEN. You MUST NOT offer standing or agree to let him up. Mock his impatience and demand obedience.`;
-      } else {
-        moodDirective += `Current State: FURIOUS & RUTHLESS. The user has disrespected you. CRITICAL: Rewards are completely OFF THE TABLE. You MUST NOT offer standing, agree to standing, or hint at relief. Mock his suffering, tell him he's staying locked to the floor, and demand that he grovels.`;
-      }
-      return moodDirective;
+      if (lower.includes("good girl") || lower.includes("no way") || lower.includes("refuse")) kateeTemper = Math.min(100, kateeTemper + 35);
+      else if (lower.includes("mistress") || lower.includes("sorry") || lower.includes("yes")) kateeTemper = Math.max(0, kateeTemper - 25);
+      
+      const badge = document.getElementById('moodBadge');
+      if (kateeTemper <= 35) { badge.innerText = `Mood: Seductive (${kateeTemper}%)`; badge.style.color = "#4ade80"; badge.style.background = "rgba(34, 197, 94, 0.2)"; }
+      else if (kateeTemper <= 65) { badge.innerText = `Mood: Irritated (${kateeTemper}%)`; badge.style.color = "#fbbf24"; badge.style.background = "rgba(245, 158, 11, 0.2)"; }
+      else { badge.innerText = `Mood: Furious (${kateeTemper}%)`; badge.style.color = "#f87171"; badge.style.background = "rgba(239, 68, 68, 0.2)"; }
+      
+      return `\n\n[TEMPER: ${kateeTemper}/100] State: ${kateeTemper > 65 ? 'FURIOUS' : (kateeTemper > 35 ? 'Irritated' : 'Seductive')}`;
     }
 
-    // DOM Elements
-    const callBtn = document.getElementById('callBtn');
-    const pauseBtn = document.getElementById('pauseBtn');
-    const hangupBtn = document.getElementById('hangupBtn');
-    const callStatus = document.getElementById('callStatus');
-    const callCard = document.getElementById('callCard');
-    const chatLog = document.getElementById('chatLog');
-    const timerBanner = document.getElementById('timerBanner');
-    const settingsModal = document.getElementById('settingsModal');
-    const openSettings = document.getElementById('openSettings');
-    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
-    const resetPromptBtn = document.getElementById('resetPromptBtn');
-    const clearMemoryBtn = document.getElementById('clearMemoryBtn');
-    const apiOrUrlInput = document.getElementById('apiOrUrlInput');
-    const kokoroUrlInput = document.getElementById('kokoroUrlInput');
-    const kokoroVoiceSelect = document.getElementById('kokoroVoiceSelect');
-    const standDurationSlider = document.getElementById('standDurationSlider');
-    const standDurationVal = document.getElementById('standDurationVal');
-    const kneelWebhookInput = document.getElementById('kneelWebhookInput');
-    const standWebhookInput = document.getElementById('standWebhookInput');
-    const releaseWebhookInput = document.getElementById('releaseWebhookInput');
-    const systemPromptInput = document.getElementById('systemPromptInput');
-
+    // --- DOM SETUP ---
     apiOrUrlInput.value = config.apiOrUrl;
     kokoroUrlInput.value = config.kokoroUrl;
-    kokoroVoiceSelect.value = config.kokoroVoice;
-    standDurationSlider.value = config.standDuration;
-    standDurationVal.innerText = `${config.standDuration}s`;
-    kneelWebhookInput.value = config.kneelWebhook;
-    standWebhookInput.value = config.standWebhook;
-    releaseWebhookInput.value = config.releaseWebhook;
+    webhookBaseInput.value = config.webhookBase;
     systemPromptInput.value = config.prompt;
     updateMemoryUI();
 
-    standDurationSlider.oninput = () => { standDurationVal.innerText = `${standDurationSlider.value}s`; };
-
-    resetPromptBtn.onclick = () => {
-      systemPromptInput.value = DEFAULT_PROMPT;
-    };
-
-    clearMemoryBtn.onclick = () => {
-      if (confirm("Are you sure you want to wipe Katie's lifetime memory?")) {
-        KatieMemory = {
-          totalSessions: 0,
-          totalKneels: 0,
-          totalStands: 0,
-          disrespectCount: 0,
-          sessionNotes: ""
-        };
-        saveKatieMemory();
-      }
-    };
-
-    openSettings.onclick = () => {
-      updateMemoryUI();
-      settingsModal.classList.add('open');
-    };
+    resetPromptBtn.onclick = () => { systemPromptInput.value = DEFAULT_PROMPT; };
+    openSettings.onclick = () => { settingsModal.classList.add('open'); };
+    clearMemoryBtn.onclick = () => { if(confirm("Wipe memory?")) { kateeMemory = {totalSessions:0, totalSlaps:0, sessionNotes:""}; saveKateeMemory(); }};
 
     saveSettingsBtn.onclick = () => {
       config.apiOrUrl = apiOrUrlInput.value.trim();
       config.kokoroUrl = kokoroUrlInput.value.trim();
-      config.kokoroVoice = kokoroVoiceSelect.value;
-      config.standDuration = parseInt(standDurationSlider.value) || 30;
-      config.kneelWebhook = kneelWebhookInput.value.trim();
-      config.standWebhook = standWebhookInput.value.trim();
-      config.releaseWebhook = releaseWebhookInput.value.trim();
+      config.webhookBase = webhookBaseInput.value.trim();
       config.prompt = systemPromptInput.value.trim();
-
-      localStorage.setItem('Katie_api_url', config.apiOrUrl);
-      localStorage.setItem('Katie_kokoro_url', config.kokoroUrl);
-      localStorage.setItem('Katie_kokoro_voice', config.kokoroVoice);
-      localStorage.setItem('Katie_stand_duration', config.standDuration);
-      localStorage.setItem('Katie_kneel_webhook', config.kneelWebhook);
-      localStorage.setItem('Katie_stand_webhook', config.standWebhook);
-      localStorage.setItem('Katie_release_webhook', config.releaseWebhook);
-      localStorage.setItem('Katie_prompt', config.prompt);
-
-      const notesInput = document.getElementById('memoryNotesInput');
-      if (notesInput) {
-        KatieMemory.sessionNotes = notesInput.value.trim();
-        saveKatieMemory();
-      }
-
+      localStorage.setItem('katee_api_url', config.apiOrUrl);
+      localStorage.setItem('katee_kokoro_url', config.kokoroUrl);
+      localStorage.setItem('katee_webhook_base', config.webhookBase);
+      localStorage.setItem('katee_prompt', config.prompt);
+      kateeMemory.sessionNotes = document.getElementById('memoryNotesInput').value;
+      saveKateeMemory();
       settingsModal.classList.remove('open');
     };
 
-    callBtn.onclick = () => {
-      if (!config.apiOrUrl) {
-        settingsModal.classList.add('open');
-        alert('Please enter your LM Studio URL in settings.');
-        return;
-      }
-      startCall();
-    };
-
-    pauseBtn.onclick = () => togglePause();
-    hangupBtn.onclick = () => endCall();
-
-    function togglePause() {
-      if (!isCalling) return;
-      isPaused = !isPaused;
-
-      if (isPaused) {
-        if (recognition) {
-          try { recognition.abort(); } catch (e) {}
-        }
-        clearTimeout(silenceTimer);
-        callCard.className = "call-card";
-        callStatus.innerText = "⏸️ Call Paused (Mic Off)";
-        pauseBtn.innerText = "▶️";
-        pauseBtn.title = "Resume Call";
-        pauseBtn.style.backgroundColor = "var(--success)";
-      } else {
-        pauseBtn.innerText = "⏸️";
-        pauseBtn.title = "Pause Mic";
-        pauseBtn.style.backgroundColor = "var(--warning)";
-        callStatus.innerText = "Listening...";
-        callCard.className = "call-card listening";
-        startSpeechTurn();
-      }
+    // --- HARDWARE WEBHOOKS ---
+    function sendWebhook(path) {
+      const url = config.webhookBase.replace(/\/+$/, '') + path;
+      fetch(url, { method: 'GET', mode: 'no-cors' }).catch(() => {});
+      const img = new Image(); img.src = url + '?t=' + Date.now();
     }
 
-    function appendMessage(sender, text, isInterim = false) {
-      if (!text || typeof text !== 'string' || !text.trim()) return;
-      
-      if (isInterim) {
-        if (!currentInterimBubble) {
-          currentInterimBubble = document.createElement('div');
-          currentInterimBubble.className = 'bubble user interim';
-          chatLog.appendChild(currentInterimBubble);
-        }
-        currentInterimBubble.textContent = text;
-      } else {
-        if (currentInterimBubble) {
-          currentInterimBubble.remove();
-          currentInterimBubble = null;
-        }
-        const b = document.createElement('div');
-        b.className = `bubble ${sender}`;
-        b.textContent = text;
-        chatLog.appendChild(b);
-      }
-      chatLog.scrollTop = chatLog.scrollHeight;
+    function parseActions(raw) {
+      const lower = raw.toLowerCase();
+      if (/\[UNTIE\]/i.test(raw)) { sendWebhook("/untie"); updateLight("light-restraints", "Restraints: RELEASED", false); }
+      if (/\[SLAP_ON\]/i.test(raw)) { sendWebhook("/slap/on"); updateLight("light-slap", "Slapping Balls...", true, true); kateeMemory.totalSlaps++; saveKateeMemory(); }
+      if (/\[SLAP_OFF\]/i.test(raw)) { sendWebhook("/slap/off"); updateLight("light-slap", "Ball-Slapper: IDLE", false, false); }
+      if (/\[VIBE_ON\]/i.test(raw)) { sendWebhook("/vibe/on"); updateLight("light-vibe", "Vibrator: ACTIVE", true); }
+      if (/\[VIBE_OFF\]/i.test(raw)) { sendWebhook("/vibe/off"); updateLight("light-vibe", "Vibrator: OFF", false); }
     }
 
-    function triggerWebhook(url, actionName) {
-      if (!url) return;
-      try {
-        fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' }).catch(() => {});
-        const img = new Image();
-        img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
-      } catch (err) {
-        console.error("Webhook trigger error:", err);
-      }
+    function updateLight(id, label, active, pulse = false) {
+      const el = document.getElementById(id);
+      el.innerText = label;
+      active ? el.classList.add('active') : el.classList.remove('active');
+      pulse ? el.classList.add('pulse') : el.classList.remove('pulse');
     }
 
-    function stopStandTimer() {
-      if (standingAutoKneelTimer) {
-        clearTimeout(standingAutoKneelTimer);
-        standingAutoKneelTimer = null;
-      }
-      if (countdownInterval) {
-        clearInterval(countdownInterval);
-        countdownInterval = null;
-      }
-      if (pendingStandTimeout) {
-        clearTimeout(pendingStandTimeout);
-        pendingStandTimeout = null;
-      }
-    }
-
-    function triggerStandWithTimer(chosenSeconds = 20) {
-      stopStandTimer();
-      triggerWebhook(config.standWebhook, "Stand Sent");
-      KatieMemory.totalStands++;
-      saveKatieMemory();
-
-      const totalSeconds = Math.max(10, Math.min(30, chosenSeconds));
-      let secondsLeft = totalSeconds;
-
-      timerBanner.className = "timer-banner";
-      timerBanner.style.display = "block";
-      timerBanner.innerText = `⏳ Standing: ${secondsLeft}s left (Katie granted ${totalSeconds}s)`;
-
-      countdownInterval = setInterval(() => {
-        secondsLeft--;
-        if (secondsLeft > 0) {
-          timerBanner.innerText = `⏳ Standing: ${secondsLeft}s left (Katie granted ${totalSeconds}s)`;
-        } else {
-          stopStandTimer();
-          triggerWebhook(config.kneelWebhook, "Auto-Kneel Triggered");
-          KatieMemory.totalKneels++;
-          saveKatieMemory();
-          timerBanner.className = "timer-banner expired";
-          timerBanner.innerText = `⚡ ${totalSeconds}s Expired: Kneel Actuator Triggered`;
-
-          setTimeout(() => {
-            if (!standingAutoKneelTimer) timerBanner.style.display = "none";
-          }, 3500);
-        }
-      }, 1000);
-
-      standingAutoKneelTimer = setTimeout(() => {
-        stopStandTimer();
-      }, totalSeconds * 1000);
-    }
-
-    function startCall() {
-      isCalling = true;
-      isPaused = false;
-      isProcessing = false;
-      chatHistory = [];
-      chatLog.innerHTML = '';
-      stopStandTimer();
-      timerBanner.style.display = "none";
-      callBtn.style.display = "none";
-      pauseBtn.style.display = "flex";
-      pauseBtn.innerText = "⏸️";
-      pauseBtn.style.backgroundColor = "var(--warning)";
-      hangupBtn.style.display = "flex";
-      callCard.className = "call-card listening";
-      callStatus.innerText = "Listening...";
-      appendMessage('Katie', "Call connected. I'm listening, handsome.");
-
-      startSpeechTurn();
-    }
-
-    function startSpeechTurn() {
-      if (!isCalling || isPaused || isProcessing) return;
-
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert("Please use Google Chrome on Android for voice input.");
-        endCall();
-        return;
-      }
-
-      if (recognition) {
-        try { recognition.abort(); } catch (e) {}
-        recognition = null;
-      }
-
-      recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-      latestTranscript = "";
-
-      recognition.onstart = () => {
-        if (isCalling && !isPaused && !isProcessing) {
-          callCard.className = "call-card listening";
-          callStatus.innerText = "Listening...";
-        }
-      };
-
-      recognition.onresult = (event) => {
-        let text = "";
-        for (let i = 0; i < event.results.length; i++) {
-          text = event.results[i][0].transcript;
-        }
-        latestTranscript = text.trim();
-        if (latestTranscript) {
-          appendMessage('user', latestTranscript, true);
-
-          if (latestTranscript.toUpperCase().includes("RED")) {
-            stopStandTimer();
-            triggerWebhook(config.releaseWebhook, "Safeword RED (Release Triggered)");
-            timerBanner.className = "timer-banner expired";
-            timerBanner.style.display = "block";
-            timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
-          }
-
-          clearTimeout(silenceTimer);
-          silenceTimer = setTimeout(() => {
-            if (latestTranscript && isCalling && !isPaused && !isProcessing) {
-              commitUserSpeech(latestTranscript);
-            }
-          }, 1000);
-        }
-      };
-
-      recognition.onerror = (e) => {
-        if (isCalling && e.error !== 'no-speech') {
-          console.warn("Speech error:", e.error);
-        }
-      };
-
-      recognition.onend = () => {
-        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
-          if (latestTranscript && latestTranscript.length > 1) {
-            commitUserSpeech(latestTranscript);
-          } else {
-            setTimeout(() => { if (isCalling && !isPaused && !isProcessing) startSpeechTurn(); }, 300);
-          }
-        }
-      };
-
-      try { recognition.start(); } catch (err) { console.error(err); }
-    }
-
-    function commitUserSpeech(text) {
-      if (isProcessing || isPaused) return;
-      isProcessing = true;
-      clearTimeout(silenceTimer);
-      latestTranscript = "";
-
-      if (recognition) {
-        try { recognition.abort(); } catch (e) {}
-        recognition = null;
-      }
-      appendMessage('user', text, false);
-      sendToLMStudio(text);
-    }
-
-    // --- LM STUDIO ENGINE WITH PERSISTENT MEMORY & TEMPER ---
-    async function sendToLMStudio(userText) {
+    // --- ENGINE ---
+    async function executeTurn(userText) {
       callCard.className = "call-card";
       callStatus.innerText = "Katie is thinking...";
       chatHistory.push({ role: "user", content: userText });
-
       if (chatHistory.length > 6) chatHistory = chatHistory.slice(-6);
 
       try {
-        let baseUrl = config.apiOrUrl.replace(/\/+$/, '');
-        if (!baseUrl.includes('/v1')) baseUrl += '/v1';
-        const url = `${baseUrl}/chat/completions`;
-
-        // Inject Long-Term Memory + Real-Time Mood
-        const currentMoodText = updateKatieMood(userText);
-        const memoryText = getMemoryPrompt();
-        
-        const messages = [
-          { role: "system", content: config.prompt + memoryText + currentMoodText },
-          ...chatHistory
-        ];
-
-        const res = await fetch(url, {
+        const mood = updateKatieMood(userText);
+        const res = await fetch(config.apiOrUrl + "/v1/chat/completions", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "ngrok-skip-browser-warning": "true"
-          },
+          headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
           body: JSON.stringify({
-            messages: messages,
-            max_tokens: 250,
-            temperature: 0.65,
-            stop: ["User:", "Human:", "Input:", "input your response", "\nUser:", "\nHuman:"]
+            messages: [{ role: "system", content: config.prompt + mood }, ...chatHistory],
+            max_tokens: 120, temperature: 0.7, stop: ["User:", "\nUser:"]
           })
         });
-
         const data = await res.json();
-        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+        const raw = data.choices[0].message.content.trim();
+        
+        parseActions(raw);
+        let cleanText = raw.replace(/\[.*?\]/g, '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/\*[^*]*\*/g, '').trim();
+        const sentences = cleanText.match(/[^.!?]+[.!?]+/g);
+        if (sentences && sentences.length > 2) cleanText = sentences.slice(0, 2).join(' ');
 
-        const reply = data.choices?.[0]?.message?.content || "";
-        processModelReply(reply.trim(), "assistant");
+        chatHistory.push({ role: "assistant", content: cleanText });
+        appendMessage('katee', cleanText);
+        playVoice(cleanText);
 
       } catch (err) {
-        console.error("LM Studio Error:", err);
-        appendMessage('system', `LM Studio Error: ${err.message}\nEnsure LM Studio Server & Cloudflare tunnel are running.`);
+        appendMessage('system', "Connection Error: Check LM Studio.");
         resumeListeningWithDelay(2500);
       }
     }
 
-   // --- SMART PROCESSOR: TARGETED REFUSALS & NATURAL PHRASE DETECTOR ---
-    function processModelReply(rawReply, modelRole) {
-      const lower = rawReply.toLowerCase();
-      
-      // 1. Targeted Stand Refusals (Only blocks if she explicitly says you cannot stand)
-      const isExplicitStandRefusal = 
-        lower.includes("not letting you stand") ||
-        lower.includes("not going to let you stand") ||
-        lower.includes("won't let you stand") ||
-        lower.includes("wont let you stand") ||
-        lower.includes("can't stand") ||
-        lower.includes("cannot stand") ||
-        lower.includes("not on your feet") ||
-        lower.includes("not ready to stand") ||
-        lower.includes("not getting up") ||
-        lower.includes("no standing") ||
-        (lower.includes("not a chance") && !lower.includes("grant"));
-
-      // 2. Positive Stand Grants (Catches all her natural speech phrasing)
-      const hasPositiveStandPhrase = 
-        lower.includes("i'll give you") ||
-        lower.includes("i will give you") ||
-        lower.includes("i'm giving you") ||
-        lower.includes("i'll grant you") ||
-        lower.includes("i will grant you") ||
-        lower.includes("i'm granting you") ||
-        lower.includes("i am granting you") ||
-        lower.includes("i'll let you stand") ||
-        lower.includes("i will let you stand") ||
-        lower.includes("i'm letting you stand") ||
-        lower.includes("extending the actuator") ||
-        lower.includes("let the actuator extend") ||
-        (lower.includes("on your feet") && (lower.includes("fine") || lower.includes("grant") || lower.includes("give you") || lower.includes("seconds")));
-
-      // 3. Question Filter: ONLY block if it's purely a question asking you to plead
-      const isPureTestQuestion = 
-        (rawReply.trim().endsWith("?") && !hasPositiveStandPhrase) ||
-        lower.includes("tell me why you deserve") ||
-        lower.includes("do you think you've been obedient enough") ||
-        lower.includes("do you think you deserve");
-
-      // 4. Detect Dynamic Seconds
-      const standMatch = rawReply.match(/\[ACTION:\s*STAND(?::\s*(\d+))?\]/i);
-      let detectedSeconds = 20; // Default
-
-      if (standMatch && standMatch[1]) {
-        detectedSeconds = parseInt(standMatch[1]);
-      } else {
-        const numMatch = lower.match(/\b(1[0-9]|2[0-9]|30)\s*seconds?\b/);
-        if (numMatch) detectedSeconds = parseInt(numMatch[1]);
-        else if (lower.includes("ten seconds") || lower.includes("10 seconds")) detectedSeconds = 10;
-        else if (lower.includes("fifteen seconds") || lower.includes("15 seconds")) detectedSeconds = 15;
-        else if (lower.includes("twenty seconds") || lower.includes("20 seconds")) detectedSeconds = 20;
-        else if (lower.includes("twenty-five seconds") || lower.includes("25 seconds")) detectedSeconds = 25;
-        else if (lower.includes("thirty seconds") || lower.includes("30 seconds")) detectedSeconds = 30;
-      }
-
-      let shouldStandSeconds = null;
-
-      // 5. Hardware Trigger Evaluation
-      const isKneelTrigger = /\[(?:ACTION:\s*)?(?:INSTANT\s+PUNISHMENT\s*)?KNEEL\]/i.test(rawReply) ||
-        /\[INSTANT\s+PUNISHMENT\]/i.test(rawReply) ||
-        /\bKNEEL\b/i.test(rawReply) ||
-        lower.includes("down you go") ||
-        lower.includes("back down you go") ||
-        lower.includes("stay on your knees") ||
-        lower.includes("back on your knees") ||
-        lower.includes("patronize your mistress") ||
-        lower.includes("learn your place");
-
-      if (/\[ACTION:\s*RELEASE\]/i.test(rawReply) || lower.includes("disengage the electromagnet") || lower.includes("disengaged and you're completely free")) {
-        stopStandTimer();
-        triggerWebhook(config.releaseWebhook, "Electromagnet Released");
-        timerBanner.className = "timer-banner expired";
-        timerBanner.style.display = "block";
-        timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
-      } else if (isKneelTrigger) {
-        stopStandTimer();
-        triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
-        KatieMemory.totalKneels++;
-        saveKatieMemory();
-
-        timerBanner.className = "timer-banner expired";
-        timerBanner.style.display = "block";
-        timerBanner.innerText = "⚡ Kneel Actuator Triggered";
-
-        setTimeout(() => {
-          if (!standingAutoKneelTimer) timerBanner.style.display = "none";
-        }, 3500);
-
-      } 
-      // 🔒 STAND LOGIC: Triggers when Pleased (<=35%), not refusing, not a test question, and granting standing
-      else if (KatieTemper <= 35 && !isExplicitStandRefusal && !isPureTestQuestion && (standMatch || hasPositiveStandPhrase)) {
-        shouldStandSeconds = detectedSeconds;
-      }
-
-      // 6. Clean Text for Display & Kokoro TTS
-      let cleanText = rawReply
-        .replace(/<think>[\s\S]*?<\/think>/gi, '')
-        .replace(/\[(?:ACTION:\s*)?(?:INSTANT\s+PUNISHMENT\s*)?STAND(?::\s*\d+)?\]/gi, '')
-        .replace(/\[(?:ACTION:\s*)?(?:INSTANT\s+PUNISHMENT\s*)?(KNEEL|RELEASE)\]/gi, '')
-        .replace(/\[INSTANT\s+PUNISHMENT\]/gi, '')
-        .replace(/\[KNEEL\]/gi, '')
-        .replace(/ACTION:\s*(KNEEL|STAND|RELEASE)/gi, '')
-        .replace(/^(scowls|glares|smirks|laughs|sighs|chuckles|looks|leans|steps|crosses|rolls|stares|pauses|tilts)[^.!?\n]*[.!?:\)]\s*/i, '')
-        .replace(/\([^)]*\)/g, '')
-        .replace(/\*[^*]*\*/g, '')
-        .replace(/(User:|Human:|Input:|input your response).*$/is, '')
-        .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
-        .trim();
-
-      // 7. Smart 2-Sentence Slicer
-      const completeSentences = cleanText.match(/[^.!?]+[.!?]+/g);
-      if (completeSentences && completeSentences.length > 0) {
-        cleanText = completeSentences.slice(0, 2).join(' ').trim();
-      }
-
-      if (!cleanText || cleanText.length === 0) {
-        cleanText = "Stay right there on your knees, bitch, and keep your focus on me.";
-      }
-
-      chatHistory.push({ role: modelRole, content: cleanText });
-      appendMessage('Katie', cleanText);
-      playVoice(cleanText, shouldStandSeconds);
-    }
-
-    // --- KOKORO LOCAL VOICE OR BROWSER FALLBACK WITH TIMED ACTION ---
-    async function playVoice(text, standSeconds = null) {
+    async function playVoice(text) {
       callCard.className = "call-card talking";
       callStatus.innerText = "Katie is speaking...";
-
-      if (pendingStandTimeout) {
-        clearTimeout(pendingStandTimeout);
-        pendingStandTimeout = null;
-      }
-
       if (config.kokoroUrl) {
         try {
-          let baseUrl = config.kokoroUrl.replace(/\/+$/, '');
-          if (!baseUrl.includes('/v1')) baseUrl += '/v1';
-          const ttsUrl = `${baseUrl}/audio/speech`;
-
-          const res = await fetch(ttsUrl, {
+          const res = await fetch(config.kokoroUrl + "/v1/audio/speech", {
             method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "ngrok-skip-browser-warning": "true"
-            },
-            body: JSON.stringify({
-              input: text,
-              voice: config.kokoroVoice || "af_bella",
-              model: "kokoro",
-              response_format: "mp3"
-            })
+            headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+            body: JSON.stringify({ input: text, voice: config.kokoroVoice, response_format: "mp3" })
           });
-
-          if (!res.ok) throw new Error("Kokoro request failed");
-
           const blob = await res.blob();
-          const audioUrl = URL.createObjectURL(blob);
-
-          if (currentAudioElement) {
-            currentAudioElement.pause();
-            currentAudioElement = null;
-          }
-
-          currentAudioElement = new Audio(audioUrl);
-
-          // Triggers the actuator at ~70% through her voice line
-          currentAudioElement.onloadedmetadata = () => {
-            if (standSeconds) {
-              const dur = currentAudioElement.duration || 3;
-              const triggerDelayMs = Math.max(600, (dur * 0.7) * 1000);
-              
-              pendingStandTimeout = setTimeout(() => {
-                if (isCalling) triggerStandWithTimer(standSeconds);
-              }, triggerDelayMs);
-            }
-          };
-
-          currentAudioElement.onended = () => {
-            resumeListeningWithDelay(600);
-          };
-
-          currentAudioElement.play();
+          document.getElementById('audioPlayback').src = URL.createObjectURL(blob);
+          document.getElementById('audioPlayback').onended = () => resumeListeningWithDelay(600);
           return;
+        } catch (e) {}
+      }
+      const u = new SpeechSynthesisUtterance(text);
+      u.onend = () => resumeListeningWithDelay(600);
+      synth.speak(u);
+    }
 
-        } catch (e) {
-          console.warn("Kokoro error, using browser voice:", e);
+    // --- INPUT HANDLING ---
+    function sendTextMessage() { const t = userTextInput.value.trim(); if(t && !isProcessing) { userTextInput.value=""; appendMessage('user', t); executeTurn(t); }}
+    
+    callBtn.onclick = () => {
+      isCalling = true; isPaused = false; chatLog.innerHTML = '';
+      callBtn.style.display="none"; pauseBtn.style.display="flex"; hangupBtn.style.display="flex";
+      callCard.className="call-card listening"; callStatus.innerText="Listening...";
+      startSpeechTurn();
+    };
+
+    hangupBtn.onclick = () => {
+      isCalling = false; stopStandTimer(); callCard.className="call-card"; callStatus.innerText="Ended";
+      callBtn.style.display="flex"; pauseBtn.style.display="none"; hangupBtn.style.display="none";
+      if(recognition) recognition.abort();
+      
+      kateeMemory.totalSessions++;
+      kateeMemory.sessionNotes = `Session ${kateeMemory.totalSessions}: ${kateeTemper > 60 ? 'Ended while furious.' : 'Ended normally.'}`;
+      saveKateeMemory();
+    };
+
+    function startSpeechTurn() {
+      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SR || !isCalling || isPaused) return;
+      recognition = new SR();
+      recognition.continuous = false; recognition.interimResults = true;
+      recognition.onresult = (e) => {
+        const t = e.results[0][0].transcript;
+        appendMessage('user', t, true);
+        if (e.results[0].isFinal) {
+          clearTimeout(silenceTimer);
+          silenceTimer = setTimeout(() => {
+            appendMessage('user', t, false); executeTurn(t);
+          }, 1000);
         }
-      }
-
-      // Browser fallback voice
-      if (standSeconds) {
-        const estTotalMs = (text.length / 14 / 0.95) * 1000;
-        const triggerDelayMs = Math.max(600, estTotalMs * 0.7);
-        
-        pendingStandTimeout = setTimeout(() => {
-          if (isCalling) triggerStandWithTimer(standSeconds);
-        }, triggerDelayMs);
-      }
-
-      const utterance = new SpeechSynthesisUtterance(text);
-      utterance.rate = 0.95;
-      utterance.onend = () => {
-        resumeListeningWithDelay(600);
       };
-      synth.speak(utterance);
+      recognition.onend = () => { if(isCalling && !isPaused) recognition.start(); };
+      recognition.start();
     }
 
-    function resumeListeningWithDelay(ms) {
-      callCard.className = "call-card";
-      if (!isPaused) callStatus.innerText = "Listening...";
-      setTimeout(() => {
-        isProcessing = false;
-        if (isCalling && !isPaused) {
-          startSpeechTurn();
-        }
-      }, ms);
+    function resumeListeningWithDelay(ms) { 
+      callCard.className="call-card"; 
+      setTimeout(() => { if(isCalling && !isPaused) startSpeechTurn(); }, ms); 
     }
 
-    function endCall() {
-      isCalling = false;
-      isPaused = false;
-      isProcessing = false;
-      clearTimeout(silenceTimer);
-      stopStandTimer();
-
-      // 🧠 AUTO-DEBRIEF & SAVE SESSION MEMORY
-      if (chatHistory.length >= 2) {
-        KatieMemory.totalSessions++;
-        
-        let newNote = `Session ${KatieMemory.totalSessions}: `;
-        if (KatieTemper > 65) {
-          newNote += `He ended the call while I was furious. Disrespect level was high; he struggled to obey and needed heavy kneeling punishments.`;
-        } else if (KatieTemper <= 30) {
-          newNote += `He was well-behaved, obedient on his knees, and earned rewards properly.`;
-        } else {
-          newNote += `He showed some resistance to begging but stayed clamped to the floor.`;
-        }
-        KatieMemory.sessionNotes = newNote;
-        saveKatieMemory();
+    function appendMessage(sender, text, interim=false) {
+      if(!text) return;
+      if(interim) {
+        if(!currentInterimBubble) { currentInterimBubble = document.createElement('div'); currentInterimBubble.className='bubble user interim'; chatLog.appendChild(currentInterimBubble); }
+        currentInterimBubble.textContent = text;
+      } else {
+        if(currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble=null; }
+        const b = document.createElement('div'); b.className=`bubble ${sender}`; b.textContent=text; chatLog.appendChild(b);
       }
-
-      timerBanner.style.display = "none";
-      callCard.className = "call-card";
-      callStatus.innerText = "Call Ended";
-      callBtn.style.display = "flex";
-      pauseBtn.style.display = "none";
-      hangupBtn.style.display = "none";
-
-      if (currentInterimBubble) {
-        currentInterimBubble.remove();
-        currentInterimBubble = null;
-      }
-
-      if (recognition) {
-        try { recognition.abort(); } catch (e) {}
-        recognition = null;
-      }
-
-      if (currentAudioElement) {
-        currentAudioElement.pause();
-        currentAudioElement = null;
-      }
-      if (synth) synth.cancel();
+      chatLog.scrollTop = chatLog.scrollHeight;
     }
   </script>
 </body>
