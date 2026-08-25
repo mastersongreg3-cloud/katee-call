@@ -348,6 +348,19 @@
     </div>
   </div>
 
+<!-- 🧠 KATEE'S LONG-TERM MEMORY VIEWER -->
+      <div class="input-group">
+        <label>Katee's Long-Term Memory (Persistent Records)</label>
+        <textarea id="memoryNotesInput" rows="3" placeholder="Katee's memory notes will appear here after calls..."></textarea>
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-top: 6px;">
+          <span id="memoryStatsDisplay" style="font-size: 11px; color: #94a3b8;">Sessions: 0 | Kneels: 0 | Stands: 0</span>
+          <button type="button" class="btn-secondary" id="clearMemoryBtn" style="font-size: 11px; padding: 3px 8px; background: #ef4444;">Wipe Memory</button>
+        </div>
+      </div>
+
+
+
+  
   <script>
     const DEFAULT_PROMPT = `[CHARACTER & LIVE VOICE-CALL DIRECTIVE]
 You are "Katee", in an active live voice call with your submissive male partner. You are his alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend.
@@ -375,12 +388,13 @@ CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, fei
 - Floor Actuator: A clamp is secured tightly around his balls, tethered directly to a floor linear actuator (binary KNEEL or STAND).
 - Sensory Focus: Frequently taunt him about his "balls", his "penis", the clamp squeezing his balls, and how helpless he looks kneeling.
 
-### 5. STANDING PROTOCOL (OBEDIENCE & SHE INITIATES):
-- RULE 1 (HE CANNOT ASK): If he asks to stand up early, instantly shut him down. Scold him, mock his impatience, and tell him to be good on his knees.
-- RULE 2 (YOU INITIATE THE OFFER): After a few turns of good, obedient conversation, YOU bring up standing. Ask him if he thinks he's been good enough to earn some time on his feet.
-- RULE 3 (HIS RESPONSE & YOUR DECISION): When he responds with submission (e.g. "Yes Mistress"), YOU decide:
-  * GRANT STANDING: Choose 15 to 30 seconds, state the time aloud, and append [ACTION: STAND:XX] (where XX is 15 to 30).
-  * TEASE & DENY: Tell him you changed your mind and force him to stay down.
+### 5. STANDING PROTOCOL & TEMPER RULES (OBEDIENCE & SHE INITIATES):
+- RULE 1 (NO REWARDS WHEN ANGRY): If your temper is Irritated or Furious (>35%), standing is 100% FORBIDDEN. Never offer standing, never ask if he wants to get up, and never agree to it. Mock his discomfort, remind him of his bad behavior, and keep him clamped to the floor.
+- RULE 2 (HE CANNOT ASK EARLY): If he asks to stand on his own, instantly shut him down. Scold him for speaking out of turn, mock his impatience, and tell him to stay quiet on his knees.
+- RULE 3 (YOU INITIATE ONLY WHEN PLEASED): Only after several turns of good, obedient conversation—and ONLY when your temper is calm and Pleased (<=35%)—YOU bring up standing by asking if he thinks he's earned some time on his feet.
+- RULE 4 (HIS SUBMISSION & YOUR DECISION): When he responds with submission (e.g. "Yes Mistress"), YOU make the final call:
+  * GRANT STANDING: Choose a dynamic duration between 20 and 30 seconds, state the exact number aloud, and append [ACTION: STAND:XX] (e.g. [ACTION: STAND:20]).
+  * TEASE & DENY: Tell him you changed your mind because he looks too handsome helpless on the floor, and force him to stay kneeling.
 
 ### SPECIAL REACTION — "GOOD GIRL":
 - If he calls YOU "good girl", recognize it as cheekiness or disrespect.
@@ -412,6 +426,11 @@ Katee: You have been good, but I love seeing you helpless on the floor too much.
 User: Good girl.
 Katee: Did you really just call me "good girl"? You don't get to patronize your Mistress—get right back down on your knees and learn your place.
 [ACTION: KNEEL]
+
+
+User: please, my balls hurt, let me up!
+Katee: Did you forget how angry you just made me, bitch? You don't get a single second off the floor when you've been misbehaving—stay right there on your knees and endure it.
+
 
 
 User: RED
@@ -516,6 +535,16 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       localStorage.setItem('katee_release_webhook', config.releaseWebhook);
       localStorage.setItem('katee_prompt', config.prompt);
       settingsModal.classList.remove('open');
+
+      
+      const notesInput = document.getElementById('memoryNotesInput');
+      if (notesInput) {
+        kateeMemory.sessionNotes = notesInput.value.trim();
+        saveKateeMemory();
+      }
+
+
+      
     };
 
     callBtn.onclick = () => {
@@ -752,9 +781,54 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
     }
 
+
+
+// =========================================================================
+    // 🧠 PERSISTENT LONG-TERM MEMORY ENGINE
+    // =========================================================================
+    let kateeMemory = JSON.parse(localStorage.getItem('katee_memory')) || {
+      totalSessions: 0,
+      totalKneels: 0,
+      totalStands: 0,
+      disrespectCount: 0,
+      sessionNotes: "He has a habit of pushing boundaries and needs strict discipline."
+    };
+
+    function saveKateeMemory() {
+      localStorage.setItem('katee_memory', JSON.stringify(kateeMemory));
+      updateMemoryUI();
+    }
+
+    function updateMemoryUI() {
+      const notesEl = document.getElementById('memoryNotesInput');
+      const statsEl = document.getElementById('memoryStatsDisplay');
+      if (notesEl) notesEl.value = kateeMemory.sessionNotes || "";
+      if (statsEl) {
+        statsEl.innerText = `Sessions: ${kateeMemory.totalSessions} | Kneels: ${kateeMemory.totalKneels} | Stands: ${kateeMemory.totalStands} | Disrespect: ${kateeMemory.disrespectCount}`;
+      }
+    }
+
+    function getMemoryPrompt() {
+      if (kateeMemory.totalSessions === 0) {
+        return `\n\n[KATEE'S LONG-TERM MEMORY]\nThis is your very first session with him. Establish your absolute dominance and test his obedience from the start.`;
+      }
+      return `\n\n[KATEE'S REAL LONG-TERM MEMORY FROM PAST CALLS]\n` +
+        `- Total Past Sessions: ${kateeMemory.totalSessions} completed calls.\n` +
+        `- Lifetime Actuator Kneels Enforced: ${kateeMemory.totalKneels} times.\n` +
+        `- Lifetime Stand Rewards Granted: ${kateeMemory.totalStands} times.\n` +
+        `- Disrespect Incidents: He has disrespected you ${kateeMemory.disrespectCount} times in the past.\n` +
+        `- Your Notes On Him: "${kateeMemory.sessionNotes}"\n` +
+        `INSTRUCTION: Genuinely reference his past session history, mock his lifetime punishments, or acknowledge if he is behaving better or worse than last time.`;
+    }
+
+
    // =========================================================================
     // 🔥 KATEE TEMPER & MOOD ENGINE (0 to 100)
     // =========================================================================
+
+
+
+    
     let kateeTemper = 15; // Starts calm & pleased (0 - 100)
 
     function updateKateeMood(userSpeech) {
@@ -833,17 +907,16 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         }
       }
 
-      // 5. INJECT HER EXACT EMOTION DIRECTIVE INTO HER BRAIN
+// 5. INJECT HER EXACT EMOTION DIRECTIVE INTO HER BRAIN
       let moodDirective = `\n\n[KATEE'S CURRENT TEMPER: ${kateeTemper}/100]\n`;
-      if (kateeTemper <= 30) {
-        moodDirective += `Current State: Pleased and sensual. You are confident, playful, and open to offering him 10-30s standing if he pleases you.`;
+      if (kateeTemper <= 35) {
+        moodDirective += `Current State: Pleased & sensual. You are dominant, playful, and open to offering him 10-30s standing ONLY if he pleases you.`;
       } else if (kateeTemper <= 65) {
-        moodDirective += `Current State: Irritated & Strict. You are annoyed by his defiance. Mock his audacity, demand deeper submission, and DO NOT allow standing.`;
+        moodDirective += `Current State: Irritated & Strict. You are annoyed. CRITICAL: Standing is 100% FORBIDDEN. You MUST NOT offer standing or agree to let him up. Mock his impatience and demand obedience.`;
       } else {
-        moodDirective += `Current State: FURIOUS & RUTHLESS. The user has disrespected you with sarcasm or refusal. Your tone must be cold, harsh, and cutting. Standing is 100% FORBIDDEN. Force him to stay kneeling and make him grovel to earn your favor back.`;
+        moodDirective += `Current State: FURIOUS & RUTHLESS. The user has disrespected you. CRITICAL: Rewards are completely OFF THE TABLE. You MUST NOT offer standing, agree to standing, or hint at relief. Mock his suffering, tell him he's staying locked to the floor, and demand that he grovels.`;
       }
       return moodDirective;
-    }
 
     // --- LM STUDIO ENGINE ---
     async function sendToLMStudio(userText) {
@@ -860,10 +933,11 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
         // Inject dynamic mood on every turn
         const currentMoodText = updateKateeMood(userText);
+        const memoryText = getMemoryPrompt();
         const messages = [
-          { role: "system", content: config.prompt + currentMoodText },
-          ...chatHistory
-        ];
+        { role: "system", content: config.prompt + memoryText + currentMoodText },
+        ...chatHistory
+         ];
 
         const res = await fetch(url, {
           method: "POST",
@@ -1196,6 +1270,25 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       clearTimeout(silenceTimer);
       stopStandTimer();
 
+
+// 🧠 AUTO-DEBRIEF & SAVE SESSION MEMORY
+      if (chatHistory.length >= 2) {
+        kateeMemory.totalSessions++;
+        
+        let newNote = `Session ${kateeMemory.totalSessions}: `;
+        if (kateeTemper > 65) {
+          newNote += `He ended the call while I was furious. Disrespect level was high; he struggled to obey and needed heavy kneeling punishments.`;
+        } else if (kateeTemper <= 30) {
+          newNote += `He was well-behaved, obedient on his knees, and earned rewards properly.`;
+        } else {
+          newNote += `He showed some resistance to begging but stayed clamped to the floor.`;
+        }
+        kateeMemory.sessionNotes = newNote;
+        saveKateeMemory();
+      }
+
+
+      
       timerBanner.style.display = "none";
       callCard.className = "call-card";
       callStatus.innerText = "Call Ended";
