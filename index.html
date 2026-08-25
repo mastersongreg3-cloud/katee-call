@@ -265,7 +265,13 @@
       🎙️
     </div>
     <div class="caller-name">Katee</div>
+
+
+    <div class="mood-badge" id="moodBadge" style="font-size: 11px; font-weight: 700; padding: 2px 10px; border-radius: 12px; margin-top: 4px; background: rgba(34, 197, 94, 0.2); color: #4ade80; border: 1px solid #22c55e;">Mood: Seductive (Pleased)</div>
     <div class="call-status" id="callStatus">Ready to Call</div>
+
+    
+
   </div>
 
   <div class="timer-banner" id="timerBanner">⏳ Stand Active: 30s left</div>
@@ -746,7 +752,62 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
     }
 
-    // --- LM STUDIO ENGINE (HIGH TOKEN BUFFER) ---
+   // =========================================================================
+    // 🔥 KATEE TEMPER & MOOD ENGINE (0 to 100)
+    // =========================================================================
+    let kateeTemper = 15; // Starts calm & pleased (0 - 100)
+
+    function updateKateeMood(userSpeech) {
+      const lower = userSpeech.toLowerCase();
+
+      // Actions that spike her temper
+      if (lower.includes("good girl")) {
+        kateeTemper = Math.min(100, kateeTemper + 40);
+      } else if (lower.includes("let me up") || lower.includes("let me stand") || lower.includes("hurry up")) {
+        kateeTemper = Math.min(100, kateeTemper + 15);
+      } 
+      // Actions that calm her down
+      else if (lower.includes("sorry") || lower.includes("mistress") || lower.includes("forgive me") || lower.includes("yes mistress") || lower.includes("please mistress")) {
+        kateeTemper = Math.max(0, kateeTemper - 20);
+      } else {
+        // Natural gentle cooling for regular submissive chat
+        kateeTemper = Math.max(0, kateeTemper - 5);
+      }
+
+      // Update the visual badge on screen if present
+      const moodBadge = document.getElementById('moodBadge');
+      if (moodBadge) {
+        if (kateeTemper <= 30) {
+          moodBadge.innerText = `Mood: Pleased (${kateeTemper}%)`;
+          moodBadge.style.color = "#4ade80";
+          moodBadge.style.borderColor = "#22c55e";
+          moodBadge.style.background = "rgba(34, 197, 94, 0.2)";
+        } else if (kateeTemper <= 65) {
+          moodBadge.innerText = `Mood: Irritated (${kateeTemper}%)`;
+          moodBadge.style.color = "#fbbf24";
+          moodBadge.style.borderColor = "#f59e0b";
+          moodBadge.style.background = "rgba(245, 158, 11, 0.2)";
+        } else {
+          moodBadge.innerText = `Mood: Furious (${kateeTemper}%)`;
+          moodBadge.style.color = "#f87171";
+          moodBadge.style.borderColor = "#ef4444";
+          moodBadge.style.background = "rgba(239, 68, 68, 0.2)";
+        }
+      }
+
+      // Dynamic mood directive injected into the prompt
+      let moodDirective = `\n\n[KATEE'S CURRENT TEMPER: ${kateeTemper}/100]\n`;
+      if (kateeTemper <= 30) {
+        moodDirective += `Current State: Pleased and playful. You are dominant, sensual, and open to offering him 10-30s standing if he pleases you.`;
+      } else if (kateeTemper <= 65) {
+        moodDirective += `Current State: Irritated & Strict. You are annoyed by his impatience or attitude. Mock him, demand deeper respect, and DO NOT allow standing yet.`;
+      } else {
+        moodDirective += `Current State: FURIOUS & RUTHLESS. The user has disrespected you. Your tone must be cold, harsh, and cutting. Standing is 100% FORBIDDEN. Force him to stay kneeling and make him grovel to earn your favor back.`;
+      }
+      return moodDirective;
+    }
+
+    // --- LM STUDIO ENGINE ---
     async function sendToLMStudio(userText) {
       callCard.className = "call-card";
       callStatus.innerText = "Katee is thinking...";
@@ -759,8 +820,10 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         if (!baseUrl.includes('/v1')) baseUrl += '/v1';
         const url = `${baseUrl}/chat/completions`;
 
+        // Inject dynamic mood on every turn
+        const currentMoodText = updateKateeMood(userText);
         const messages = [
-          { role: "system", content: config.prompt },
+          { role: "system", content: config.prompt + currentMoodText },
           ...chatHistory
         ];
 
@@ -801,8 +864,10 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
       try {
         const url = "https://api.groq.com/openai/v1/chat/completions";
+        
+        const currentMoodText = updateKateeMood(userText);
         const messages = [
-          { role: "system", content: config.prompt },
+          { role: "system", content: config.prompt + currentMoodText },
           ...chatHistory
         ];
 
@@ -844,8 +909,10 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
       try {
         const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash:generateContent?key=${config.apiOrUrl}`;
+        const currentMoodText = updateKateeMood(userText);
+        
         const payload = {
-          systemInstruction: { parts: [{ text: config.prompt }] },
+          systemInstruction: { parts: [{ text: config.prompt + currentMoodText }] },
           contents: chatHistory,
           generationConfig: { maxOutputTokens: 250 }
         };
@@ -910,7 +977,6 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         timerBanner.style.display = "block";
         timerBanner.innerText = "⚡ EMERGENCY: Electromagnet Released";
       } else if (isKneelTrigger) {
-        // Stop timer immediately and fire Kneel webhook
         stopStandTimer();
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
         timerBanner.className = "timer-banner expired";
@@ -947,7 +1013,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
         .trim();
 
-      // 4. Smart Sentence Slicer (Keeps only the first 2 completed sentences)
+      // 4. Smart Sentence Slicer (1 to 2 sentences)
       const completeSentences = cleanText.match(/[^.!?]+[.!?]+/g);
       if (completeSentences && completeSentences.length > 0) {
         cleanText = completeSentences.slice(0, 2).join(' ').trim();
@@ -1011,6 +1077,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
           currentAudioElement = new Audio(audioUrl);
 
+          // Triggers the actuator at ~70% through her sentence
           currentAudioElement.onloadedmetadata = () => {
             if (standSeconds) {
               const dur = currentAudioElement.duration || 3;
