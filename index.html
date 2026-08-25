@@ -1015,8 +1015,8 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
       } else if (isKneelTrigger) {
         stopStandTimer();
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
-        kateeMemory.totalKneels++;
-        saveKateeMemory();
+        KatieMemory.totalKneels++;
+        saveKatieMemory();
 
         timerBanner.className = "timer-banner expired";
         timerBanner.style.display = "block";
@@ -1028,7 +1028,7 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
       } 
       // 🔒 STAND LOGIC: Triggers when Pleased (<=35%), not refusing, not a test question, and granting standing
-      else if (kateeTemper <= 35 && !isExplicitStandRefusal && !isPureTestQuestion && (standMatch || hasPositiveStandPhrase)) {
+      else if (KatieTemper <= 35 && !isExplicitStandRefusal && !isPureTestQuestion && (standMatch || hasPositiveStandPhrase)) {
         shouldStandSeconds = detectedSeconds;
       }
 
@@ -1058,7 +1058,7 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
 
       chatHistory.push({ role: modelRole, content: cleanText });
-      appendMessage('katee', cleanText);
+      appendMessage('Katie', cleanText);
       playVoice(cleanText, shouldStandSeconds);
     }
 
