@@ -974,7 +974,7 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
     }
 
-    // --- SMART PROCESSOR: STRIPS ACTIONS & STOPS FROZEN TIMERS ---
+// --- SMART PROCESSOR: STRIPS ACTIONS, ENFORCES TEMPER LOCK & 2 SENTENCES ---
     function processModelReply(rawReply, modelRole) {
       const lower = rawReply.toLowerCase();
       const isRefusal = /\b(not|won't|can't|cannot|never|no way|don't|haven't|refuse|not yet)\b/i.test(lower);
@@ -1025,14 +1025,16 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
           if (!standingAutoKneelTimer) timerBanner.style.display = "none";
         }, 3500);
 
-      } else if (
+      } 
+      // 🔒 HARD TEMPER-LOCK: Only permit standing if her temper is <= 35% (Pleased)
+      else if (kateeTemper <= 35 && (
         standMatch || 
         (!isRefusal && (
           lower.includes("extending the actuator") ||
           lower.includes("let you stand") ||
           lower.includes("on your feet")
         ))
-      ) {
+      )) {
         shouldStandSeconds = detectedSeconds;
       }
 
