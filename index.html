@@ -936,37 +936,66 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
     }
 
-    // --- SMART PROCESSOR: HARDWARE EVALUATION & 2-SENTENCE ENFORCEMENT ---
+   // --- SMART PROCESSOR: TARGETED REFUSALS & NATURAL PHRASE DETECTOR ---
     function processModelReply(rawReply, modelRole) {
       const lower = rawReply.toLowerCase();
-      const isRefusal = /\b(not|won't|can't|cannot|never|no way|don't|haven't|refuse|not yet)\b/i.test(lower);
       
-      const isQuestionOrTest = rawReply.includes("?") || 
-        lower.includes("tell me why") || 
-        lower.includes("do you think") || 
-        lower.includes("if you deserve") || 
-        lower.includes("why you deserve") ||
-        lower.includes("deserve some time");
+      // 1. Targeted Stand Refusals (Only blocks if she explicitly says you cannot stand)
+      const isExplicitStandRefusal = 
+        lower.includes("not letting you stand") ||
+        lower.includes("not going to let you stand") ||
+        lower.includes("won't let you stand") ||
+        lower.includes("wont let you stand") ||
+        lower.includes("can't stand") ||
+        lower.includes("cannot stand") ||
+        lower.includes("not on your feet") ||
+        lower.includes("not ready to stand") ||
+        lower.includes("not getting up") ||
+        lower.includes("no standing") ||
+        (lower.includes("not a chance") && !lower.includes("grant"));
 
-      // 1. Detect dynamic seconds from [ACTION: STAND:XX] or spoken dialogue
+      // 2. Positive Stand Grants (Catches all her natural speech phrasing)
+      const hasPositiveStandPhrase = 
+        lower.includes("i'll give you") ||
+        lower.includes("i will give you") ||
+        lower.includes("i'm giving you") ||
+        lower.includes("i'll grant you") ||
+        lower.includes("i will grant you") ||
+        lower.includes("i'm granting you") ||
+        lower.includes("i am granting you") ||
+        lower.includes("i'll let you stand") ||
+        lower.includes("i will let you stand") ||
+        lower.includes("i'm letting you stand") ||
+        lower.includes("extending the actuator") ||
+        lower.includes("let the actuator extend") ||
+        (lower.includes("on your feet") && (lower.includes("fine") || lower.includes("grant") || lower.includes("give you") || lower.includes("seconds")));
+
+      // 3. Question Filter: ONLY block if it's purely a question asking you to plead
+      const isPureTestQuestion = 
+        (rawReply.trim().endsWith("?") && !hasPositiveStandPhrase) ||
+        lower.includes("tell me why you deserve") ||
+        lower.includes("do you think you've been obedient enough") ||
+        lower.includes("do you think you deserve");
+
+      // 4. Detect Dynamic Seconds
       const standMatch = rawReply.match(/\[ACTION:\s*STAND(?::\s*(\d+))?\]/i);
-      let detectedSeconds = 20;
+      let detectedSeconds = 20; // Default
 
       if (standMatch && standMatch[1]) {
         detectedSeconds = parseInt(standMatch[1]);
       } else {
         const numMatch = lower.match(/\b(1[0-9]|2[0-9]|30)\s*seconds?\b/);
         if (numMatch) detectedSeconds = parseInt(numMatch[1]);
-        else if (lower.includes("ten seconds")) detectedSeconds = 10;
-        else if (lower.includes("fifteen seconds")) detectedSeconds = 15;
-        else if (lower.includes("twenty seconds")) detectedSeconds = 20;
-        else if (lower.includes("twenty-five seconds") || lower.includes("twenty five seconds")) detectedSeconds = 25;
-        else if (lower.includes("thirty seconds")) detectedSeconds = 30;
+        else if (lower.includes("ten seconds") || lower.includes("10 seconds")) detectedSeconds = 10;
+        else if (lower.includes("fifteen seconds") || lower.includes("15 seconds")) detectedSeconds = 15;
+        else if (lower.includes("twenty seconds") || lower.includes("20 seconds")) detectedSeconds = 20;
+        else if (lower.includes("twenty-five seconds") || lower.includes("25 seconds")) detectedSeconds = 25;
+        else if (lower.includes("thirty seconds") || lower.includes("30 seconds")) detectedSeconds = 30;
       }
 
       let shouldStandSeconds = null;
 
-      // 2. Hardware Trigger Evaluation
+      // 5. Hardware Trigger Evaluation
       const isKneelTrigger = /\[(?:ACTION:\s*)?(?:INSTANT\s+PUNISHMENT\s*)?KNEEL\]/i.test(rawReply) ||
         /\[INSTANT\s+PUNISHMENT\]/i.test(rawReply) ||
         /\bKNEEL\b/i.test(rawReply) ||
@@ -986,8 +1015,8 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
       } else if (isKneelTrigger) {
         stopStandTimer();
         triggerWebhook(config.kneelWebhook, "Hardware: Kneel Sent");
-        KatieMemory.totalKneels++;
-        saveKatieMemory();
+        kateeMemory.totalKneels++;
+        saveKateeMemory();
 
         timerBanner.className = "timer-banner expired";
         timerBanner.style.display = "block";
@@ -997,23 +1026,13 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
           if (!standingAutoKneelTimer) timerBanner.style.display = "none";
         }, 3500);
 
-      } else if (
-        KatieTemper <= 35 && 
-        !isRefusal && 
-        !isQuestionOrTest && 
-        (
-          standMatch || 
-          lower.includes("extending the actuator") ||
-          lower.includes("i'm granting you") ||
-          lower.includes("i am granting you") ||
-          lower.includes("i'll let you stand for") ||
-          lower.includes("i am letting you stand for")
-        )
-      ) {
+      } 
+      // 🔒 STAND LOGIC: Triggers when Pleased (<=35%), not refusing, not a test question, and granting standing
+      else if (kateeTemper <= 35 && !isExplicitStandRefusal && !isPureTestQuestion && (standMatch || hasPositiveStandPhrase)) {
         shouldStandSeconds = detectedSeconds;
       }
 
-      // 3. Clean Text for Display & Kokoro TTS
+      // 6. Clean Text for Display & Kokoro TTS
       let cleanText = rawReply
         .replace(/<think>[\s\S]*?<\/think>/gi, '')
         .replace(/\[(?:ACTION:\s*)?(?:INSTANT\s+PUNISHMENT\s*)?STAND(?::\s*\d+)?\]/gi, '')
@@ -1028,7 +1047,7 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
         .replace(/([\u2700-\u27BF]|[\uE000-\uF8FF]|\uD83C[\uDC00-\uDFFF]|\uD83D[\uDC00-\uDFFF]|[\u2011-\u26FF]|\uD83E[\uDD10-\uDDFF])/g, '')
         .trim();
 
-      // 4. Smart 2-Sentence Slicer
+      // 7. Smart 2-Sentence Slicer
       const completeSentences = cleanText.match(/[^.!?]+[.!?]+/g);
       if (completeSentences && completeSentences.length > 0) {
         cleanText = completeSentences.slice(0, 2).join(' ').trim();
@@ -1039,7 +1058,7 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
 
       chatHistory.push({ role: modelRole, content: cleanText });
-      appendMessage('Katie', cleanText);
+      appendMessage('katee', cleanText);
       playVoice(cleanText, shouldStandSeconds);
     }
 
