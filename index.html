@@ -974,10 +974,20 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
     }
 
-// --- SMART PROCESSOR: STRIPS ACTIONS, ENFORCES TEMPER LOCK & 2 SENTENCES ---
+// --- SMART PROCESSOR: STRIPS ACTIONS, ENFORCES TEMPER LOCK, QUESTIONS & 2 SENTENCES ---
     function processModelReply(rawReply, modelRole) {
       const lower = rawReply.toLowerCase();
+      
+      // Check if she is refusing
       const isRefusal = /\b(not|won't|can't|cannot|never|no way|don't|haven't|refuse|not yet)\b/i.test(lower);
+      
+      // Check if she is asking a question or testing you (MUST NOT TRIGGER STANDING)
+      const isQuestionOrTest = rawReply.includes("?") || 
+        lower.includes("tell me why") || 
+        lower.includes("do you think") || 
+        lower.includes("if you deserve") || 
+        lower.includes("why you deserve") ||
+        lower.includes("deserve some time");
 
       // 1. Detect dynamic seconds from [ACTION: STAND:XX] or spoken dialogue
       const standMatch = rawReply.match(/\[ACTION:\s*STAND(?::\s*(\d+))?\]/i);
@@ -1026,15 +1036,20 @@ Katee: Stopping right now, baby. The electromagnet is disengaged and you're comp
         }, 3500);
 
       } 
-      // 🔒 HARD TEMPER-LOCK: Only permit standing if her temper is <= 35% (Pleased)
-      else if (kateeTemper <= 35 && (
-        standMatch || 
-        (!isRefusal && (
+      // 🔒 STAND LOGIC: Must be Pleased (<=35%), NOT refusing, NOT asking a question, and giving affirmative permission
+      else if (
+        kateeTemper <= 35 && 
+        !isRefusal && 
+        !isQuestionOrTest && 
+        (
+          standMatch || 
           lower.includes("extending the actuator") ||
-          lower.includes("let you stand") ||
-          lower.includes("on your feet")
-        ))
-      )) {
+          lower.includes("i'm granting you") ||
+          lower.includes("i am granting you") ||
+          lower.includes("i'll let you stand for") ||
+          lower.includes("i am letting you stand for")
+        )
+      ) {
         shouldStandSeconds = detectedSeconds;
       }
 
