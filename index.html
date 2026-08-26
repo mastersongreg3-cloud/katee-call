@@ -819,9 +819,26 @@
       return /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping)\b/i.test(str);
     }
 
-    // --- EXECUTION ENGINE ---
+   // --- PHONETIC SPEECH AUTO-CORRECTOR ---
+    function correctSpeechPhonetics(rawText) {
+      if (!rawText) return "";
+      let text = rawText;
+
+      // Auto-correct misheard "mistress" (e.g. miss chris, mrs, ms, mister, missed us, misses)
+      text = text.replace(/\b(miss chris|missed us|mrs\.?|ms\.?|mr\.?|mister|misses)\b/gi, "mistress");
+
+      // Auto-correct misheard "untie" (e.g. on tom, on time, on tie, un tie, and tie, un tight)
+      text = text.replace(/\b(on tom|on time|on tie|un tie|un-tie|and tie|un tight|until me)\b/gi, "untie");
+
+      // Auto-correct misheard "Katie" (e.g. cathy, kathy, cadi, kd, k t)
+      text = text.replace(/\b(kathy|cathy|cadi|k d|k t|kd)\b/gi, "Katie");
+
+      return text;
+    }
+
+    // --- ENGINE ---
     function sendTextMessage() { 
-      const t = userTextInput.value.trim(); 
+      const t = correctSpeechPhonetics(userTextInput.value.trim()); 
       if (t && !isProcessing) { 
         if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
         userTextInput.value = ""; 
@@ -831,6 +848,7 @@
     }
 
     function commitUserSpeech(text) {
+      text = correctSpeechPhonetics(text);
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
       if (silenceTimer) clearTimeout(silenceTimer);
@@ -1060,6 +1078,7 @@
         if (isCalling && !isPaused && !isProcessing) {
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
+          resetSilencePenalty();
         }
       };
 
@@ -1068,7 +1087,9 @@
         for (let i = 0; i < event.results.length; i++) {
           text = event.results[i][0].transcript;
         }
-        latestTranscript = text.trim();
+        
+        // Auto-correct phonetically in real time
+        latestTranscript = correctSpeechPhonetics(text.trim());
 
         if (latestTranscript) {
           if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
@@ -1087,6 +1108,7 @@
           }
 
           clearTimeout(silenceTimer);
+          if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
           silenceTimer = setTimeout(() => {
             if (latestTranscript && isCalling && !isPaused && !isProcessing) {
               commitUserSpeech(latestTranscript);
