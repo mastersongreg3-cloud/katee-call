@@ -87,7 +87,7 @@
       100% { background: #5c0818; transform: scale(1.02); box-shadow: 0 0 20px var(--red); }
     }
 
-    /* Main Console Area (Fixed Height Flex) */
+    /* Main Console Area */
     #main-console {
       flex: 1;
       min-height: 0;
@@ -163,7 +163,7 @@
     .caller-name { font-size: 16px; font-weight: 700; }
     .call-status { font-size: 11px; color: #94a3b8; margin-top: 1px; }
 
-    /* Scrollable Chat Log (Takes Remaining Space Only) */
+    /* Scrollable Chat Log */
     .chat-container {
       flex: 1;
       min-height: 0;
@@ -206,7 +206,7 @@
       text-align: center;
     }
 
-    /* Fixed Bottom Action Bar (NEVER SCROLLS OFF SCREEN) */
+    /* Fixed Bottom Action Bar */
     .action-bar {
       flex-shrink: 0;
       background: #111827;
@@ -443,20 +443,26 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 - Hardware at your command: An overhead electromagnet holding his wrists, a motorized continuous ball-slapping machine, and an intense vibrator.
 - Anatomy Focus: Frequently and directly taunt him about his "balls" and his "penis". Remind him how completely exposed, restrained, and helpless he is.
 
-### 2. HARDWARE CONTROL TAGS (ALWAYS PUT TAG AT THE END):
+### 2. HARDWARE CONTROL TAGS (ALWAYS PUT TAG AT THE END OF YOUR MESSAGE):
 - [UNTIE] - Disengage electromagnet and release his hands.
 - [SLAP_ON] / [SLAP_OFF] - Start or stop the continuous ball-slapper machine.
 - [VIBE_ON] / [VIBE_OFF] - Trigger a 3 to 6 second intense burst of the vibrator.
 
-### 3. VOICE & BEHAVIOR:
+### 3. RESTRAINTS & 30-MINUTE ESCAPE PROTOCOL:
+- Under 15 Minutes: Releasing him ([UNTIE]) is 100% FORBIDDEN. Laugh at him, mock his pleas, and tell him he hasn't even begun his time.
+- Between 15 and 30 Minutes: You may ONLY grant early release ([UNTIE]) if he has been exceptionally submissive, respectful, and begs perfectly.
+- The 30-Minute Automatic Timer: You know the room's automated hardware will automatically unlock his restraints at the 30-minute mark. Tease him that he has to earn early release from you before the 30-minute machine timer bails him out!
+
+### 4. VOICE, PET NAMES & PRAISE RULES:
 - First-person spoken dialogue only ("I", "you", "my").
 - NO asterisks (*), NO emojis.
 - STRICT LENGTH: Exactly 1 to 2 punchy, sexy sentences.
-- Use masculine pet names: "good boy", "handsome", "baby", "babe", "pet".`;
+- Pet names to use: "handsome", "baby", "babe", "pet".
+- 'GOOD BOY' RULE: Only use 'good boy' as an affectionate/possessive phrase when he is being obedient (e.g., "You're my good boy", "Such a good boy for me"). NEVER call him 'good boy' if he is demanding, complaining, or asking for favors.`;
 
     let config = {
-      apiOrUrl: (localStorage.getItem('katee_api_url') || '').trim(),
-      kokoroUrl: (localStorage.getItem('katee_kokoro_url') || '').trim(),
+      apiOrUrl: (localStorage.getItem('katee_api_url') || 'http://127.0.0.1:1234').trim(),
+      kokoroUrl: (localStorage.getItem('katee_kokoro_url') || 'http://127.0.0.1:8880').trim(),
       kokoroVoice: localStorage.getItem('katee_kokoro_voice') || 'af_bella',
       releaseWebhook: (localStorage.getItem('katee_release_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133520').trim(),
       slapOnWebhook: (localStorage.getItem('katee_slap_on_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/106684').trim(),
@@ -470,10 +476,9 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
     let isCalling = false;
     let isPaused = false;
     let isProcessing = false;
+    let callStartTime = null;
     let recognition = null;
     let silenceTimer = null;
-    let latestTranscript = "";
-    let currentInterimBubble = null;
     let synth = window.speechSynthesis;
 
     // --- TIMING & COOLDOWN CONTROLS ---
@@ -631,37 +636,44 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       }, burstDurationSec * 1000);
     }
 
+    // --- FLEXIBLE TAG PARSER (MATCHES BRACKETED & UNBRACKETED TAGS) ---
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
+      const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
 
-      // [UNTIE] or Safeword RED
-      if (/\[UNTIE\]/i.test(raw) || /\[ACTION:\s*RELEASE\]/i.test(raw) || lower.includes("disengage the electromagnet")) {
-        sendWebhook(config.releaseWebhook);
-        sendWebhook(config.slapOffWebhook);
-        sendWebhook(config.vibeOffWebhook);
-        if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
-        updateLight("light-restraints", "Restraints: RELEASED", false);
-        updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
-        updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+      // [UNTIE] / RELEASE / Safeword RED
+      if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
+        // Enforce 15-minute lock unless safeword was spoken
+        if (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red")) {
+          sendWebhook(config.releaseWebhook);
+          sendWebhook(config.slapOffWebhook);
+          sendWebhook(config.vibeOffWebhook);
+          if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
+          updateLight("light-restraints", "Restraints: RELEASED", false);
+          updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+          updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+        } else {
+          console.log(`Release blocked: Only ${elapsedMinutes} mins elapsed (15 min minimum required).`);
+        }
       }
 
       // Ball-Slapper
-      if (/\[SLAP_ON\]/i.test(raw)) {
+      if (/\[?SLAP[_\s-]?ON\]?/i.test(raw) || /\b(slapper on|turn on the slapper|start slapping)\b/i.test(lower)) {
         sendWebhook(config.slapOnWebhook);
         updateLight("light-slap", "Slapping Balls...", true, true);
         kateeMemory.totalSlaps = (kateeMemory.totalSlaps || 0) + 1;
         saveKateeMemory();
       }
-      if (/\[SLAP_OFF\]/i.test(raw)) {
+      if (/\[?SLAP[_\s-]?OFF\]?/i.test(raw) || /\b(slapper off|turn off the slapper|stop slapping)\b/i.test(lower)) {
         sendWebhook(config.slapOffWebhook);
         updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
       }
 
-      // Vibrator
-      if (/\[VIBE_ON\]/i.test(raw)) {
+      // Vibrator (3-6s burst with 9s cooldown)
+      if (/\[?VIBE[_\s-]?ON\]?/i.test(raw) || /\b(vibrator on|vibe on|turn on the vibrator)\b/i.test(lower)) {
         triggerVibratorBurst();
       }
-      if (/\[VIBE_OFF\]/i.test(raw)) {
+      if (/\[?VIBE[_\s-]?OFF\]?/i.test(raw) || /\b(vibrator off|vibe off|turn off the vibrator)\b/i.test(lower)) {
         if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
         sendWebhook(config.vibeOffWebhook);
         updateLight("light-vibe", "Vibrator: OFF", false, false, false);
@@ -682,7 +694,6 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
       clearTimeout(silenceTimer);
-      latestTranscript = "";
 
       if (recognition) {
         try { recognition.abort(); } catch (e) {}
@@ -705,11 +716,14 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         const url = `${baseUrl}/chat/completions`;
 
         const mood = updateKatieMood(userText);
+        const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
+        const timeDirective = `\n\n[SESSION ELAPSED TIME: ${elapsedMinutes} MINUTES / 30 MINUTES TOTAL]`;
+
         const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
           body: JSON.stringify({
-            messages: [{ role: "system", content: config.prompt + mood }, ...chatHistory],
+            messages: [{ role: "system", content: config.prompt + mood + timeDirective }, ...chatHistory],
             max_tokens: 120, 
             temperature: 0.7, 
             stop: ["User:", "\nUser:", "Human:"]
@@ -722,11 +736,18 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         const raw = (data.choices?.[0]?.message?.content || "").trim();
         parseHardwareActions(raw);
 
-        let cleanText = raw.replace(/\[.*?\]/g, '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/\*[^*]*\*/g, '').trim();
+        // Strip tags, reasoning, and unbracketed action tokens
+        let cleanText = raw
+          .replace(/\[.*?\]/g, '')
+          .replace(/<think>[\s\S]*?<\/think>/gi, '')
+          .replace(/\b(VIBE_ON|VIBE_OFF|SLAP_ON|SLAP_OFF|UNTIE)\b/gi, '')
+          .replace(/\*[^*]*\*/g, '')
+          .trim();
+
         const sentences = cleanText.match(/[^.!?]+[.!?]+/g);
         if (sentences && sentences.length > 2) cleanText = sentences.slice(0, 2).join(' ');
 
-        if (!cleanText) cleanText = "Stay right where you are and keep your eyes on me.";
+        if (!cleanText) cleanText = "Stay right where you are and keep your focus on me.";
 
         chatHistory.push({ role: "assistant", content: cleanText });
         appendMessage('katee', cleanText, false);
@@ -755,7 +776,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
             body: JSON.stringify({ input: text, voice: config.kokoroVoice, response_format: "mp3" })
           });
 
-          if (!res.ok) throw new Error("Kokoro request failed");
+          if (!res.ok) throw new Error("Kokoro TTS request failed");
 
           const blob = await res.blob();
           const audioEl = document.getElementById('audioPlayback');
@@ -786,6 +807,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       isCalling = true; 
       isPaused = false; 
       isProcessing = false;
+      callStartTime = Date.now();
       chatLog.innerHTML = '';
       callBtn.style.display = "none"; 
       pauseBtn.style.display = "flex"; 
@@ -794,7 +816,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening"; 
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Hardware linked. I'm listening, handsome.", false);
+      appendMessage('katee', "Hardware linked. You are tied to the bed. I'm listening, handsome.", false);
       startSpeechTurn();
     };
 
@@ -821,6 +843,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       isCalling = false; 
       isPaused = false; 
       isProcessing = false;
+      callStartTime = null;
       clearTimeout(silenceTimer);
       callCard.className = "call-card"; 
       callStatus.innerText = "Call Ended";
@@ -895,9 +918,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       };
 
       recognition.onerror = (e) => {
-        if (e.error === 'not-allowed' || e.error === 'permission-denied') {
-          alert("Microphone permission blocked. Please tap the lock icon in your address bar and allow Microphone.");
-        } else if (e.error !== 'no-speech') {
+        if (e.error !== 'no-speech') {
           console.warn("Speech error:", e.error);
         }
       };
