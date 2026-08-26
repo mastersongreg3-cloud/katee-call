@@ -808,14 +808,15 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       }, burstDurationSec * 1000);
     }
 
+// --- BULLETPROOF ACTION PARSER (FIXED VIBRATOR NEGATION BUG) ---
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
-      const isNegated = /\b(not|won't|wont|never|refuse|why would i|don't think|no way)\b/i.test(lower);
 
-      // Release
+      // 1. [UNTIE] / RELEASE / Safeword RED
+      const isUntieRefusal = /\b(not untying|won't untie|wont untie|not releasing|never untie|refuse to untie|not letting you go)\b/i.test(lower);
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
-        if (!isNegated && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
+        if (!isUntieRefusal && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
           sendWebhook(config.releaseWebhook);
           sendWebhook(config.slapOffWebhook);
           sendWebhook(config.vibeOffWebhook);
@@ -827,19 +828,20 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         }
       }
 
-      // Slapper OFF
+      // 2. BALL-SLAPPER OFF (Only blocked if she explicitly refuses to stop slapping)
+      const isSlapRefusal = /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping)\b/i.test(lower);
       const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
-        (!isNegated && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
+        (!isSlapRefusal && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
 
-      if (wantsSlapOff && !isNegated) {
+      if (wantsSlapOff && !isSlapRefusal) {
         if (isSlapperActive) {
           sendWebhook(config.slapOffWebhook);
           isSlapperActive = false;
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
       } 
-      // Slapper ON
-      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isNegated && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping")))) {
+      // 3. BALL-SLAPPER ON
+      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isSlapRefusal && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping") || lower.includes("slap your balls")))) {
         if (!isSlapperActive) {
           sendWebhook(config.slapOnWebhook);
           isSlapperActive = true;
@@ -849,11 +851,29 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         }
       }
 
-      // Vibrator ON / OFF (Catches natural phrases + tags)
-      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on") || lower.includes("turning on the vibrator") || lower.includes("turn on the vibrator"))) {
+      // 4. VIBRATOR ON (Targeted Refusal: innocent words like "don't get used to it" will NEVER block it!)
+      const isVibeRefusal = /\b(not turning on the vibrator|won't turn on the vibrator|no vibrator|refuse to give you the vibrator|not giving you the vibrator|no vibration)\b/i.test(lower);
+      const isVibeOnTrigger = /\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || 
+        (!isVibeRefusal && (
+          lower.includes("vibrator on") || 
+          lower.includes("vibe on") || 
+          lower.includes("turn on the vibrator") ||
+          lower.includes("turning on the vibrator") ||
+          lower.includes("stimulation for your penis") ||
+          lower.includes("burst for your penis") ||
+          lower.includes("reward for your penis") ||
+          lower.includes("little stimulation") ||
+          lower.includes("little reward for your") ||
+          lower.includes("enjoy this while it lasts") ||
+          lower.includes("feel this vibration")
+        ));
+
+      if (isVibeOnTrigger) {
         triggerVibratorBurst();
       }
-      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && lower.includes("vibrator off"))) {
+
+      // 5. VIBRATOR OFF
+      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isVibeRefusal && lower.includes("turn off the vibrator"))) {
         stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
         updateLight("light-vibe", "Vibrator: OFF", false, false, false);
