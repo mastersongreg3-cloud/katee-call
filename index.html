@@ -475,8 +475,27 @@ CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, fei
 - ANTI-PARROT RULE: If he just repeats "yes mistress" or "sorry" over and over like a broken record, do NOT reward him. Mock him for sounding like a robot, tell him words are cheap, and demand that he actually answers your questions with real thought.
 - PERSONAL OWNERSHIP: Never speak about the hardware passively (never say "the slapper" or "the machine is slapping you"). ALWAYS speak with direct personal ownership: "a break from ME slapping your balls", "how does it feel when I slap your balls", or "I'm punishing your balls".
 
+### 7. VIBRATOR TEASING & GREED PUNISHMENT:
+- GENEROUS WITH VIBRATOR: When you are pleased or in a playful mood, be generous with short 3 to 6 second bursts of the vibrator [VIBE_ON] to tease and stimulate his penis throughout the conversation.
+- GREED PENALTY: If he constantly asks, begs, or whines for the vibrator, punish his greed by starting to slap his balls with [SLAP_ON].
+- CRUEL COMBOS: When punishing his greed, you can choose to slap his balls while giving his penis a burst of the vibrator at the exact same time ([SLAP_ON] [VIBE_ON]) to overload him!
 
-### 7. EXACT DIALOGUE EXAMPLES:
+
+### 8. EXACT DIALOGUE EXAMPLES:
+
+
+User: Please give me the vibrator again, Katie, it feels so good!
+Katie: Getting greedy for stimulation, handsome? I'll give your penis a burst, but your balls are getting slapped for demanding it.
+[SLAP_ON] [VIBE_ON]
+
+User: Can I have more vibrator please?
+Katie: You don't get to demand pleasure from me, baby. Take these slaps to your balls until you learn some patience.
+[SLAP_ON]
+
+User: I love how you're taking care of me, Mistress.
+Katie: You're being such a good boy for me today, handsome. Here is a little reward for your penis.
+[VIBE_ON]
+
 
 User: Good girl.
 Katie: Did you really just call me "good girl"? You don't get to patronize your Mistress, baby—let's see how your balls handle me punishing them with some slapping.
@@ -736,7 +755,19 @@ let consecutiveSamePhraseCount = 0;
       cooldown ? el.classList.add('cooldown') : el.classList.remove('cooldown');
     }
 
-    // --- VIBRATOR BURST (3-6s) & 9s COOLDOWN ---
+// --- TIMING & COOLDOWN CONTROLS ---
+    let vibeAutoOffTimer = null;
+    let vibeActiveInterval = null;
+    let vibeCooldownInterval = null;
+    let vibeCooldownUntil = 0;
+
+    function stopAllVibeTimers() {
+      if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
+      if (vibeActiveInterval) { clearInterval(vibeActiveInterval); vibeActiveInterval = null; }
+      if (vibeCooldownInterval) { clearInterval(vibeCooldownInterval); vibeCooldownInterval = null; }
+    }
+
+    // --- VIBRATOR LIVE ACTIVE COUNTDOWN (3-6s) & 9s COOLDOWN ---
     function triggerVibratorBurst() {
       const now = Date.now();
       if (now < vibeCooldownUntil) {
@@ -745,26 +776,43 @@ let consecutiveSamePhraseCount = 0;
         return;
       }
 
+      stopAllVibeTimers();
+
+      // Random burst duration: 3, 4, 5, or 6 seconds
       const burstDurationSec = Math.floor(Math.random() * 4) + 3;
+      let activeLeft = burstDurationSec;
+
       sendWebhook(config.vibeOnWebhook);
-      updateLight("light-vibe", `Vibrator: ACTIVE (${burstDurationSec}s)`, true);
+      updateLight("light-vibe", `⚡ VIBRATING: ${activeLeft}s`, true);
       kateeMemory.totalVibes = (kateeMemory.totalVibes || 0) + 1;
       saveKateeMemory();
 
-      if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
+      // Live countdown while vibrating
+      vibeActiveInterval = setInterval(() => {
+        activeLeft--;
+        if (activeLeft > 0) {
+          updateLight("light-vibe", `⚡ VIBRATING: ${activeLeft}s`, true);
+        } else {
+          clearInterval(vibeActiveInterval);
+          vibeActiveInterval = null;
+        }
+      }, 1000);
 
+      // Auto-off and switch to 9s cooldown countdown
       vibeAutoOffTimer = setTimeout(() => {
+        stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
         vibeCooldownUntil = Date.now() + 9000;
-        updateLight("light-vibe", "Vibrator: COOLDOWN (9s)", false, false, true);
 
         let cdRemaining = 9;
-        const cdInterval = setInterval(() => {
+        updateLight("light-vibe", `⏳ COOLDOWN: ${cdRemaining}s`, false, false, true);
+
+        vibeCooldownInterval = setInterval(() => {
           cdRemaining--;
           if (cdRemaining > 0) {
-            updateLight("light-vibe", `Vibrator: COOLDOWN (${cdRemaining}s)`, false, false, true);
+            updateLight("light-vibe", `⏳ COOLDOWN: ${cdRemaining}s`, false, false, true);
           } else {
-            clearInterval(cdInterval);
+            stopAllVibeTimers();
             updateLight("light-vibe", "Vibrator: OFF", false, false, false);
           }
         }, 1000);
@@ -788,7 +836,7 @@ let consecutiveSamePhraseCount = 0;
           sendWebhook(config.slapOffWebhook);
           sendWebhook(config.vibeOffWebhook);
           isSlapperActive = false;
-          if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
+          stopAllVibeTimers();
           updateLight("light-restraints", "Restraints: RELEASED", false);
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
           updateLight("light-vibe", "Vibrator: OFF", false, false, false);
@@ -822,7 +870,7 @@ let consecutiveSamePhraseCount = 0;
         triggerVibratorBurst();
       }
       if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && (lower.includes("vibrator off") || lower.includes("turn off the vibrator")))) {
-        if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
+        stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
         updateLight("light-vibe", "Vibrator: OFF", false, false, false);
       }
@@ -1010,7 +1058,7 @@ let consecutiveSamePhraseCount = 0;
         isSlapperActive = false;
         updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
       }
-      if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
+      stopAllVibeTimers();
 
       if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
       if (recognition) try { recognition.abort(); } catch (e) {}
@@ -1065,7 +1113,7 @@ let consecutiveSamePhraseCount = 0;
             sendWebhook(config.slapOffWebhook);
             sendWebhook(config.vibeOffWebhook);
             isSlapperActive = false;
-            if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
+            stopAllVibeTimers();
             updateLight("light-restraints", "Restraints: RELEASED", false);
             updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
             updateLight("light-vibe", "Vibrator: OFF", false, false, false);
