@@ -494,16 +494,6 @@
     }
 
     function getHardwareStatusDirective() {
-
-// Inside function getHardwareStatusDirective():
-    if (now < vibeCooldownUntil) {
-      const cdLeft = Math.ceil((vibeCooldownUntil - now) / 1000);
-      status += `- VIBRATOR: COOLING DOWN (${cdLeft}s remaining). Do not turn it on until cooldown ends.\n`;
-    } else {
-      status += "- VIBRATOR: READY (HIGH PRIORITY: Append [VIBE_ON] on 80-90% of turns to stimulate him unless you are Furious).\n";
-    }
-
-      
       let status = "\n\n[LIVE HARDWARE STATUS IN THE ROOM]:\n";
       if (isSlapperActive) {
         status += "- BALL-SLAPPER: CURRENTLY ON & ACTIVELY SLAPPING HIS BALLS. (Do NOT say you 'will turn it on'—it is ALREADY running right now. Talk about the continuous slapping he is taking, or decide to stop with [SLAP_OFF]).\n";
@@ -516,7 +506,7 @@
         const cdLeft = Math.ceil((vibeCooldownUntil - now) / 1000);
         status += `- VIBRATOR: COOLING DOWN (${cdLeft}s remaining). Do not turn it on until cooldown ends.\n`;
       } else {
-        status += "- VIBRATOR: READY. You can trigger a 3-6s burst anytime with [VIBE_ON]. (CRITICAL: If you tell him you are using it, you MUST append [VIBE_ON] at the end).\n";
+        status += "- VIBRATOR: READY (HIGH PRIORITY: Append [VIBE_ON] on 80-90% of turns to tease/stimulate him unless you are Furious).\n";
       }
       return status;
     }
@@ -695,7 +685,6 @@
       if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
       if (!isCalling || isPaused || isProcessing) return;
 
-      // Exactly 10 seconds of true silence triggers Katie's slap penalty
       silenceMasterTimer = setTimeout(() => {
         if (isCalling && !isPaused && !isProcessing) {
           silenceMasterTimer = null;
@@ -719,13 +708,13 @@
       }, 10000);
     }
 
+    // --- VIBRATOR BURST (4-6s) & 9s COOLDOWN ---
     function triggerVibratorBurst() {
       const now = Date.now();
       if (now < vibeCooldownUntil) return;
 
-     // Inside function triggerVibratorBurst():
-    // Random burst duration: 4, 5, or 6 seconds
-    const burstDurationSec = Math.floor(Math.random() * 3) + 4;
+      // 4 to 6 seconds random burst
+      const burstDurationSec = Math.floor(Math.random() * 3) + 4;
       sendWebhook(config.vibeOnWebhook);
       updateLight("light-vibe", `Vibrator: ACTIVE (${burstDurationSec}s)`, true);
       kateeMemory.totalVibes = (kateeMemory.totalVibes || 0) + 1;
@@ -1110,7 +1099,7 @@
         isProcessing = false;
         if (isCalling && !isPaused) {
           startSpeechTurn();
-          startMasterSilenceTimer(); // Master 10s countdown begins when Katie finishes speaking
+          startMasterSilenceTimer(); // Master 10s countdown starts after Katie finishes speaking
         }
       }, ms); 
     }
