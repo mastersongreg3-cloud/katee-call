@@ -812,14 +812,20 @@ function parseHardwareActions(raw) {
         }
       }
 
-      // 4. VIBRATOR ON / OFF
-      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on") || lower.includes("turning on the vibrator") || lower.includes("turn on the vibrator"))) {
-        triggerVibratorBurst();
+// 4. VIBRATOR RESUME / ON
+      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || /\[?VIBE[_\s-]?RESUME:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on") || lower.includes("resume the vibrator"))) {
+        if (!isVibeCycleRunning) {
+          isVibeCycleRunning = true;
+          runVibratorAutoCycle();
+        }
       }
-      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && lower.includes("vibrator off"))) {
+
+      // 5. VIBRATOR PAUSE / OFF (Withhold pleasure)
+      if (/\[?VIBE[_\s-]?PAUSE:?\]?/i.test(raw) || /\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && (lower.includes("pause the vibrator") || lower.includes("turn off the vibrator") || lower.includes("withhold the vibrator")))) {
+        isVibeCycleRunning = false;
         stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
-        updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+        updateLight("light-vibe", "Vibrator: PAUSED (Withheld)", false);
       }
     }
 
