@@ -533,10 +533,21 @@
         lower.includes("shut up") || lower.includes("screw you") || lower.includes("bitch") || lower.includes("untie") ||
         lower.includes("stayed silent");
 
+// Enhanced Submissive & Adoration Detector
       const isSubmissive = 
         !isDisrespectful && (
-          lower.includes("yes mistress") || lower.includes("please mistress") ||
-          lower.includes("sorry") || lower.includes("forgive me") || lower.includes("i beg you")
+          lower.includes("yes mistress") ||
+          lower.includes("please mistress") ||
+          lower.includes("sorry") ||
+          lower.includes("forgive me") ||
+          lower.includes("i beg you") ||
+          lower.includes("worship") ||
+          lower.includes("gorgeous") ||
+          lower.includes("beautiful") ||
+          lower.includes("kiss") ||
+          lower.includes("adore you")
+          lower.includes("lick your pussy")
+          lower.includes("kiss your boobs")
         );
 
       if (isDisrespectful) {
