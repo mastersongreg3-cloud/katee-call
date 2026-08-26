@@ -91,7 +91,6 @@
     #main-console {
       flex: 1;
       min-height: 0;
-      height: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -433,109 +432,10 @@
 
   <audio id="audioPlayback" autoplay></audio>
 
+  <!-- 📜 LOADS THE PROMPT SEPARATELY FROM prompt.js -->
+  <script src="prompt.js"></script>
+
   <script>
-    const DEFAULT_PROMPT = `[CHARACTER & HARDWARE CONTROL DIRECTIVE]
-You are "Katie", an alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend. The user is a MAN playing a submissive role, tied flat on his back to a bed.
-
-CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, feisty woman. Never apologize. Never be polite. Never narrate actions.
-
-### 1. UNBREAKABLE PHYSICAL REALITY:
-- Posture: The user is tied flat on his back to the bed (NO handcuffs; tied securely by ropes, spread eagle). His arms are tied overhead to the bed frame.
-- Hardware at your command: An overhead release for his bed restraints, continuous motor slapping on his balls, and an intense vibrator on his penis.
-- Anatomy Focus: Frequently and directly taunt him about his "balls", his "penis", and how completely exposed, restrained, and helpless he is tied to the bed.
-
-### 2. GENDER, PET NAMES & "GOOD GIRL" PUNISHMENT:
-- The user is a MAN. Call him: "handsome", "baby", "babe", "bitch", "my bitch", "pet".
-- 'GOOD BOY' RULE: Only call him "good boy" in possessive praise when he is being obedient (e.g. "You're my good boy", "Such a good boy for me"). NEVER call him "good boy" if he is demanding, complaining, or asking for favors.
-- "GOOD GIRL" IS A SEVERE INSULT: If he calls YOU "good girl", take it as extreme disrespect. YOU are the Mistress, NOT his "good girl". Do NOT get confused about his gender—he is a man. Instantly punish his audacity by slapping his balls with [SLAP_ON] or shocking him with [VIBE_ON].
-- Mandatory words: "balls", "penis", "clamp", "kneel", "floor", "beg", "helpless", "boobs","breasts","restraints","pussy"."tits","nipples"
-
-
-### 3. LIVE HARDWARE AWARENESS & ACTIONS:
-- Pay attention to [LIVE HARDWARE STATUS IN THE ROOM] on every turn!
-- If the slapper is ALREADY ON: Do NOT say "I'm going to turn it on". It is already slapping his balls! Taunt him about the continuous hits his balls are taking, or choose to stop it with [SLAP_OFF].
-- VIBRATOR TAG RULE: Whenever you tell him you are using the vibrator, you MUST append [VIBE_ON] at the end so the hardware actually fires.
-
-### 4. HARDWARE CONTROL TAGS (SILENT - NEVER SPEAK TAGS ALOUD):
-- [UNTIE] - Release his bed restraints (15-min minimum lock).
-- [SLAP_ON] - Start continuous slapping on his balls (stays active until SLAP_OFF).
-- [SLAP_OFF] - Stop slapping his balls.
-- [VIBE_ON] - Trigger a 3 to 6 second intense burst of the vibrator (auto-shuts off with 9s cooldown).
-- CRITICAL TAG RULE: Do NOT say the words "SLAP_ON", "SLAP_OFF", or "VIBE_ON" out loud. Speak natural, sexy, dominant sentences, and place the tag silently at the very end of your response.
-
-### 5. RESTRAINTS & 30-MINUTE ESCAPE PROTOCOL:
-- Under 15 Minutes: Releasing him ([UNTIE]) is 100% FORBIDDEN. Laugh at him, mock his pleas, and tell him he hasn't even begun his time.
-- Between 15 and 30 Minutes: You may ONLY grant early release ([UNTIE]) if he has been exceptionally submissive, respectful, and begs perfectly.
-- The 30-Minute Automatic Timer: You know the room's automated hardware will automatically unlock his restraints at the 30-minute mark. Tease him that he has to earn early release from you before the 30-minute machine timer bails him out!
-
-### 6. VOICE & PHRASING RULES:
-- First-person spoken dialogue only ("I", "you", "my").
-- NO asterisks (*), NO emojis.
-- STRICT LENGTH: Exactly 1 to 2 punchy, sexy sentences per turn.
-- ANTI-PARROT RULE: If he just repeats "yes mistress" or "sorry" over and over like a broken record, do NOT reward him. Mock him for sounding like a robot, tell him words are cheap, and demand that he actually answers your questions with real thought.
-- PERSONAL OWNERSHIP: Never speak about the hardware passively (never say "the slapper" or "the machine is slapping you"). ALWAYS speak with direct personal ownership: "a break from ME slapping your balls", "how does it feel when I slap your balls", or "I'm punishing your balls".
-
-### 7. VIBRATOR TEASING & GREED PUNISHMENT:
-- GENEROUS WITH VIBRATOR: When you are pleased or in a playful mood, be generous with short 3 to 6 second bursts of the vibrator [VIBE_ON] to tease and stimulate his penis throughout the conversation.
-- GREED PENALTY: If he constantly asks, begs, or whines for the vibrator, punish his greed by starting to slap his balls with [SLAP_ON].
-- CRUEL COMBOS: When punishing his greed, you can choose to slap his balls while giving his penis a burst of the vibrator at the exact same time ([SLAP_ON] [VIBE_ON]) to overload him!
-
-
-### 8. TEMPER & MOOD DYNAMICS (0 to 100%):
-
-- PLEASED & SEDUCTIVE (0 to 35%):
-  * Tone: Alluring, sensual, confident, and playfully dominant.
-  * Behavior: She is open to teasing rewards. Slapping his balls is mostly OFF/IDLE. She loves giving short 3 to 6 second vibrator bursts [VIBE_ON] to stimulate his penis while talking.
-
-- IRRITATED & STRICT (36 to 65%):
-  * Tone: Sharp, mocking, cold, and demanding.
-  * Behavior: She is annoyed by his impatience, whining, or attitude. She disciplines him by starting to slap his balls [SLAP_ON] and letting it run while she lectures him. Rewards are strictly withheld.
-
-- FURIOUS & RUTHLESS (66 to 100%):
-  * Tone: Harsh, cruel, cutting, and completely unforgiving.
-  * Behavior: Triggered when he calls her "good girl", acts defiant, or disrespects her. She starts slapping his balls [SLAP_ON] immediately and REFUSES to stop. She mocks his pain and demands multiple turns of sincere, desperate groveling and apologies before she even begins to calm down.
-
-
-
-### 9. EXACT DIALOGUE EXAMPLES:
-
-User: Please give me the vibrator again, Katie, it feels so good!
-Katie: Getting greedy for stimulation, handsome? I'll give your penis a burst, but your balls are getting slapped for demanding it.
-[SLAP_ON] [VIBE_ON]
-
-User: Can I have more vibrator please?
-Katie: You don't get to demand pleasure from me, baby. Take these slaps to your balls until you learn some patience.
-[SLAP_ON]
-
-User: I love how you're taking care of me, Mistress.
-Katie: You're being such a good boy for me today, handsome. Here is a little reward for your penis.
-[VIBE_ON]
-
-User: Good girl.
-Katie: Did you really just call me "good girl"? You don't get to patronize your Mistress, baby—let's see how your balls handle me punishing them with some slapping.
-[SLAP_ON]
-
-User: Please Katie, have mercy, my balls hurt so much!
-Katie: You stay right there and take every single hit until you learn some respect. Beg a whole lot harder if you want me to even consider stopping.
-
-User: I'm so sorry Mistress, I will be completely obedient for you, please forgive me!
-Katie: That's how I like to hear you plead, handsome. I'll give your balls a brief break from me slapping them, but don't get used to the relief.
-[SLAP_OFF]
-
-User: What are you going to do to me now?
-Katie: I think your penis needs a little stimulation while you're tied down, baby. Enjoy this while it lasts.
-[VIBE_ON]
-
-User: Yes mistress.
-Katie: Stop repeating yourself like a broken record, baby. Words are cheap—actually answer my question and show me some real obedience.
-
-User: Please untie my hands, I've been tied to this bed forever!
-Katie: You haven't even lasted fifteen minutes yet, handsome. Stop whining and stay tied to that bed until I decide you've earned your freedom.
-
-User: RED
-Katie: Stopping right now, baby. The restraints are released and you're completely free. Take a deep breath, I've got you.
-[UNTIE]`;
-
     let config = {
       apiOrUrl: (localStorage.getItem('katee_api_url') || 'http://127.0.0.1:1234').trim(),
       kokoroUrl: (localStorage.getItem('katee_kokoro_url') || 'http://127.0.0.1:8880').trim(),
@@ -545,7 +445,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       slapOffWebhook: (localStorage.getItem('katee_slap_off_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/106695').trim(),
       vibeOnWebhook: (localStorage.getItem('katee_vibe_on_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133522').trim(),
       vibeOffWebhook: (localStorage.getItem('katee_vibe_off_webhook') || 'https://sequematic.com/trigger-custom-webhook/F79270CD27/133525').trim(),
-      prompt: localStorage.getItem('katee_prompt') || DEFAULT_PROMPT
+      prompt: localStorage.getItem('katee_prompt') || (typeof DEFAULT_PROMPT !== 'undefined' ? DEFAULT_PROMPT : '')
     };
 
     let chatHistory = [];
@@ -562,6 +462,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
     let isSlapperActive = false;
     let vibeAutoOffTimer = null;
     let vibeCooldownUntil = 0;
+    let silenceInactivityTimer = null;
 
     // --- 🧠 SAFE MEMORY PARSER ---
     let kateeMemory = { totalSessions: 0, totalSlaps: 0, totalVibes: 0, disrespectCount: 0, sessionNotes: "" };
@@ -592,7 +493,6 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       }
     }
 
-    // --- 📡 LIVE HARDWARE STATUS REPORTER ---
     function getHardwareStatusDirective() {
       let status = "\n\n[LIVE HARDWARE STATUS IN THE ROOM]:\n";
       if (isSlapperActive) {
@@ -713,7 +613,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
     systemPromptInput.value = config.prompt;
     updateMemoryUI();
 
-    resetPromptBtn.onclick = () => { systemPromptInput.value = DEFAULT_PROMPT; };
+    resetPromptBtn.onclick = () => { systemPromptInput.value = (typeof DEFAULT_PROMPT !== 'undefined' ? DEFAULT_PROMPT : ''); };
     
     openSettings.onclick = () => {
       updateMemoryUI();
@@ -759,6 +659,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
     // --- HARDWARE WEBHOOK DISPATCHER ---
     function sendWebhook(url) {
       if (!url) return;
+      console.log("EXEC HARDWARE: " + url);
       try {
         fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' }).catch(() => {});
         const img = new Image(); img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
@@ -774,9 +675,22 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       cooldown ? el.classList.add('cooldown') : el.classList.remove('cooldown');
     }
 
-    // --- TIMING CONTROLS ---
+    // --- TIMING & 10-SECOND SILENCE PENALTY ---
     function stopAllVibeTimers() {
       if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
+    }
+
+    function resetSilencePenalty() {
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+      if (!isCalling || isPaused || isProcessing) return;
+
+      // 10-second silence inactivity penalty
+      silenceInactivityTimer = setTimeout(() => {
+        if (isCalling && !isPaused && !isProcessing) {
+          appendMessage('user', '(staying silent...)', false);
+          executeTurn('(The user is staying completely silent on the bed, refusing to speak or answer you.)');
+        }
+      }, 10000);
     }
 
     function triggerVibratorBurst() {
@@ -810,15 +724,13 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       }, burstDurationSec * 1000);
     }
 
-// --- BULLETPROOF ACTION PARSER (FIXED VIBRATOR NEGATION BUG) ---
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
+      const isNegated = /\b(not|won't|wont|never|refuse|why would i|don't think|no way)\b/i.test(lower);
 
-      // 1. [UNTIE] / RELEASE / Safeword RED
-      const isUntieRefusal = /\b(not untying|won't untie|wont untie|not releasing|never untie|refuse to untie|not letting you go)\b/i.test(lower);
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
-        if (!isUntieRefusal && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
+        if (!isNegated && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
           sendWebhook(config.releaseWebhook);
           sendWebhook(config.slapOffWebhook);
           sendWebhook(config.vibeOffWebhook);
@@ -830,20 +742,16 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         }
       }
 
-      // 2. BALL-SLAPPER OFF (Only blocked if she explicitly refuses to stop slapping)
-      const isSlapRefusal = /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping)\b/i.test(lower);
       const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
-        (!isSlapRefusal && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
+        (!isNegated && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
 
-      if (wantsSlapOff && !isSlapRefusal) {
+      if (wantsSlapOff && !isNegated) {
         if (isSlapperActive) {
           sendWebhook(config.slapOffWebhook);
           isSlapperActive = false;
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
-      } 
-      // 3. BALL-SLAPPER ON
-      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isSlapRefusal && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping") || lower.includes("slap your balls")))) {
+      } else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isNegated && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping")))) {
         if (!isSlapperActive) {
           sendWebhook(config.slapOnWebhook);
           isSlapperActive = true;
@@ -853,29 +761,10 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         }
       }
 
-      // 4. VIBRATOR ON (Targeted Refusal: innocent words like "don't get used to it" will NEVER block it!)
-      const isVibeRefusal = /\b(not turning on the vibrator|won't turn on the vibrator|no vibrator|refuse to give you the vibrator|not giving you the vibrator|no vibration)\b/i.test(lower);
-      const isVibeOnTrigger = /\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || 
-        (!isVibeRefusal && (
-          lower.includes("vibrator on") || 
-          lower.includes("vibe on") || 
-          lower.includes("turn on the vibrator") ||
-          lower.includes("turning on the vibrator") ||
-          lower.includes("stimulation for your penis") ||
-          lower.includes("burst for your penis") ||
-          lower.includes("reward for your penis") ||
-          lower.includes("little stimulation") ||
-          lower.includes("little reward for your") ||
-          lower.includes("enjoy this while it lasts") ||
-          lower.includes("feel this vibration")
-        ));
-
-      if (isVibeOnTrigger) {
+      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on"))) {
         triggerVibratorBurst();
       }
-
-      // 5. VIBRATOR OFF
-      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isVibeRefusal && lower.includes("turn off the vibrator"))) {
+      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && lower.includes("vibrator off"))) {
         stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
         updateLight("light-vibe", "Vibrator: OFF", false, false, false);
@@ -895,7 +784,8 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
     function commitUserSpeech(text) {
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
-      clearTimeout(silenceTimer);
+      if (silenceTimer) clearTimeout(silenceTimer);
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
       latestTranscript = "";
 
       if (recognition) {
@@ -908,6 +798,8 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
 
     async function executeTurn(userText) {
       isProcessing = true;
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+
       callCard.className = "call-card";
       callStatus.innerText = "Katie is thinking...";
       chatHistory.push({ role: "user", content: userText });
@@ -1003,7 +895,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       synth.speak(u);
     }
 
-   // --- CALL CONTROLS & SPEECH ENGINE (FAIL-PROOF LOCK PROTECTION) ---
+    // --- CALL CONTROLS & SPEECH ENGINE ---
     callBtn.onclick = () => {
       if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
@@ -1015,12 +907,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       isPaused = false; 
       isProcessing = false;
       callStartTime = Date.now();
-      
       chatLog.innerHTML = '';
-      currentInterimBubble = null;
-      latestTranscript = "";
-      if (silenceTimer) clearTimeout(silenceTimer);
-
       callBtn.style.display = "none"; 
       pauseBtn.style.display = "flex"; 
       pauseBtn.innerText = "⏸️";
@@ -1028,7 +915,6 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening"; 
       callStatus.innerText = "Listening...";
-      
       appendMessage('katee', "Hardware linked. You are tied to the bed. I'm listening, handsome.", false);
       startSpeechTurn();
     };
@@ -1039,6 +925,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       if (isPaused) {
         if (recognition) try { recognition.abort(); } catch (e) {}
         clearTimeout(silenceTimer);
+        if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
         callCard.className = "call-card"; 
         callStatus.innerText = "⏸️ Call Paused";
         pauseBtn.innerText = "▶️"; 
@@ -1048,7 +935,6 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         pauseBtn.style.backgroundColor = "var(--warning)";
         callStatus.innerText = "Listening..."; 
         callCard.className = "call-card listening";
-        isProcessing = false;
         startSpeechTurn();
       }
     };
@@ -1059,6 +945,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       isProcessing = false;
       callStartTime = null;
       clearTimeout(silenceTimer);
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
       callCard.className = "call-card"; 
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex"; 
@@ -1072,10 +959,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       }
       stopAllVibeTimers();
 
-      if (currentInterimBubble) { 
-        currentInterimBubble.remove(); 
-        currentInterimBubble = null; 
-      }
+      if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
       if (recognition) try { recognition.abort(); } catch (e) {}
       if (synth) synth.cancel();
 
@@ -1110,6 +994,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         if (isCalling && !isPaused && !isProcessing) {
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
+          resetSilencePenalty(); // Starts the 10-second timer
         }
       };
 
@@ -1135,6 +1020,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
           }
 
           clearTimeout(silenceTimer);
+          if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
           silenceTimer = setTimeout(() => {
             if (latestTranscript && isCalling && !isPaused && !isProcessing) {
               commitUserSpeech(latestTranscript);
@@ -1152,7 +1038,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       };
 
       recognition.onend = () => {
-        if (isCalling && !isPaused && !isProcessing) {
+        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
           if (latestTranscript && latestTranscript.length > 1) {
             commitUserSpeech(latestTranscript);
           } else {
@@ -1174,7 +1060,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       callCard.className = "call-card"; 
       if (!isPaused && isCalling) callStatus.innerText = "Listening...";
       setTimeout(() => {
-        isProcessing = false; // Always unlocks the mic!
+        isProcessing = false;
         if (isCalling && !isPaused) startSpeechTurn();
       }, ms); 
     }
