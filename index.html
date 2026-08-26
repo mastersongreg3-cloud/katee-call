@@ -515,21 +515,24 @@
       }
     }
 
+// --- 📡 LIVE HARDWARE STATUS REPORTER ---
     function getHardwareStatusDirective() {
       let status = "\n\n[LIVE HARDWARE STATUS IN THE ROOM]:\n";
+
+      // Slapper live state
       if (isSlapperActive) {
-        status += "- BALL-SLAPPER: CURRENTLY ON & ACTIVELY SLAPPING HIS BALLS. (Do NOT say you 'will turn it on'—it is ALREADY running right now. Talk about the continuous slapping he is taking, or decide to stop with [SLAP_OFF]).\n";
+        status += "- BALL-SLAPPER: CURRENTLY ON & ACTIVELY SLAPPING HIS BALLS. (Do NOT say you 'will turn it on'—it is ALREADY running right now. Talk about the continuous hits his balls are taking, or decide to stop with [SLAP_OFF]).\n";
       } else {
-        status += "- BALL-SLAPPER: CURRENTLY OFF/IDLE. (You can turn it on with [SLAP_ON] if he misbehaves).\n";
+        status += "- BALL-SLAPPER: CURRENTLY OFF/IDLE. (You can turn it on with [SLAP_ON] if he misbehaves or if you are angry).\n";
       }
       
-      const now = Date.now();
-      if (now < vibeCooldownUntil) {
-        const cdLeft = Math.ceil((vibeCooldownUntil - now) / 1000);
-        status += `- VIBRATOR: COOLING DOWN (${cdLeft}s remaining). Do not turn it on until cooldown ends.\n`;
+      // Vibrator live state (AWARE OF AUTO-CYCLE)
+      if (isVibeCycleRunning) {
+        status += "- VIBRATOR: AUTO-CYCLE IS ACTIVELY RUNNING ON HIS PENIS (Pulsing 4-6s ON, 9s OFF continuously). Do NOT say you 'will turn it on'—it is ALREADY buzzing his penis by default! Talk about the vibrations he is currently feeling, or choose to pause/withhold it with [VIBE_PAUSE] if you want to punish him.\n";
       } else {
-        status += "- VIBRATOR: READY (HIGH PRIORITY: Append [VIBE_ON] on 80-90% of turns to tease/stimulate him unless you are Furious).\n";
+        status += "- VIBRATOR: CURRENTLY PAUSED / WITHHELD. You are currently denying him pleasure. (You can resume the auto-cycle with [VIBE_RESUME] when he obeys).\n";
       }
+
       return status;
     }
 
