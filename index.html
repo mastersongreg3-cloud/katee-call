@@ -536,7 +536,7 @@
       return status;
     }
 
-    let consecutiveSamePhraseCount = 0;
+let consecutiveSamePhraseCount = 0;
     let lastUserSpeechText = "";
 
     function updateKatieMood(userSpeech) {
@@ -549,19 +549,35 @@
       }
       lastUserSpeechText = lower;
 
+      // 1. DEFIANCE, SARCASM & DISRESPECT DETECTOR
       const isDisrespectful = 
-        lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way") ||
-        lower.includes("not begging") || lower.includes("won't beg") || lower.includes("wont beg") ||
-        lower.includes("never") || lower.includes("make me") || lower.includes("refuse") ||
-        lower.includes("shut up") || lower.includes("screw you") || lower.includes("bitch") || lower.includes("untie") ||
+        lower.includes("good girl") ||
+        lower.includes("good mistress") ||
+        lower.includes("no way") ||
+        lower.includes("not begging") ||
+        lower.includes("won't beg") ||
+        lower.includes("wont beg") ||
+        lower.includes("never") ||
+        lower.includes("make me") ||
+        lower.includes("refuse") ||
+        lower.includes("shut up") ||
+        lower.includes("screw you") ||
+        lower.includes("bitch") ||
+        lower.includes("untie") ||
         lower.includes("stayed silent");
 
+      // 2. SINCERE SUBMISSION DETECTOR
       const isSubmissive = 
         !isDisrespectful && (
-          lower.includes("yes mistress") || lower.includes("please mistress") ||
-          lower.includes("sorry") || lower.includes("forgive me") || lower.includes("i beg you")
+          lower.includes("yes mistress") ||
+          lower.includes("please mistress") ||
+          lower.includes("sorry") ||
+          lower.includes("forgive me") ||
+          lower.includes("i beg you") ||
+          lower.includes("worship")
         );
 
+      // 3. CALCULATE HER TEMPER
       if (isDisrespectful) {
         kateeMemory.disrespectCount = (kateeMemory.disrespectCount || 0) + 1;
         saveKateeMemory();
@@ -573,6 +589,24 @@
         kateeTemper = Math.max(0, kateeTemper - coolAmount);
       }
 
+      // 4. ⚡ AUTOMATIC HARDWARE ENFORCEMENT BASED ON MOOD
+      if (kateeTemper > 35) {
+        // AUTO-PAUSE VIBRATOR: Immediately cuts power and withholds pleasure when angry
+        if (isVibeCycleRunning) {
+          isVibeCycleRunning = false;
+          stopAllVibeTimers();
+          sendWebhook(config.vibeOffWebhook);
+          updateLight("light-vibe", "Vibrator: PAUSED (Withheld)", false);
+        }
+      } else {
+        // AUTO-RESUME VIBRATOR: Automatically starts pulsing again when she is pleased
+        if (!isVibeCycleRunning && isCalling && !isPaused) {
+          isVibeCycleRunning = true;
+          runVibratorAutoCycle();
+        }
+      }
+
+      // 5. UPDATE VISUAL BADGE
       const badge = document.getElementById('moodBadge');
       if (badge) {
         if (kateeTemper <= 35) { 
@@ -590,17 +624,18 @@
         }
       }
 
+      // 6. INJECT HER EXACT EMOTION DIRECTIVE INTO PROMPT
       let moodDirective = `\n\n[CURRENT TEMPER: ${kateeTemper}/100]\n`;
       if (consecutiveSamePhraseCount >= 1) {
         moodDirective += `WARNING: The user is repeating "${lower}" like a lazy broken record without thinking. Call him out for repeating himself, demand a real answer to what you said, and do NOT reward him.\n`;
       }
       
       if (kateeTemper <= 35) {
-        moodDirective += `State: Seductive & Pleased. Slapper is mostly IDLE. Use [VIBE_ON] for quick teasing bursts if he pleases you.`;
+        moodDirective += `State: Seductive & Pleased. Slapper is mostly IDLE. Vibrator auto-cycle is actively running on his penis.`;
       } else if (kateeTemper <= 65) {
-        moodDirective += `State: Irritated. Discipline him with [SLAP_ON] and let the slapper run while you talk.`;
+        moodDirective += `State: Irritated. Discipline him with [SLAP_ON]. Vibrator is PAUSED to withhold pleasure.`;
       } else {
-        moodDirective += `State: FURIOUS & RUTHLESS. You are angry. If the slapper is not on, turn it on with [SLAP_ON] and LEAVE IT SLAPPING. Refuse to turn it off until he gives thoughtful, sincere apologies.`;
+        moodDirective += `State: FURIOUS & RUTHLESS. You are angry. Turn on the slapper with [SLAP_ON] and LEAVE IT SLAPPING. Vibrator is 100% PAUSED. Refuse to give him any pleasure until he begs for mercy.`;
       }
       return moodDirective;
     }
