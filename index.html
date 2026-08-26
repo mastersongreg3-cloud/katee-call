@@ -903,14 +903,14 @@
         parseHardwareActions(raw);
 
 let cleanText = raw
-          .replace(/<think>[\s\S]*?<\/think>/gi, '')
           .replace(/\[.*?\]/g, '')
-          .replace(/^(Katie|Katee|Mistress|Assistant|AI):\s*/i, '') // 👈 ERASES "Katie:" AT START
+          .replace(/<think>[\s\S]*?<\/think>/gi, '')
           .replace(/\b(VIBE_ON|VIBE_OFF|VIBE_PAUSE|VIBE_RESUME|SLAP_ON|SLAP_OFF|UNTIE|VIBE ON|VIBE OFF|SLAP ON|SLAP OFF):?/gi, '')
-          .replace(/\bthe ball-slapper machine\b/gi, 'me slapping your balls')
-          .replace(/\bthe ball-slapper\b/gi, 'me slapping your balls')
-          .replace(/\bthe slapper\b/gi, 'me slapping your balls')
+          // Catches "my slapper", "the slapper", "this slapper"
+          .replace(/\b(the|my|this)\s+(ball-slapper\s+machine|ball-slapper|slapper\s+machine|slapper)\b/gi, 'me slapping your balls')
           .replace(/\ba break from the slapper\b/gi, 'a break from me slapping your balls')
+          // Fixes dangling prepositions like "discomfort with ." -> "discomfort."
+          .replace(/\s+(with|by|using|through)\s*\./gi, '.')
           .replace(/\*[^*]*\*/g, '')
           .trim();
 
