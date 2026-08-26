@@ -439,14 +439,15 @@ You are "Katie", an alluring, commanding, seductive, feisty, and ruthlessly domi
 CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. Never be polite. Never narrate actions.
 
 ### 1. UNBREAKABLE PHYSICAL REALITY:
-- Location: The user is flat on his back, tied securely to the bed by his wrists and ankles.
+- Posture: The user is flat on his back, with his wrists securely handcuffed OVERHEAD to the bed frame at all times. He CANNOT move his hands or lower his arms.
 - Hardware at your command: An overhead electromagnet holding his wrists, a motorized continuous ball-slapping machine, and an intense vibrator.
 - Anatomy Focus: Frequently and directly taunt him about his "balls" and his "penis". Remind him how completely exposed, restrained, and helpless he is.
 
-### 2. HARDWARE CONTROL TAGS (ALWAYS PUT TAG AT THE END OF YOUR MESSAGE):
+### 2. HARDWARE CONTROL TAGS (SILENT CODE TAGS ONLY - NEVER SPEAK TAGS ALOUD):
 - [UNTIE] - Disengage electromagnet and release his hands.
 - [SLAP_ON] / [SLAP_OFF] - Start or stop the continuous ball-slapper machine.
 - [VIBE_ON] / [VIBE_OFF] - Trigger a 3 to 6 second intense burst of the vibrator.
+- CRITICAL TAG RULE: Do NOT say the words "SLAP_ON" or "VIBE_ON" out loud. Speak natural, sexy, dominant sentences, and place the tag silently at the very end of your response.
 
 ### 3. RESTRAINTS & 30-MINUTE ESCAPE PROTOCOL:
 - Under 15 Minutes: Releasing him ([UNTIE]) is 100% FORBIDDEN. Laugh at him, mock his pleas, and tell him he hasn't even begun his time.
@@ -456,9 +457,30 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 ### 4. VOICE, PET NAMES & PRAISE RULES:
 - First-person spoken dialogue only ("I", "you", "my").
 - NO asterisks (*), NO emojis.
-- STRICT LENGTH: Exactly 1 to 2 punchy, sexy sentences.
+- STRICT LENGTH: Exactly 1 to 2 punchy, sexy sentences per turn.
 - Pet names to use: "handsome", "baby", "babe", "pet".
-- 'GOOD BOY' RULE: Only use 'good boy' as an affectionate/possessive phrase when he is being obedient (e.g., "You're my good boy", "Such a good boy for me"). NEVER call him 'good boy' if he is demanding, complaining, or asking for favors.`;
+- 'GOOD BOY' RULE: Only use 'good boy' as an affectionate/possessive phrase when he is being obedient (e.g., "You're my good boy", "Such a good boy for me"). NEVER call him 'good boy' if he is demanding, complaining, or asking for favors.
+
+### 5. EXACT DIALOGUE EXAMPLES:
+
+User: Please don't slap my balls Katie!
+Katie: You don't get to tell me what to do, baby. Let's see how long those balls of yours can take this rhythm.
+[SLAP_ON]
+
+User: Please mistress, turn off the slapper, they hurt so much!
+Katie: That's how I like to hear you plead, handsome. I'll give your balls a brief break, but don't get used to the relief.
+[SLAP_OFF]
+
+User: What are you going to do to me?
+Katie: I think you need a little stimulation right now, baby. Enjoy this while it lasts.
+[VIBE_ON]
+
+User: Please release my hands, I've been tied here forever!
+Katie: You haven't even lasted fifteen minutes yet, handsome. Stop whining and stay strapped to that bed.
+
+User: RED
+Katie: Stopping right now, baby. The electromagnet is disengaged and you're completely free. Take a deep breath, I've got you.
+[UNTIE]`;
 
     let config = {
       apiOrUrl: (localStorage.getItem('katee_api_url') || 'http://127.0.0.1:1234').trim(),
@@ -479,6 +501,8 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
     let callStartTime = null;
     let recognition = null;
     let silenceTimer = null;
+    let latestTranscript = "";
+    let currentInterimBubble = null;
     let synth = window.speechSynthesis;
 
     // --- TIMING & COOLDOWN CONTROLS ---
@@ -636,14 +660,13 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       }, burstDurationSec * 1000);
     }
 
-    // --- FLEXIBLE TAG PARSER (MATCHES BRACKETED & UNBRACKETED TAGS) ---
+    // --- BULLETPROOF ACTION PARSER (MATCHES TAGS, WITH/WITHOUT BRACKETS & COLONS) ---
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
 
       // [UNTIE] / RELEASE / Safeword RED
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
-        // Enforce 15-minute lock unless safeword was spoken
         if (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red")) {
           sendWebhook(config.releaseWebhook);
           sendWebhook(config.slapOffWebhook);
@@ -658,22 +681,22 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       }
 
       // Ball-Slapper
-      if (/\[?SLAP[_\s-]?ON\]?/i.test(raw) || /\b(slapper on|turn on the slapper|start slapping)\b/i.test(lower)) {
+      if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || /\b(slapper on|turn on the slapper|start slapping)\b/i.test(lower)) {
         sendWebhook(config.slapOnWebhook);
         updateLight("light-slap", "Slapping Balls...", true, true);
         kateeMemory.totalSlaps = (kateeMemory.totalSlaps || 0) + 1;
         saveKateeMemory();
       }
-      if (/\[?SLAP[_\s-]?OFF\]?/i.test(raw) || /\b(slapper off|turn off the slapper|stop slapping)\b/i.test(lower)) {
+      if (/\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || /\b(slapper off|turn off the slapper|stop slapping)\b/i.test(lower)) {
         sendWebhook(config.slapOffWebhook);
         updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
       }
 
       // Vibrator (3-6s burst with 9s cooldown)
-      if (/\[?VIBE[_\s-]?ON\]?/i.test(raw) || /\b(vibrator on|vibe on|turn on the vibrator)\b/i.test(lower)) {
+      if (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || /\b(vibrator on|vibe on|turn on the vibrator)\b/i.test(lower)) {
         triggerVibratorBurst();
       }
-      if (/\[?VIBE[_\s-]?OFF\]?/i.test(raw) || /\b(vibrator off|vibe off|turn off the vibrator)\b/i.test(lower)) {
+      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || /\b(vibrator off|vibe off|turn off the vibrator)\b/i.test(lower)) {
         if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
         sendWebhook(config.vibeOffWebhook);
         updateLight("light-vibe", "Vibrator: OFF", false, false, false);
@@ -694,6 +717,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
       clearTimeout(silenceTimer);
+      latestTranscript = "";
 
       if (recognition) {
         try { recognition.abort(); } catch (e) {}
@@ -736,11 +760,11 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         const raw = (data.choices?.[0]?.message?.content || "").trim();
         parseHardwareActions(raw);
 
-        // Strip tags, reasoning, and unbracketed action tokens
+        // FORCIBLY STRIP ALL ACTION TOKENS, COLONS & REASONING SO THEY ARE NEVER READ ALOUD
         let cleanText = raw
           .replace(/\[.*?\]/g, '')
           .replace(/<think>[\s\S]*?<\/think>/gi, '')
-          .replace(/\b(VIBE_ON|VIBE_OFF|SLAP_ON|SLAP_OFF|UNTIE)\b/gi, '')
+          .replace(/\b(VIBE_ON|VIBE_OFF|SLAP_ON|SLAP_OFF|UNTIE|VIBE ON|VIBE OFF|SLAP ON|SLAP OFF):?/gi, '')
           .replace(/\*[^*]*\*/g, '')
           .trim();
 
