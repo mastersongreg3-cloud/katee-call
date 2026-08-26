@@ -790,13 +790,13 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
       if (!isCalling || isPaused || isProcessing) return;
 
-      // 10-second silence inactivity penalty
+      // If user stays silent on the bed for 15 seconds, Katie takes control
       silenceInactivityTimer = setTimeout(() => {
         if (isCalling && !isPaused && !isProcessing) {
           appendMessage('user', '(staying silent...)', false);
           executeTurn('(The user is staying completely silent on the bed, refusing to speak or answer you.)');
         }
-      }, 10000);
+      }, 15000);
     }
 
     // --- VIBRATOR BURST (3-6s) & 9s COOLDOWN ---
@@ -853,11 +853,11 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
-      const isNegated = /\b(not|won't|wont|never|refuse|why would i|don't think|no way)\b/i.test(lower);
 
-      // Release / UNTIE / RED
+      // 1. [UNTIE] / RELEASE / Safeword RED
+      const isUntieRefusal = /\b(not untying|won't untie|wont untie|not releasing|never untie|refuse to untie)\b/i.test(lower);
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
-        if (!isNegated && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
+        if (!isUntieRefusal && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
           sendWebhook(config.releaseWebhook);
           sendWebhook(config.slapOffWebhook);
           sendWebhook(config.vibeOffWebhook);
@@ -869,7 +869,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         }
       }
 
-      // Slapper OFF
+      // 2. BALL-SLAPPER OFF (Only stops if she genuinely agrees)
       const isSlapRefusal = /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping)\b/i.test(lower);
       const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
         (!isSlapRefusal && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
@@ -881,7 +881,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
       } 
-      // Slapper ON
+      // 3. BALL-SLAPPER ON
       else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isSlapRefusal && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping") || lower.includes("slap your balls")))) {
         if (!isSlapperActive) {
           sendWebhook(config.slapOnWebhook);
@@ -892,7 +892,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         }
       }
 
-      // Vibrator ON / OFF
+      // 4. VIBRATOR ON (Catches tags + natural phrases without blocking on "don't get used to it")
       const isVibeRefusal = /\b(not turning on the vibrator|won't turn on the vibrator|no vibrator|refuse to give you the vibrator)\b/i.test(lower);
       const isVibeOnTrigger = /\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || 
         (!isVibeRefusal && (
@@ -1117,7 +1117,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       if (synth) synth.cancel();
 
       if (chatHistory.length >= 2) {
-        kateeMemory.totalSessions++;
+        kateeMemory.totalSessions = (kateeMemory.totalSessions || 0) + 1;
         kateeMemory.sessionNotes = `Session ${kateeMemory.totalSessions}: ${kateeTemper > 60 ? 'Ended while furious. User was defiant.' : 'Ended normally.'}`;
         saveKateeMemory();
       }
@@ -1147,7 +1147,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         if (isCalling && !isPaused && !isProcessing) {
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
-          resetSilencePenalty(); // 10-second silence timer
+          resetSilencePenalty(); // Starts the 15-second inactivity counter
         }
       };
 
