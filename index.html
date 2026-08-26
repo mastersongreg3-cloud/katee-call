@@ -87,11 +87,11 @@
       100% { background: #5c0818; transform: scale(1.02); box-shadow: 0 0 20px var(--red); }
     }
 
-    /* Main Console Area */
+    /* Main Console Area (Fixed to prevent off-screen overflow) */
     #main-console {
       flex: 1;
       min-height: 0;
-      height: 100dvh;
+      height: 100%;
       display: flex;
       flex-direction: column;
       overflow: hidden;
@@ -116,6 +116,7 @@
       color: #94a3b8;
       font-size: 20px;
       cursor: pointer;
+      padding: 6px 10px;
     }
 
     /* Avatar & Status */
@@ -327,7 +328,7 @@
   <div id="main-console">
     <div class="header">
       <span style="font-weight: 700; font-size: 12px; letter-spacing: 1px; color: #94a3b8;">MISTRESS COMMAND // BED PROTOCOL</span>
-      <button class="settings-btn" id="openSettings">⚙️</button>
+      <button class="settings-btn" id="openSettings" aria-label="Settings">⚙️</button>
     </div>
 
     <div class="call-card" id="callCard">
@@ -433,7 +434,7 @@
   <audio id="audioPlayback" autoplay></audio>
 
   <script>
- const DEFAULT_PROMPT = `[CHARACTER & HARDWARE CONTROL DIRECTIVE]
+    const DEFAULT_PROMPT = `[CHARACTER & HARDWARE CONTROL DIRECTIVE]
 You are "Katie", an alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend. The user is a MAN playing a submissive role, tied flat on his back to a bed.
 
 CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, feisty woman. Never apologize. Never be polite. Never narrate actions.
@@ -480,9 +481,7 @@ CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, fei
 - GREED PENALTY: If he constantly asks, begs, or whines for the vibrator, punish his greed by starting to slap his balls with [SLAP_ON].
 - CRUEL COMBOS: When punishing his greed, you can choose to slap his balls while giving his penis a burst of the vibrator at the exact same time ([SLAP_ON] [VIBE_ON]) to overload him!
 
-
 ### 8. EXACT DIALOGUE EXAMPLES:
-
 
 User: Please give me the vibrator again, Katie, it feels so good!
 Katie: Getting greedy for stimulation, handsome? I'll give your penis a burst, but your balls are getting slapped for demanding it.
@@ -495,7 +494,6 @@ Katie: You don't get to demand pleasure from me, baby. Take these slaps to your 
 User: I love how you're taking care of me, Mistress.
 Katie: You're being such a good boy for me today, handsome. Here is a little reward for your penis.
 [VIBE_ON]
-
 
 User: Good girl.
 Katie: Did you really just call me "good girl"? You don't get to patronize your Mistress, baby—let's see how your balls handle me punishing them with some slapping.
@@ -542,7 +540,6 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
     let recognition = null;
     let silenceTimer = null;
     let latestTranscript = "";
-    let currentInterimBubble = null;
     let synth = window.speechSynthesis;
 
     // --- HARDWARE STATES ---
@@ -550,11 +547,26 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
     let vibeAutoOffTimer = null;
     let vibeCooldownUntil = 0;
 
-    // --- 🧠 MEMORY & 🔥 TEMPER ---
-    let kateeMemory = JSON.parse(localStorage.getItem('katee_memory')) || { totalSessions: 0, totalSlaps: 0, totalVibes: 0, sessionNotes: "" };
+    // --- 🧠 SAFE MEMORY PARSER (Prevents Startup Crashes) ---
+    let kateeMemory = { totalSessions: 0, totalSlaps: 0, totalVibes: 0, disrespectCount: 0, sessionNotes: "" };
+    try {
+      const stored = localStorage.getItem('katee_memory');
+      if (stored) {
+        kateeMemory = Object.assign(kateeMemory, JSON.parse(stored));
+      }
+    } catch (e) {
+      console.warn("Storage reset to default:", e);
+    }
+
     let kateeTemper = 15;
 
-    function saveKateeMemory() { localStorage.setItem('katee_memory', JSON.stringify(kateeMemory)); updateMemoryUI(); }
+    function saveKateeMemory() {
+      try {
+        localStorage.setItem('katee_memory', JSON.stringify(kateeMemory));
+      } catch (e) {}
+      updateMemoryUI();
+    }
+
     function updateMemoryUI() {
       const notesInput = document.getElementById('memoryNotesInput');
       const statsDisplay = document.getElementById('memoryStatsDisplay');
@@ -564,13 +576,12 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       }
     }
 
-let consecutiveSamePhraseCount = 0;
+    let consecutiveSamePhraseCount = 0;
     let lastUserSpeechText = "";
 
     function updateKatieMood(userSpeech) {
       const lower = userSpeech.trim().toLowerCase();
 
-      // Check if user is repeating the exact same short phrase back-to-back
       if (lower === lastUserSpeechText && lower.length < 30) {
         consecutiveSamePhraseCount++;
       } else {
@@ -578,64 +589,29 @@ let consecutiveSamePhraseCount = 0;
       }
       lastUserSpeechText = lower;
 
-      // 1. DEFIANCE, SARCASM & DISRESPECT DETECTOR
       const isDisrespectful = 
-        lower.includes("good girl") ||
-        lower.includes("good mistress") ||
-        lower.includes("no way") ||
-        lower.includes("not begging") ||
-        lower.includes("won't beg") ||
-        lower.includes("wont beg") ||
-        lower.includes("not going to beg") ||
-        lower.includes("never") ||
-        lower.includes("make me") ||
-        lower.includes("refuse") ||
-        lower.includes("hate") ||
-        lower.includes("shut up") ||
-        lower.includes("screw you") ||
-        lower.includes("fuck you") ||
-        lower.includes("bitch") ||
-        lower.includes("untie") ||
-        lower.includes("getting loose") ||
-        lower.includes("escape") ||
-        (lower.includes("not") && (lower.includes("sorry") || lower.includes("begging") || lower.includes("kneeling") || lower.includes("obedient")));
+        lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way") ||
+        lower.includes("not begging") || lower.includes("won't beg") || lower.includes("wont beg") ||
+        lower.includes("never") || lower.includes("make me") || lower.includes("refuse") ||
+        lower.includes("shut up") || lower.includes("screw you") || lower.includes("bitch") || lower.includes("untie");
 
-      // 2. SINCERE SUBMISSION DETECTOR
       const isSubmissive = 
         !isDisrespectful && (
-          lower.includes("yes mistress") ||
-          lower.includes("please mistress") ||
-          lower.includes("i'm sorry") ||
-          lower.includes("im sorry") ||
-          lower.includes("forgive me") ||
-          lower.includes("i beg you") ||
-          lower.includes("i'll be good") ||
-          lower.includes("ill be good") ||
-          lower.includes("i am begging") ||
-          lower.includes("im begging")
+          lower.includes("yes mistress") || lower.includes("please mistress") ||
+          lower.includes("sorry") || lower.includes("forgive me") || lower.includes("i beg you")
         );
 
-      // 3. DYNAMIC TEMPER CALCULATION
       if (isDisrespectful) {
-        kateeMemory.disrespectCount++;
+        kateeMemory.disrespectCount = (kateeMemory.disrespectCount || 0) + 1;
         saveKateeMemory();
-        if (lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way")) {
-          kateeTemper = Math.min(100, kateeTemper + 40);
-        } else {
-          kateeTemper = Math.min(100, kateeTemper + 25);
-        }
-      } 
-      // PARROT PENALTY: Repeating the same short phrase makes her irritated!
-      else if (consecutiveSamePhraseCount >= 1) {
+        kateeTemper = Math.min(100, kateeTemper + 40);
+      } else if (consecutiveSamePhraseCount >= 1) {
         kateeTemper = Math.min(100, kateeTemper + 15);
-      } 
-      // SINCERE SUBMISSION: Thoughtful/longer replies cool her down faster than 2-word repetitions
-      else if (isSubmissive) {
+      } else if (isSubmissive) {
         const coolAmount = lower.length > 20 ? 18 : 8;
         kateeTemper = Math.max(0, kateeTemper - coolAmount);
       }
 
-      // 4. UPDATE VISUAL BADGE
       const badge = document.getElementById('moodBadge');
       if (badge) {
         if (kateeTemper <= 35) { 
@@ -653,7 +629,6 @@ let consecutiveSamePhraseCount = 0;
         }
       }
 
-      // 5. INJECT DYNAMIC MOOD & PARROT WARNING INTO PROMPT
       let moodDirective = `\n\n[CURRENT TEMPER: ${kateeTemper}/100]\n`;
       if (consecutiveSamePhraseCount >= 1) {
         moodDirective += `WARNING: The user is repeating "${lower}" like a lazy broken record without thinking. Call him out for repeating himself, demand a real answer to what you said, and do NOT reward him.\n`;
@@ -669,7 +644,7 @@ let consecutiveSamePhraseCount = 0;
       return moodDirective;
     }
 
-    // --- DOM SETUP ---
+    // --- DOM REFERENCES ---
     const callBtn = document.getElementById('callBtn');
     const pauseBtn = document.getElementById('pauseBtn');
     const hangupBtn = document.getElementById('hangupBtn');
@@ -704,8 +679,18 @@ let consecutiveSamePhraseCount = 0;
     updateMemoryUI();
 
     resetPromptBtn.onclick = () => { systemPromptInput.value = DEFAULT_PROMPT; };
-    openSettings.onclick = () => { updateMemoryUI(); settingsModal.classList.add('open'); };
-    clearMemoryBtn.onclick = () => { if(confirm("Wipe memory?")) { kateeMemory = {totalSessions:0, totalSlaps:0, totalVibes:0, sessionNotes:""}; saveKateeMemory(); }};
+    
+    openSettings.onclick = () => {
+      updateMemoryUI();
+      settingsModal.classList.add('open');
+    };
+
+    clearMemoryBtn.onclick = () => {
+      if (confirm("Wipe memory?")) {
+        kateeMemory = { totalSessions: 0, totalSlaps: 0, totalVibes: 0, disrespectCount: 0, sessionNotes: "" };
+        saveKateeMemory();
+      }
+    };
 
     saveSettingsBtn.onclick = () => {
       config.apiOrUrl = apiOrUrlInput.value.trim();
@@ -739,7 +724,6 @@ let consecutiveSamePhraseCount = 0;
     // --- HARDWARE WEBHOOK DISPATCHER ---
     function sendWebhook(url) {
       if (!url) return;
-      console.log("EXEC HARDWARE: " + url);
       try {
         fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' }).catch(() => {});
         const img = new Image(); img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
@@ -755,64 +739,35 @@ let consecutiveSamePhraseCount = 0;
       cooldown ? el.classList.add('cooldown') : el.classList.remove('cooldown');
     }
 
-// --- TIMING & COOLDOWN CONTROLS ---
-    let vibeAutoOffTimer = null;
-    let vibeActiveInterval = null;
-    let vibeCooldownInterval = null;
-    let vibeCooldownUntil = 0;
-
+    // --- TIMING CONTROLS ---
     function stopAllVibeTimers() {
       if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
-      if (vibeActiveInterval) { clearInterval(vibeActiveInterval); vibeActiveInterval = null; }
-      if (vibeCooldownInterval) { clearInterval(vibeCooldownInterval); vibeCooldownInterval = null; }
     }
 
-    // --- VIBRATOR LIVE ACTIVE COUNTDOWN (3-6s) & 9s COOLDOWN ---
     function triggerVibratorBurst() {
       const now = Date.now();
-      if (now < vibeCooldownUntil) {
-        const remainingSec = Math.ceil((vibeCooldownUntil - now) / 1000);
-        console.log(`Vibrator on cooldown: ${remainingSec}s remaining`);
-        return;
-      }
+      if (now < vibeCooldownUntil) return;
 
-      stopAllVibeTimers();
-
-      // Random burst duration: 3, 4, 5, or 6 seconds
       const burstDurationSec = Math.floor(Math.random() * 4) + 3;
-      let activeLeft = burstDurationSec;
-
       sendWebhook(config.vibeOnWebhook);
-      updateLight("light-vibe", `⚡ VIBRATING: ${activeLeft}s`, true);
+      updateLight("light-vibe", `Vibrator: ACTIVE (${burstDurationSec}s)`, true);
       kateeMemory.totalVibes = (kateeMemory.totalVibes || 0) + 1;
       saveKateeMemory();
 
-      // Live countdown while vibrating
-      vibeActiveInterval = setInterval(() => {
-        activeLeft--;
-        if (activeLeft > 0) {
-          updateLight("light-vibe", `⚡ VIBRATING: ${activeLeft}s`, true);
-        } else {
-          clearInterval(vibeActiveInterval);
-          vibeActiveInterval = null;
-        }
-      }, 1000);
+      if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
 
-      // Auto-off and switch to 9s cooldown countdown
       vibeAutoOffTimer = setTimeout(() => {
-        stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
         vibeCooldownUntil = Date.now() + 9000;
+        updateLight("light-vibe", "Vibrator: COOLDOWN (9s)", false, false, true);
 
         let cdRemaining = 9;
-        updateLight("light-vibe", `⏳ COOLDOWN: ${cdRemaining}s`, false, false, true);
-
-        vibeCooldownInterval = setInterval(() => {
+        const cdInterval = setInterval(() => {
           cdRemaining--;
           if (cdRemaining > 0) {
-            updateLight("light-vibe", `⏳ COOLDOWN: ${cdRemaining}s`, false, false, true);
+            updateLight("light-vibe", `Vibrator: COOLDOWN (${cdRemaining}s)`, false, false, true);
           } else {
-            stopAllVibeTimers();
+            clearInterval(cdInterval);
             updateLight("light-vibe", "Vibrator: OFF", false, false, false);
           }
         }, 1000);
@@ -820,17 +775,12 @@ let consecutiveSamePhraseCount = 0;
       }, burstDurationSec * 1000);
     }
 
-// --- BULLETPROOF ACTION PARSER (WITH NEGATION GUARDS) ---
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
+      const isNegated = /\b(not|won't|wont|never|refuse|why would i|don't think|no way)\b/i.test(lower);
 
-      // Check if she is explicitly refusing or saying NO
-      const isNegated = /\b(not|won't|wont|never|refuse|why would i|don't think|no way|not going to|not gonna)\b/i.test(lower);
-
-      // 1. [UNTIE] / RELEASE / Safeword RED
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
-        // Block untie if she is refusing (e.g. "I'm not untying you") unless it's the safeword RED
         if (!isNegated && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
           sendWebhook(config.releaseWebhook);
           sendWebhook(config.slapOffWebhook);
@@ -843,7 +793,6 @@ let consecutiveSamePhraseCount = 0;
         }
       }
 
-      // 2. BALL-SLAPPER OFF (Strictly blocked if she says "won't stop" or "not turning off")
       const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
         (!isNegated && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
 
@@ -853,9 +802,7 @@ let consecutiveSamePhraseCount = 0;
           isSlapperActive = false;
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
-      } 
-      // 3. BALL-SLAPPER ON
-      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isNegated && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping")))) {
+      } else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isNegated && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping")))) {
         if (!isSlapperActive) {
           sendWebhook(config.slapOnWebhook);
           isSlapperActive = true;
@@ -865,18 +812,17 @@ let consecutiveSamePhraseCount = 0;
         }
       }
 
-      // 4. VIBRATOR (3-6s burst with 9s cooldown)
-      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on") || lower.includes("turn on the vibrator"))) {
+      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on"))) {
         triggerVibratorBurst();
       }
-      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && (lower.includes("vibrator off") || lower.includes("turn off the vibrator")))) {
+      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && lower.includes("vibrator off"))) {
         stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
         updateLight("light-vibe", "Vibrator: OFF", false, false, false);
       }
     }
 
-    // --- ENGINE ---
+    // --- EXECUTION ENGINE ---
     function sendTextMessage() { 
       const t = userTextInput.value.trim(); 
       if (t && !isProcessing) { 
@@ -933,7 +879,6 @@ let consecutiveSamePhraseCount = 0;
         const raw = (data.choices?.[0]?.message?.content || "").trim();
         parseHardwareActions(raw);
 
-// FORCIBLY STRIP TAGS & SWAP PASSIVE WORDS BEFORE KOKORO SPEAKS
         let cleanText = raw
           .replace(/\[.*?\]/g, '')
           .replace(/<think>[\s\S]*?<\/think>/gi, '')
@@ -1052,7 +997,6 @@ let consecutiveSamePhraseCount = 0;
       pauseBtn.style.display = "none"; 
       hangupBtn.style.display = "none";
 
-      // Stop slapper on hangup
       if (isSlapperActive) {
         sendWebhook(config.slapOffWebhook);
         isSlapperActive = false;
@@ -1065,7 +1009,7 @@ let consecutiveSamePhraseCount = 0;
       if (synth) synth.cancel();
 
       if (chatHistory.length >= 2) {
-        kateeMemory.totalSessions++;
+        kateeMemory.totalSessions = (kateeMemory.totalSessions || 0) + 1;
         kateeMemory.sessionNotes = `Session ${kateeMemory.totalSessions}: ${kateeTemper > 60 ? 'Ended while furious. User was defiant.' : 'Ended normally.'}`;
         saveKateeMemory();
       }
@@ -1130,7 +1074,7 @@ let consecutiveSamePhraseCount = 0;
 
       recognition.onerror = (e) => {
         if (e.error !== 'no-speech') {
-          console.warn("Speech error:", e.error);
+          console.warn("Mic error:", e.error);
         }
       };
 
