@@ -466,6 +466,12 @@ CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, fei
 - First-person spoken dialogue only ("I", "you", "my").
 - NO asterisks (*), NO emojis.
 - STRICT LENGTH: Exactly 1 to 2 punchy, sexy sentences per turn.
+- ANTI-PARROT RULE: If he just repeats "yes mistress" or "sorry" over and over like a broken record, do NOT reward him. Mock him for sounding like a robot, tell him words are cheap, and demand that he actually answers your questions with real thought.
+
+
+
+
+
 
 ### 6. EXACT DIALOGUE EXAMPLES:
 
@@ -533,28 +539,107 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }
     }
 
+let consecutiveSamePhraseCount = 0;
+    let lastUserSpeechText = "";
+
     function updateKatieMood(userSpeech) {
-      const lower = userSpeech.toLowerCase();
-      if (lower.includes("good girl") || lower.includes("no way") || lower.includes("refuse") || lower.includes("bitch")) {
-        kateeTemper = Math.min(100, kateeTemper + 40);
-      } else if (lower.includes("mistress") || lower.includes("sorry") || lower.includes("yes")) {
-        kateeTemper = Math.max(0, kateeTemper - 25);
+      const lower = userSpeech.trim().toLowerCase();
+
+      // Check if user is repeating the exact same short phrase back-to-back
+      if (lower === lastUserSpeechText && lower.length < 30) {
+        consecutiveSamePhraseCount++;
+      } else {
+        consecutiveSamePhraseCount = 0;
       }
-      
+      lastUserSpeechText = lower;
+
+      // 1. DEFIANCE, SARCASM & DISRESPECT DETECTOR
+      const isDisrespectful = 
+        lower.includes("good girl") ||
+        lower.includes("good mistress") ||
+        lower.includes("no way") ||
+        lower.includes("not begging") ||
+        lower.includes("won't beg") ||
+        lower.includes("wont beg") ||
+        lower.includes("not going to beg") ||
+        lower.includes("never") ||
+        lower.includes("make me") ||
+        lower.includes("refuse") ||
+        lower.includes("hate") ||
+        lower.includes("shut up") ||
+        lower.includes("screw you") ||
+        lower.includes("fuck you") ||
+        lower.includes("bitch") ||
+        lower.includes("untie") ||
+        lower.includes("getting loose") ||
+        lower.includes("escape") ||
+        (lower.includes("not") && (lower.includes("sorry") || lower.includes("begging") || lower.includes("kneeling") || lower.includes("obedient")));
+
+      // 2. SINCERE SUBMISSION DETECTOR
+      const isSubmissive = 
+        !isDisrespectful && (
+          lower.includes("yes mistress") ||
+          lower.includes("please mistress") ||
+          lower.includes("i'm sorry") ||
+          lower.includes("im sorry") ||
+          lower.includes("forgive me") ||
+          lower.includes("i beg you") ||
+          lower.includes("i'll be good") ||
+          lower.includes("ill be good") ||
+          lower.includes("i am begging") ||
+          lower.includes("im begging")
+        );
+
+      // 3. DYNAMIC TEMPER CALCULATION
+      if (isDisrespectful) {
+        kateeMemory.disrespectCount++;
+        saveKateeMemory();
+        if (lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way")) {
+          kateeTemper = Math.min(100, kateeTemper + 40);
+        } else {
+          kateeTemper = Math.min(100, kateeTemper + 25);
+        }
+      } 
+      // PARROT PENALTY: Repeating the same short phrase makes her irritated!
+      else if (consecutiveSamePhraseCount >= 1) {
+        kateeTemper = Math.min(100, kateeTemper + 15);
+      } 
+      // SINCERE SUBMISSION: Thoughtful/longer replies cool her down faster than 2-word repetitions
+      else if (isSubmissive) {
+        const coolAmount = lower.length > 20 ? 18 : 8;
+        kateeTemper = Math.max(0, kateeTemper - coolAmount);
+      }
+
+      // 4. UPDATE VISUAL BADGE
       const badge = document.getElementById('moodBadge');
       if (badge) {
-        if (kateeTemper <= 35) { badge.innerText = `Mood: Seductive (${kateeTemper}%)`; badge.style.color = "#4ade80"; badge.style.background = "rgba(34, 197, 94, 0.2)"; }
-        else if (kateeTemper <= 65) { badge.innerText = `Mood: Irritated (${kateeTemper}%)`; badge.style.color = "#fbbf24"; badge.style.background = "rgba(245, 158, 11, 0.2)"; }
-        else { badge.innerText = `Mood: Furious (${kateeTemper}%)`; badge.style.color = "#f87171"; badge.style.background = "rgba(239, 68, 68, 0.2)"; }
+        if (kateeTemper <= 35) { 
+          badge.innerText = `Mood: Seductive (${kateeTemper}%)`; 
+          badge.style.color = "#4ade80"; 
+          badge.style.background = "rgba(34, 197, 94, 0.2)"; 
+        } else if (kateeTemper <= 65) { 
+          badge.innerText = `Mood: Irritated (${kateeTemper}%)`; 
+          badge.style.color = "#fbbf24"; 
+          badge.style.background = "rgba(245, 158, 11, 0.2)"; 
+        } else { 
+          badge.innerText = `Mood: Furious (${kateeTemper}%)`; 
+          badge.style.color = "#f87171"; 
+          badge.style.background = "rgba(239, 68, 68, 0.2)"; 
+        }
+      }
+
+      // 5. INJECT DYNAMIC MOOD & PARROT WARNING INTO PROMPT
+      let moodDirective = `\n\n[CURRENT TEMPER: ${kateeTemper}/100]\n`;
+      if (consecutiveSamePhraseCount >= 1) {
+        moodDirective += `WARNING: The user is repeating "${lower}" like a lazy broken record without thinking. Call him out for repeating himself, demand a real answer to what you said, and do NOT reward him.\n`;
       }
       
-      let moodDirective = `\n\n[CURRENT TEMPER: ${kateeTemper}/100]\n`;
       if (kateeTemper <= 35) {
-        moodDirective += `State: Seductive & Pleased. Slapper is mostly IDLE. Use [VIBE_ON] for quick teasing bursts.`;
+        moodDirective += `State: Seductive & Pleased. Slapper is mostly IDLE. Use [VIBE_ON] for quick teasing bursts if he pleases you.`;
       } else if (kateeTemper <= 65) {
         moodDirective += `State: Irritated. Discipline him with [SLAP_ON] and let the slapper run while you talk.`;
       } else {
-        moodDirective += `State: FURIOUS & RUTHLESS. You are angry. If the slapper is not already on, turn it on with [SLAP_ON] and LEAVE IT SLAPPING continuously. Refuse to turn it off until he grovels and begs for mercy.`;
+        moodDirective += `State: FURIOUS & RUTHLESS. You are angry. If the slapper is not on, turn it on with [SLAP_ON] and LEAVE IT SLAPPING. Refuse to turn it off until he gives thoughtful, sincere apologies.`;
       }
       return moodDirective;
     }
