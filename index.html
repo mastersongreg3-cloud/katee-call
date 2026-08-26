@@ -1030,28 +1030,9 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       callStatus.innerText = "Listening...";
       
       appendMessage('katee', "Hardware linked. You are tied to the bed. I'm listening, handsome.", false);
-
-
-let silenceInactivityTimer = null;
-
-    function resetSilencePenalty() {
-      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
-      if (!isCalling || isPaused || isProcessing) return;
-
-      // If you stay silent for 15 seconds, it forces a turn for defiance
-      silenceInactivityTimer = setTimeout(() => {
-        if (isCalling && !isPaused && !isProcessing) {
-          appendMessage('user', '(staying silent...)', false);
-          executeTurn('(The user is staying completely silent on the bed, refusing to speak or answer you.)');
-        }
-      }, 15000);
-    }
-
-
-      
       startSpeechTurn();
     };
-resetSilencePenalty();
+
     pauseBtn.onclick = () => {
       if (!isCalling) return;
       isPaused = !isPaused;
@@ -1073,8 +1054,6 @@ resetSilencePenalty();
     };
 
     hangupBtn.onclick = () => {
-if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
-      
       isCalling = false; 
       isPaused = false; 
       isProcessing = false;
