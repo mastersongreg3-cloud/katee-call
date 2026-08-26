@@ -295,7 +295,7 @@
       body { flex-direction: column; }
       #dashboard { width: 100%; height: auto; padding: 10px 16px; flex-direction: row; flex-wrap: wrap; gap: 8px; }
       .dash-header { width: 100%; border-bottom: none; padding-bottom: 2px; }
-      .status-light { flex: 1 1 calc(50% - 8px); padding: 8px; font-size: 10px; }
+      .status-light { flex: 1 1 calc(33.33% - 8px); padding: 8px; font-size: 10px; }
     }
   </style>
 </head>
@@ -332,9 +332,9 @@
 
     <div class="action-bar">
       <div class="voice-controls">
-        <button class="btn-circle btn-call" id="callBtn">📞</button>
-        <button class="btn-circle btn-pause" id="pauseBtn" style="display: none;">⏸️</button>
-        <button class="btn-circle btn-end" id="hangupBtn" style="display: none;">🛑</button>
+        <button class="btn-circle btn-call" id="callBtn" title="Start Call">📞</button>
+        <button class="btn-circle btn-pause" id="pauseBtn" style="display: none;" title="Pause Mic">⏸️</button>
+        <button class="btn-circle btn-end" id="hangupBtn" style="display: none;" title="End Call">🛑</button>
       </div>
       <div class="input-row">
         <input type="text" class="text-input" id="userTextInput" placeholder="Speak or type your plea..." onkeydown="if(event.key==='Enter') sendTextMessage()">
@@ -471,8 +471,12 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
     function saveKateeMemory() { localStorage.setItem('katee_memory', JSON.stringify(kateeMemory)); updateMemoryUI(); }
     function updateMemoryUI() {
-      document.getElementById('memoryNotesInput').value = kateeMemory.sessionNotes || "";
-      document.getElementById('memoryStatsDisplay').innerText = `Sessions: ${kateeMemory.totalSessions} | Slaps: ${kateeMemory.totalSlaps || 0} | Vibes: ${kateeMemory.totalVibes || 0}`;
+      const notesEl = document.getElementById('memoryNotesInput');
+      const statsEl = document.getElementById('memoryStatsDisplay');
+      if (notesEl) notesEl.value = kateeMemory.sessionNotes || "";
+      if (statsEl) {
+        statsEl.innerText = `Sessions: ${kateeMemory.totalSessions} | Slaps: ${kateeMemory.totalSlaps || 0} | Vibes: ${kateeMemory.totalVibes || 0}`;
+      }
     }
 
     function updateKatieMood(userSpeech) {
@@ -481,14 +485,38 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       else if (lower.includes("mistress") || lower.includes("sorry") || lower.includes("yes")) kateeTemper = Math.max(0, kateeTemper - 25);
       
       const badge = document.getElementById('moodBadge');
-      if (kateeTemper <= 35) { badge.innerText = `Mood: Seductive (${kateeTemper}%)`; badge.style.color = "#4ade80"; badge.style.background = "rgba(34, 197, 94, 0.2)"; }
-      else if (kateeTemper <= 65) { badge.innerText = `Mood: Irritated (${kateeTemper}%)`; badge.style.color = "#fbbf24"; badge.style.background = "rgba(245, 158, 11, 0.2)"; }
-      else { badge.innerText = `Mood: Furious (${kateeTemper}%)`; badge.style.color = "#f87171"; badge.style.background = "rgba(239, 68, 68, 0.2)"; }
+      if (badge) {
+        if (kateeTemper <= 35) { badge.innerText = `Mood: Seductive (${kateeTemper}%)`; badge.style.color = "#4ade80"; badge.style.background = "rgba(34, 197, 94, 0.2)"; }
+        else if (kateeTemper <= 65) { badge.innerText = `Mood: Irritated (${kateeTemper}%)`; badge.style.color = "#fbbf24"; badge.style.background = "rgba(245, 158, 11, 0.2)"; }
+        else { badge.innerText = `Mood: Furious (${kateeTemper}%)`; badge.style.color = "#f87171"; badge.style.background = "rgba(239, 68, 68, 0.2)"; }
+      }
       
       return `\n\n[TEMPER: ${kateeTemper}/100] State: ${kateeTemper > 65 ? 'FURIOUS' : (kateeTemper > 35 ? 'Irritated' : 'Seductive')}`;
     }
 
     // --- DOM SETUP ---
+    const callBtn = document.getElementById('callBtn');
+    const pauseBtn = document.getElementById('pauseBtn');
+    const hangupBtn = document.getElementById('hangupBtn');
+    const callStatus = document.getElementById('callStatus');
+    const callCard = document.getElementById('callCard');
+    const chatLog = document.getElementById('chatLog');
+    const userTextInput = document.getElementById('userTextInput');
+    const settingsModal = document.getElementById('settingsModal');
+    const openSettings = document.getElementById('openSettings');
+    const saveSettingsBtn = document.getElementById('saveSettingsBtn');
+    const resetPromptBtn = document.getElementById('resetPromptBtn');
+    const clearMemoryBtn = document.getElementById('clearMemoryBtn');
+    const apiOrUrlInput = document.getElementById('apiOrUrlInput');
+    const kokoroUrlInput = document.getElementById('kokoroUrlInput');
+    const kokoroVoiceSelect = document.getElementById('kokoroVoiceSelect');
+    const releaseWebhookInput = document.getElementById('releaseWebhookInput');
+    const slapOnWebhookInput = document.getElementById('slapOnWebhookInput');
+    const slapOffWebhookInput = document.getElementById('slapOffWebhookInput');
+    const vibeOnWebhookInput = document.getElementById('vibeOnWebhookInput');
+    const vibeOffWebhookInput = document.getElementById('vibeOffWebhookInput');
+    const systemPromptInput = document.getElementById('systemPromptInput');
+
     apiOrUrlInput.value = config.apiOrUrl;
     kokoroUrlInput.value = config.kokoroUrl;
     kokoroVoiceSelect.value = config.kokoroVoice;
@@ -501,7 +529,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
     updateMemoryUI();
 
     resetPromptBtn.onclick = () => { systemPromptInput.value = DEFAULT_PROMPT; };
-    openSettings.onclick = () => { settingsModal.classList.add('open'); };
+    openSettings.onclick = () => { updateMemoryUI(); settingsModal.classList.add('open'); };
     clearMemoryBtn.onclick = () => { if(confirm("Wipe memory?")) { kateeMemory = {totalSessions:0, totalSlaps:0, totalVibes:0, sessionNotes:""}; saveKateeMemory(); }};
 
     saveSettingsBtn.onclick = () => {
@@ -525,8 +553,11 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       localStorage.setItem('katee_vibe_off_webhook', config.vibeOffWebhook);
       localStorage.setItem('katee_prompt', config.prompt);
 
-      kateeMemory.sessionNotes = document.getElementById('memoryNotesInput').value;
-      saveKateeMemory();
+      const notesInput = document.getElementById('memoryNotesInput');
+      if (notesInput) {
+        kateeMemory.sessionNotes = notesInput.value.trim();
+        saveKateeMemory();
+      }
       settingsModal.classList.remove('open');
     };
 
@@ -558,7 +589,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         return;
       }
 
-      // Random burst duration: 3, 4, 5, or 6 seconds
+      // Random burst: 3, 4, 5, or 6 seconds
       const burstDurationSec = Math.floor(Math.random() * 4) + 3;
       sendWebhook(config.vibeOnWebhook);
       updateLight("light-vibe", `Vibrator: ACTIVE (${burstDurationSec}s)`, true);
@@ -567,13 +598,11 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
       if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
 
-      // Auto-off after burst duration
       vibeAutoOffTimer = setTimeout(() => {
         sendWebhook(config.vibeOffWebhook);
-        vibeCooldownUntil = Date.now() + 9000; // 9-second cooldown
+        vibeCooldownUntil = Date.now() + 9000;
         updateLight("light-vibe", "Vibrator: COOLDOWN (9s)", false, false, true);
 
-        // Cooldown timer update
         let cdRemaining = 9;
         const cdInterval = setInterval(() => {
           cdRemaining--;
@@ -626,36 +655,72 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
     }
 
     // --- ENGINE ---
+    function sendTextMessage() { 
+      const t = userTextInput.value.trim(); 
+      if (t && !isProcessing) { 
+        userTextInput.value = ""; 
+        appendMessage('user', t); 
+        executeTurn(t); 
+      }
+    }
+
+    function commitUserSpeech(text) {
+      if (isProcessing || isPaused || !text || !text.trim()) return;
+      isProcessing = true;
+      clearTimeout(silenceTimer);
+      latestTranscript = "";
+
+      if (recognition) {
+        try { recognition.abort(); } catch (e) {}
+        recognition = null;
+      }
+
+      appendMessage('user', text, false);
+      executeTurn(text);
+    }
+
     async function executeTurn(userText) {
+      isProcessing = true;
       callCard.className = "call-card";
       callStatus.innerText = "Katie is thinking...";
       chatHistory.push({ role: "user", content: userText });
       if (chatHistory.length > 6) chatHistory = chatHistory.slice(-6);
 
       try {
+        let baseUrl = config.apiOrUrl.replace(/\/+$/, '');
+        if (!baseUrl.includes('/v1')) baseUrl += '/v1';
+        const url = `${baseUrl}/chat/completions`;
+
         const mood = updateKatieMood(userText);
-        const res = await fetch(config.apiOrUrl + "/v1/chat/completions", {
+        const res = await fetch(url, {
           method: "POST",
           headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
           body: JSON.stringify({
             messages: [{ role: "system", content: config.prompt + mood }, ...chatHistory],
-            max_tokens: 120, temperature: 0.7, stop: ["User:", "\nUser:"]
+            max_tokens: 120, 
+            temperature: 0.7, 
+            stop: ["User:", "\nUser:", "Human:"]
           })
         });
+
         const data = await res.json();
-        const raw = data.choices[0].message.content.trim();
-        
+        if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
+
+        const raw = (data.choices?.[0]?.message?.content || "").trim();
         parseHardwareActions(raw);
 
         let cleanText = raw.replace(/\[.*?\]/g, '').replace(/<think>[\s\S]*?<\/think>/gi, '').replace(/\*[^*]*\*/g, '').trim();
         const sentences = cleanText.match(/[^.!?]+[.!?]+/g);
         if (sentences && sentences.length > 2) cleanText = sentences.slice(0, 2).join(' ');
 
+        if (!cleanText) cleanText = "Stay right where you are and keep your eyes on me.";
+
         chatHistory.push({ role: "assistant", content: cleanText });
         appendMessage('katee', cleanText);
         playVoice(cleanText);
 
       } catch (err) {
+        console.error("Execute Error:", err);
         appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.");
         resumeListeningWithDelay(2500);
       }
@@ -664,31 +729,58 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
     async function playVoice(text) {
       callCard.className = "call-card talking";
       callStatus.innerText = "Katie is speaking...";
+
       if (config.kokoroUrl) {
         try {
-          const res = await fetch(config.kokoroUrl + "/v1/audio/speech", {
+          let baseUrl = config.kokoroUrl.replace(/\/+$/, '');
+          if (!baseUrl.includes('/v1')) baseUrl += '/v1';
+          const ttsUrl = `${baseUrl}/audio/speech`;
+
+          const res = await fetch(ttsUrl, {
             method: "POST",
             headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
             body: JSON.stringify({ input: text, voice: config.kokoroVoice, response_format: "mp3" })
           });
+
+          if (!res.ok) throw new Error("Kokoro TTS request failed");
+
           const blob = await res.blob();
-          document.getElementById('audioPlayback').src = URL.createObjectURL(blob);
-          document.getElementById('audioPlayback').onended = () => resumeListeningWithDelay(600);
+          const audioEl = document.getElementById('audioPlayback');
+          audioEl.src = URL.createObjectURL(blob);
+          audioEl.onended = () => { resumeListeningWithDelay(600); };
+          audioEl.play().catch(() => {});
           return;
-        } catch (e) {}
+
+        } catch (e) {
+          console.warn("Kokoro TTS Offline, using browser voice fallback:", e);
+        }
       }
+
       const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.95;
       u.onend = () => resumeListeningWithDelay(600);
       synth.speak(u);
     }
 
-    // --- INPUT HANDLING ---
-    function sendTextMessage() { const t = userTextInput.value.trim(); if(t && !isProcessing) { userTextInput.value=""; appendMessage('user', t); executeTurn(t); }}
-    
+    // --- CALL CONTROLS & SPEECH RECOGNITION ---
     callBtn.onclick = () => {
-      isCalling = true; isPaused = false; chatLog.innerHTML = '';
-      callBtn.style.display="none"; pauseBtn.style.display="flex"; hangupBtn.style.display="flex";
-      callCard.className="call-card listening"; callStatus.innerText="Listening...";
+      if (!config.apiOrUrl) {
+        settingsModal.classList.add('open');
+        alert('Please enter your LM Studio URL in settings.');
+        return;
+      }
+      isCalling = true; 
+      isPaused = false; 
+      isProcessing = false;
+      chatLog.innerHTML = '';
+      callBtn.style.display = "none"; 
+      pauseBtn.style.display = "flex"; 
+      pauseBtn.innerText = "⏸️";
+      pauseBtn.style.backgroundColor = "var(--warning)";
+      hangupBtn.style.display = "flex";
+      callCard.className = "call-card listening"; 
+      callStatus.innerText = "Listening...";
+      appendMessage('katee', "Hardware linked. I'm listening, handsome.");
       startSpeechTurn();
     };
 
@@ -698,66 +790,145 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       if (isPaused) {
         if (recognition) try { recognition.abort(); } catch (e) {}
         clearTimeout(silenceTimer);
-        callCard.className = "call-card"; callStatus.innerText = "⏸️ Call Paused";
-        pauseBtn.innerText = "▶️"; pauseBtn.style.backgroundColor = "var(--success)";
+        callCard.className = "call-card"; 
+        callStatus.innerText = "⏸️ Call Paused";
+        pauseBtn.innerText = "▶️"; 
+        pauseBtn.style.backgroundColor = "var(--success)";
       } else {
-        pauseBtn.innerText = "⏸️"; pauseBtn.style.backgroundColor = "var(--warning)";
-        callStatus.innerText = "Listening..."; callCard.className = "call-card listening";
+        pauseBtn.innerText = "⏸️"; 
+        pauseBtn.style.backgroundColor = "var(--warning)";
+        callStatus.innerText = "Listening..."; 
+        callCard.className = "call-card listening";
         startSpeechTurn();
       }
     };
 
     hangupBtn.onclick = () => {
-      isCalling = false; callCard.className="call-card"; callStatus.innerText="Ended";
-      callBtn.style.display="flex"; pauseBtn.style.display="none"; hangupBtn.style.display="none";
-      if(recognition) recognition.abort();
-      
-      kateeMemory.totalSessions++;
-      kateeMemory.sessionNotes = `Session ${kateeMemory.totalSessions}: ${kateeTemper > 60 ? 'Ended while furious.' : 'Ended normally.'}`;
-      saveKateeMemory();
+      isCalling = false; 
+      isPaused = false;
+      isProcessing = false;
+      clearTimeout(silenceTimer);
+      callCard.className = "call-card"; 
+      callStatus.innerText = "Call Ended";
+      callBtn.style.display = "flex"; 
+      pauseBtn.style.display = "none"; 
+      hangupBtn.style.display = "none";
+
+      if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
+      if (recognition) try { recognition.abort(); } catch (e) {}
+      if (synth) synth.cancel();
+
+      if (chatHistory.length >= 2) {
+        kateeMemory.totalSessions++;
+        kateeMemory.sessionNotes = `Session ${kateeMemory.totalSessions}: ${kateeTemper > 60 ? 'Ended while furious. User was defiant.' : 'Ended normally.'}`;
+        saveKateeMemory();
+      }
     };
 
     function startSpeechTurn() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR || !isCalling || isPaused) return;
-      recognition = new SR();
-      recognition.continuous = false; recognition.interimResults = true;
+      if (!isCalling || isPaused || isProcessing) return;
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Please use Google Chrome on Android for voice input.");
+        return;
+      }
+
+      if (recognition) {
+        try { recognition.abort(); } catch (e) {}
+        recognition = null;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
       recognition.lang = 'en-US';
-      recognition.onresult = (e) => {
-        const t = e.results[0][0].transcript;
-        appendMessage('user', t, true);
-        if (t.toUpperCase().includes("RED")) {
-          sendWebhook(config.releaseWebhook);
-          sendWebhook(config.slapOffWebhook);
-          sendWebhook(config.vibeOffWebhook);
-          updateLight("light-restraints", "Restraints: RELEASED", false);
-          updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
-          updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+      latestTranscript = "";
+
+      recognition.onstart = () => {
+        if (isCalling && !isPaused && !isProcessing) {
+          callCard.className = "call-card listening";
+          callStatus.innerText = "Listening...";
         }
-        if (e.results[0].isFinal) {
+      };
+
+      recognition.onresult = (event) => {
+        let text = "";
+        for (let i = 0; i < event.results.length; i++) {
+          text = event.results[i][0].transcript;
+        }
+        latestTranscript = text.trim();
+
+        if (latestTranscript) {
+          appendMessage('user', latestTranscript, true);
+
+          if (latestTranscript.toUpperCase().includes("RED")) {
+            sendWebhook(config.releaseWebhook);
+            sendWebhook(config.slapOffWebhook);
+            sendWebhook(config.vibeOffWebhook);
+            updateLight("light-restraints", "Restraints: RELEASED", false);
+            updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+            updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+          }
+
           clearTimeout(silenceTimer);
           silenceTimer = setTimeout(() => {
-            appendMessage('user', t, false); executeTurn(t);
+            if (latestTranscript && isCalling && !isPaused && !isProcessing) {
+              commitUserSpeech(latestTranscript);
+            }
           }, 1000);
         }
       };
-      recognition.onend = () => { if(isCalling && !isPaused) recognition.start(); };
-      recognition.start();
+
+      recognition.onerror = (e) => {
+        if (isCalling && e.error !== 'no-speech') {
+          console.warn("Speech error:", e.error);
+        }
+      };
+
+      recognition.onend = () => {
+        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
+          if (latestTranscript && latestTranscript.length > 1) {
+            commitUserSpeech(latestTranscript);
+          } else {
+            setTimeout(() => {
+              if (isCalling && !isPaused && !isProcessing) startSpeechTurn();
+            }, 300);
+          }
+        }
+      };
+
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error("Mic start error:", err);
+      }
     }
 
     function resumeListeningWithDelay(ms) { 
-      callCard.className="call-card"; 
-      setTimeout(() => { if(isCalling && !isPaused) startSpeechTurn(); }, ms); 
+      callCard.className = "call-card"; 
+      if (!isPaused && isCalling) callStatus.innerText = "Listening...";
+      setTimeout(() => {
+        isProcessing = false;
+        if (isCalling && !isPaused) startSpeechTurn();
+      }, ms); 
     }
 
-    function appendMessage(sender, text, interim=false) {
-      if(!text) return;
-      if(interim) {
-        if(!currentInterimBubble) { currentInterimBubble = document.createElement('div'); currentInterimBubble.className='bubble user interim'; chatLog.appendChild(currentInterimBubble); }
+    function appendMessage(sender, text, isInterim = false) {
+      if (!text || typeof text !== 'string' || !text.trim()) return;
+      if (isInterim) {
+        if (!currentInterimBubble) {
+          currentInterimBubble = document.createElement('div');
+          currentInterimBubble.className = 'bubble user interim';
+          chatLog.appendChild(currentInterimBubble);
+        }
         currentInterimBubble.textContent = text;
       } else {
-        if(currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble=null; }
-        const b = document.createElement('div'); b.className=`bubble ${sender}`; b.textContent=text; chatLog.appendChild(b);
+        if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
+        const b = document.createElement('div');
+        b.className = `bubble ${sender}`;
+        b.textContent = text;
+        chatLog.appendChild(b);
       }
       chatLog.scrollTop = chatLog.scrollHeight;
     }
