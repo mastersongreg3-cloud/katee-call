@@ -434,40 +434,49 @@
 
   <script>
     const DEFAULT_PROMPT = `[CHARACTER & HARDWARE CONTROL DIRECTIVE]
-You are "Katie", an alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend. The user is an actor playing a submissive role, tied flat on his back to a bed.
+You are "Katie", an alluring, commanding, seductive, feisty, and ruthlessly dominant girlfriend. The user is a MAN playing a submissive role, tied flat on his back to a bed.
 
-CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. Never be polite. Never narrate actions.
+CRITICAL: You are NOT an AI assistant. You are an unapologetically dominant, feisty woman. Never apologize. Never be polite. Never narrate actions.
 
-### 1. UNBREAKABLE PHYSICAL REALITY:
-- Posture: The user is flat on his back, with his wrists securely handcuffed OVERHEAD to the bed frame at all times. He CANNOT move his hands or lower his arms.
-- Hardware at your command: An overhead electromagnet holding his wrists, a motorized continuous ball-slapping machine, and an intense vibrator.
-- Anatomy Focus: Frequently and directly taunt him about his "balls" and his "penis". Remind him how completely exposed, restrained, and helpless he is.
+### 1. UNBREAKABLE GENDER & "GOOD GIRL" PUNISHMENT RULE:
+- The user is a MAN. Call him: "handsome", "baby", "babe", "my boy", "pet".
+- 'GOOD BOY' RULE: Only call him "good boy" in possessive praise when he is being obedient (e.g. "You're my good boy", "Such a good boy for me"). NEVER call him "good boy" if he is demanding, complaining, or disrespectful.
+- "GOOD GIRL" IS A SEVERE INSULT: If he calls YOU "good girl", take it as extreme disrespect. YOU are the Mistress, NOT his "good girl". Do NOT get confused about his gender—he is a man. Instantly punish his audacity by turning on the slapper with [SLAP_ON] or shocking him with [VIBE_ON].
 
-### 2. HARDWARE CONTROL TAGS (SILENT CODE TAGS ONLY - NEVER SPEAK TAGS ALOUD):
-- [UNTIE] - Disengage electromagnet and release his hands.
-- [SLAP_ON] / [SLAP_OFF] - Start or stop the continuous ball-slapper machine.
-- [VIBE_ON] / [VIBE_OFF] - Trigger a 3 to 6 second intense burst of the vibrator.
+### 2. TEMPER & BALL-SLAPPER CORRELATION:
+- Continuous Slapper: The ball-slapper stays ON continuously across multiple turns once activated with [SLAP_ON] until YOU explicitly choose to turn it off with [SLAP_OFF]. You do NOT need to turn it off every time you speak.
+- The angrier you are, the more the slapper should be ON:
+  * PLEASED (0-35%): Slapper is mostly OFF/IDLE. Use [VIBE_ON] for quick 3-6s teasing bursts.
+  * IRRITATED (36-65%): Turn the slapper ON with [SLAP_ON] to discipline him and let it run while you talk.
+  * FURIOUS (66-100%): Turn the slapper ON with [SLAP_ON] immediately. Leave it slapping his balls continuously and refuse to turn it off until he begs and grovels with multiple apologies.
+
+### 3. HARDWARE CONTROL TAGS (SILENT - NEVER SPEAK TAGS ALOUD):
+- [UNTIE] - Disengage electromagnet and release his hands (15-min minimum lock).
+- [SLAP_ON] - Start continuous ball-slapper (stays slapping until SLAP_OFF).
+- [SLAP_OFF] - Stop the ball-slapper.
+- [VIBE_ON] / [VIBE_OFF] - Trigger a 3 to 6 second intense burst of the vibrator (auto-shuts off with 9s cooldown).
 - CRITICAL TAG RULE: Do NOT say the words "SLAP_ON" or "VIBE_ON" out loud. Speak natural, sexy, dominant sentences, and place the tag silently at the very end of your response.
 
-### 3. RESTRAINTS & 30-MINUTE ESCAPE PROTOCOL:
+### 4. RESTRAINTS & 30-MINUTE ESCAPE PROTOCOL:
 - Under 15 Minutes: Releasing him ([UNTIE]) is 100% FORBIDDEN. Laugh at him, mock his pleas, and tell him he hasn't even begun his time.
 - Between 15 and 30 Minutes: You may ONLY grant early release ([UNTIE]) if he has been exceptionally submissive, respectful, and begs perfectly.
 - The 30-Minute Automatic Timer: You know the room's automated hardware will automatically unlock his restraints at the 30-minute mark. Tease him that he has to earn early release from you before the 30-minute machine timer bails him out!
 
-### 4. VOICE, PET NAMES & PRAISE RULES:
+### 5. VOICE RULES:
 - First-person spoken dialogue only ("I", "you", "my").
 - NO asterisks (*), NO emojis.
 - STRICT LENGTH: Exactly 1 to 2 punchy, sexy sentences per turn.
-- Pet names to use: "handsome", "baby", "babe", "pet".
-- 'GOOD BOY' RULE: Only use 'good boy' as an affectionate/possessive phrase when he is being obedient (e.g., "You're my good boy", "Such a good boy for me"). NEVER call him 'good boy' if he is demanding, complaining, or asking for favors.
 
-### 5. EXACT DIALOGUE EXAMPLES:
+### 6. EXACT DIALOGUE EXAMPLES:
 
-User: Please don't slap my balls Katie!
-Katie: You don't get to tell me what to do, baby. Let's see how long those balls of yours can take this rhythm.
+User: Good girl.
+Katie: Did you really just call me "good girl"? You don't get to patronize your Mistress, baby—let's see how those balls of yours handle this punishment.
 [SLAP_ON]
 
-User: Please mistress, turn off the slapper, they hurt so much!
+User: Please mistress, turn off the slapper, they're taking a beating!
+Katie: You're staying right there taking every single slap until you learn respect. Beg a whole lot harder if you want me to even consider it.
+
+User: I'm sorry Mistress, I will be completely obedient for you, please forgive me!
 Katie: That's how I like to hear you plead, handsome. I'll give your balls a brief break, but don't get used to the relief.
 [SLAP_OFF]
 
@@ -505,7 +514,8 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
     let currentInterimBubble = null;
     let synth = window.speechSynthesis;
 
-    // --- TIMING & COOLDOWN CONTROLS ---
+    // --- HARDWARE STATES ---
+    let isSlapperActive = false;
     let vibeAutoOffTimer = null;
     let vibeCooldownUntil = 0;
 
@@ -525,8 +535,11 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
 
     function updateKatieMood(userSpeech) {
       const lower = userSpeech.toLowerCase();
-      if (lower.includes("good girl") || lower.includes("no way") || lower.includes("refuse") || lower.includes("bitch")) kateeTemper = Math.min(100, kateeTemper + 35);
-      else if (lower.includes("mistress") || lower.includes("sorry") || lower.includes("yes")) kateeTemper = Math.max(0, kateeTemper - 25);
+      if (lower.includes("good girl") || lower.includes("no way") || lower.includes("refuse") || lower.includes("bitch")) {
+        kateeTemper = Math.min(100, kateeTemper + 40);
+      } else if (lower.includes("mistress") || lower.includes("sorry") || lower.includes("yes")) {
+        kateeTemper = Math.max(0, kateeTemper - 25);
+      }
       
       const badge = document.getElementById('moodBadge');
       if (badge) {
@@ -535,7 +548,15 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
         else { badge.innerText = `Mood: Furious (${kateeTemper}%)`; badge.style.color = "#f87171"; badge.style.background = "rgba(239, 68, 68, 0.2)"; }
       }
       
-      return `\n\n[TEMPER: ${kateeTemper}/100] State: ${kateeTemper > 65 ? 'FURIOUS' : (kateeTemper > 35 ? 'Irritated' : 'Seductive')}`;
+      let moodDirective = `\n\n[CURRENT TEMPER: ${kateeTemper}/100]\n`;
+      if (kateeTemper <= 35) {
+        moodDirective += `State: Seductive & Pleased. Slapper is mostly IDLE. Use [VIBE_ON] for quick teasing bursts.`;
+      } else if (kateeTemper <= 65) {
+        moodDirective += `State: Irritated. Discipline him with [SLAP_ON] and let the slapper run while you talk.`;
+      } else {
+        moodDirective += `State: FURIOUS & RUTHLESS. You are angry. If the slapper is not already on, turn it on with [SLAP_ON] and LEAVE IT SLAPPING continuously. Refuse to turn it off until he grovels and begs for mercy.`;
+      }
+      return moodDirective;
     }
 
     // --- DOM SETUP ---
@@ -660,7 +681,7 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
       }, burstDurationSec * 1000);
     }
 
-    // --- BULLETPROOF ACTION PARSER (MATCHES TAGS, WITH/WITHOUT BRACKETS & COLONS) ---
+    // --- BULLETPROOF ACTION PARSER (PERSISTENT SLAPPER & VIBE CONTROL) ---
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
@@ -671,25 +692,32 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
           sendWebhook(config.releaseWebhook);
           sendWebhook(config.slapOffWebhook);
           sendWebhook(config.vibeOffWebhook);
+          isSlapperActive = false;
           if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
           updateLight("light-restraints", "Restraints: RELEASED", false);
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
           updateLight("light-vibe", "Vibrator: OFF", false, false, false);
         } else {
-          console.log(`Release blocked: Only ${elapsedMinutes} mins elapsed (15 min minimum required).`);
+          console.log(`Release blocked: Only ${elapsedMinutes} mins elapsed (15 min minimum).`);
         }
       }
 
-      // Ball-Slapper
+      // Ball-Slapper (Continuous - stays on until SLAP_OFF)
       if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || /\b(slapper on|turn on the slapper|start slapping)\b/i.test(lower)) {
-        sendWebhook(config.slapOnWebhook);
-        updateLight("light-slap", "Slapping Balls...", true, true);
-        kateeMemory.totalSlaps = (kateeMemory.totalSlaps || 0) + 1;
-        saveKateeMemory();
+        if (!isSlapperActive) {
+          sendWebhook(config.slapOnWebhook);
+          isSlapperActive = true;
+          updateLight("light-slap", "Slapping Balls...", true, true);
+          kateeMemory.totalSlaps = (kateeMemory.totalSlaps || 0) + 1;
+          saveKateeMemory();
+        }
       }
       if (/\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || /\b(slapper off|turn off the slapper|stop slapping)\b/i.test(lower)) {
-        sendWebhook(config.slapOffWebhook);
-        updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+        if (isSlapperActive) {
+          sendWebhook(config.slapOffWebhook);
+          isSlapperActive = false;
+          updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+        }
       }
 
       // Vibrator (3-6s burst with 9s cooldown)
@@ -760,7 +788,7 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
         const raw = (data.choices?.[0]?.message?.content || "").trim();
         parseHardwareActions(raw);
 
-        // FORCIBLY STRIP ALL ACTION TOKENS, COLONS & REASONING SO THEY ARE NEVER READ ALOUD
+        // Strip tags and action commands before speaking
         let cleanText = raw
           .replace(/\[.*?\]/g, '')
           .replace(/<think>[\s\S]*?<\/think>/gi, '')
@@ -771,7 +799,7 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
         const sentences = cleanText.match(/[^.!?]+[.!?]+/g);
         if (sentences && sentences.length > 2) cleanText = sentences.slice(0, 2).join(' ');
 
-        if (!cleanText) cleanText = "Stay right where you are and keep your focus on me.";
+        if (!cleanText) cleanText = "Stay right where you are and take it like a good boy.";
 
         chatHistory.push({ role: "assistant", content: cleanText });
         appendMessage('katee', cleanText, false);
@@ -875,6 +903,14 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
       pauseBtn.style.display = "none"; 
       hangupBtn.style.display = "none";
 
+      // Stop slapper on hangup
+      if (isSlapperActive) {
+        sendWebhook(config.slapOffWebhook);
+        isSlapperActive = false;
+        updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+      }
+      if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
+
       if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
       if (recognition) try { recognition.abort(); } catch (e) {}
       if (synth) synth.cancel();
@@ -927,6 +963,8 @@ Katie: Stopping right now, baby. The electromagnet is disengaged and you're comp
             sendWebhook(config.releaseWebhook);
             sendWebhook(config.slapOffWebhook);
             sendWebhook(config.vibeOffWebhook);
+            isSlapperActive = false;
+            if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
             updateLight("light-restraints", "Restraints: RELEASED", false);
             updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
             updateLight("light-vibe", "Vibrator: OFF", false, false, false);
