@@ -768,10 +768,13 @@
       }, 10000);
     }
 
-    function parseHardwareActions(raw) {
+function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
       const isNegated = /\b(not|won't|wont|never|refuse|why would i|don't think|no way)\b/i.test(lower);
+
+      // Inlined refusal check - directly defined as a variable!
+      const isSlapRefusal = /\b(not\s+(going\s+to\s+|gonna\s+)?stop|won't\s+stop|wont\s+stop|never\s+stop|refuse\s+to\s+stop|keep\s+slapping|think\s+again|not\s+that\s+easy|not\s+a\s+chance|take\s+every\s+(single\s+)?hit)\b/i.test(lower);
 
       // 1. [UNTIE] / RELEASE / Safeword RED
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
@@ -780,7 +783,6 @@
           sendWebhook(config.slapOffWebhook);
           sendWebhook(config.vibeOffWebhook);
           isSlapperActive = false;
-          isVibeCycleRunning = false;
           stopAllVibeTimers();
           updateLight("light-restraints", "Restraints: RELEASED", false);
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
@@ -788,46 +790,19 @@
         }
       }
 
-// 2. BALL-SLAPPER OFF (FLEXIBLE: Catches "brief break", "short break", "break from me slapping", etc.)
-      const isSlapRefusal = /\b(not\s+(going\s+to\s+|gonna\s+)?stop|won't\s+stop|wont\s+stop|never\s+stop|refuse\s+to\s+stop|keep\s+slapping|think\s+again|not\s+that\s+easy|not\s+a\s+chance|take\s+every\s+(single\s+)?hit)\b/i.test(lower);
+      // 2. BALL-SLAPPER OFF
+      const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
+        (!isNegated && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
 
-      const hasExplicitAgreementToStop = 
-        /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) ||
-        /\b(break\s+from\s+(me\s+)?slapping)\b/i.test(lower) ||
-        /\b(give|giving)\s+(your\s+balls|you|them)\s+(a\s+)?(brief\s+|short\s+|little\s+|quick\s+|temporary\s+)?break\b/i.test(lower) ||
-        /\b(i'll|i\s+will|i'm|i\s+am)\s+(stop\s+slapping|turning?\s+off\s+the\s+slapper|give\s+you\s+a\s+break)\b/i.test(lower) ||
-        /\bfine,?\s+(i'll|i\s+will)\s+stop\b/i.test(lower);
-
-      // ONLY turn off if she genuinely agreed to give you a break and is NOT refusing
-      const wantsSlapOff = hasExplicitAgreementToStop && !isSlapRefusal;
-
-      if (wantsSlapOff) {
+      if (wantsSlapOff && !isSlapRefusal) {
         if (isSlapperActive) {
           sendWebhook(config.slapOffWebhook);
           isSlapperActive = false;
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
-      }
-// 3. BALL-SLAPPER ON (Catches tags + all natural spoken phrases about slapping your balls)
-      const wantsSlapOn = 
-        /\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || 
-        (!isSlapRefusal(lower) && (
-          lower.includes("slapper on") || 
-          lower.includes("turn on the slapper") || 
-          lower.includes("start slapping") || 
-          lower.includes("slap your balls") ||
-          lower.includes("slapping your balls") ||
-          lower.includes("punish your balls") ||
-          lower.includes("punishing your balls") ||
-          lower.includes("take these slaps") ||
-          lower.includes("give your balls a beating") ||
-          lower.includes("balls take this rhythm") ||
-          lower.includes("time to slap") ||
-          lower.includes("going to slap") ||
-          lower.includes("gonna slap")
-        ));
-
-      if (wantsSlapOn && !isSlapRefusal(lower)) {
+      } 
+      // 3. BALL-SLAPPER ON
+      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isSlapRefusal && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping") || lower.includes("slap your balls")))) {
         if (!isSlapperActive) {
           sendWebhook(config.slapOnWebhook);
           isSlapperActive = true;
@@ -837,20 +812,14 @@
         }
       }
 
-      // 4. VIBRATOR PAUSE
-      if (/\[?VIBE[_\s-]?PAUSE:?\]?/i.test(raw) || /\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && (lower.includes("pause the vibrator") || lower.includes("withhold the vibrator")))) {
-        isVibeCycleRunning = false;
+      // 4. VIBRATOR ON / OFF
+      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on") || lower.includes("turning on the vibrator") || lower.includes("turn on the vibrator"))) {
+        triggerVibratorBurst();
+      }
+      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && lower.includes("vibrator off"))) {
         stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
-        updateLight("light-vibe", "Vibrator: PAUSED (Withheld)", false);
-      }
-
-      // 5. VIBRATOR RESUME
-      if (!isNegated && (/\[?VIBE[_\s-]?RESUME:?\]?/i.test(raw) || /\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("resume the vibrator"))) {
-        if (!isVibeCycleRunning) {
-          isVibeCycleRunning = true;
-          runVibratorAutoCycle();
-        }
+        updateLight("light-vibe", "Vibrator: OFF", false, false, false);
       }
     }
 
