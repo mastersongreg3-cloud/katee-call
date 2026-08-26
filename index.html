@@ -902,9 +902,10 @@
         const raw = (data.choices?.[0]?.message?.content || "").trim();
         parseHardwareActions(raw);
 
-        let cleanText = raw
-          .replace(/\[.*?\]/g, '')
+let cleanText = raw
           .replace(/<think>[\s\S]*?<\/think>/gi, '')
+          .replace(/\[.*?\]/g, '')
+          .replace(/^(Katie|Katee|Mistress|Assistant|AI):\s*/i, '') // 👈 ERASES "Katie:" AT START
           .replace(/\b(VIBE_ON|VIBE_OFF|VIBE_PAUSE|VIBE_RESUME|SLAP_ON|SLAP_OFF|UNTIE|VIBE ON|VIBE OFF|SLAP ON|SLAP OFF):?/gi, '')
           .replace(/\bthe ball-slapper machine\b/gi, 'me slapping your balls')
           .replace(/\bthe ball-slapper\b/gi, 'me slapping your balls')
