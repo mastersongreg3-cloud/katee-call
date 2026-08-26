@@ -822,75 +822,89 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
     recognition = initSpeechEngine();
 
-    function startSpeechTurn() {
-      if (!isCalling || isPaused || isProcessing || !recognition) return;
-      latestTranscript = "";
-      try {
-        recognition.start();
-      } catch (e) {}
-    }
+  function startSpeechTurn() {
+      if (!isCalling || isPaused || isProcessing) return;
 
-    callBtn.onclick = () => {
-      if (!config.apiOrUrl) {
-        settingsModal.classList.add('open');
-        alert('Please enter your LM Studio URL in settings.');
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Please use Google Chrome on Android for voice input.");
         return;
       }
-      isCalling = true; 
-      isPaused = false; 
-      isProcessing = false;
-      chatLog.innerHTML = '';
-      callBtn.style.display = "none"; 
-      pauseBtn.style.display = "flex"; 
-      pauseBtn.innerText = "⏸️";
-      pauseBtn.style.backgroundColor = "var(--warning)";
-      hangupBtn.style.display = "flex";
-      callCard.className = "call-card listening"; 
-      callStatus.innerText = "Listening...";
-      appendMessage('katee', "Hardware linked. I'm listening, handsome.", false);
-      startSpeechTurn();
-    };
 
-    pauseBtn.onclick = () => {
-      if (!isCalling) return;
-      isPaused = !isPaused;
-      if (isPaused) {
-        if (recognition) try { recognition.stop(); } catch (e) {}
-        clearTimeout(silenceTimer);
-        callCard.className = "call-card"; 
-        callStatus.innerText = "⏸️ Call Paused";
-        pauseBtn.innerText = "▶️"; 
-        pauseBtn.style.backgroundColor = "var(--success)";
-      } else {
-        pauseBtn.innerText = "⏸️"; 
-        pauseBtn.style.backgroundColor = "var(--warning)";
-        callStatus.innerText = "Listening..."; 
-        callCard.className = "call-card listening";
-        startSpeechTurn();
+      // Always cleanly destroy and recreate to prevent Android state lock
+      if (recognition) {
+        try { recognition.abort(); } catch (e) {}
+        recognition = null;
       }
-    };
 
-    hangupBtn.onclick = () => {
-      isCalling = false; 
-      isPaused = false; 
-      isProcessing = false;
-      clearTimeout(silenceTimer);
-      callCard.className = "call-card"; 
-      callStatus.innerText = "Call Ended";
-      callBtn.style.display = "flex"; 
-      pauseBtn.style.display = "none"; 
-      hangupBtn.style.display = "none";
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      latestTranscript = "";
 
-      if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
-      if (recognition) try { recognition.stop(); } catch (e) {}
-      if (synth) synth.cancel();
+      recognition.onstart = () => {
+        if (isCalling && !isPaused && !isProcessing) {
+          callCard.className = "call-card listening";
+          callStatus.innerText = "Listening...";
+        }
+      };
 
-      if (chatHistory.length >= 2) {
-        kateeMemory.totalSessions++;
-        kateeMemory.sessionNotes = `Session ${kateeMemory.totalSessions}: ${kateeTemper > 60 ? 'Ended while furious. User was defiant.' : 'Ended normally.'}`;
-        saveKateeMemory();
+      recognition.onresult = (event) => {
+        let text = "";
+        for (let i = 0; i < event.results.length; i++) {
+          text = event.results[i][0].transcript;
+        }
+        latestTranscript = text.trim();
+
+        if (latestTranscript) {
+          appendMessage('user', latestTranscript, true);
+
+          // Emergency Safeword
+          if (latestTranscript.toUpperCase().includes("RED")) {
+            sendWebhook(config.releaseWebhook);
+            sendWebhook(config.slapOffWebhook);
+            sendWebhook(config.vibeOffWebhook);
+            updateLight("light-restraints", "Restraints: RELEASED", false);
+            updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+            updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+          }
+
+          // Automatically send 1 second after you stop speaking
+          clearTimeout(silenceTimer);
+          silenceTimer = setTimeout(() => {
+            if (latestTranscript && isCalling && !isPaused && !isProcessing) {
+              commitUserSpeech(latestTranscript);
+            }
+          }, 1000);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        if (e.error !== 'no-speech') {
+          console.warn("Mic error:", e.error);
+        }
+      };
+
+      recognition.onend = () => {
+        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
+          if (latestTranscript && latestTranscript.length > 1) {
+            commitUserSpeech(latestTranscript);
+          } else {
+            // Restart mic cleanly if no speech was detected
+            setTimeout(() => {
+              if (isCalling && !isPaused && !isProcessing) startSpeechTurn();
+            }, 300);
+          }
+        }
+      };
+
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error("Mic start error:", err);
       }
-    };
+    }
 
     function resumeListeningWithDelay(ms) { 
       callCard.className = "call-card"; 
