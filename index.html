@@ -455,14 +455,14 @@
     let callStartTime = null;
     let recognition = null;
     let silenceTimer = null;
-    let currentInterimBubble = null;
+    let silenceMasterTimer = null;
+    let latestTranscript = "";
     let synth = window.speechSynthesis;
 
     // --- HARDWARE STATES ---
     let isSlapperActive = false;
     let vibeAutoOffTimer = null;
     let vibeCooldownUntil = 0;
-    let silenceInactivityTimer = null;
 
     // --- 🧠 SAFE MEMORY PARSER ---
     let kateeMemory = { totalSessions: 0, totalSlaps: 0, totalVibes: 0, disrespectCount: 0, sessionNotes: "" };
@@ -528,7 +528,8 @@
         lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way") ||
         lower.includes("not begging") || lower.includes("won't beg") || lower.includes("wont beg") ||
         lower.includes("never") || lower.includes("make me") || lower.includes("refuse") ||
-        lower.includes("shut up") || lower.includes("screw you") || lower.includes("bitch") || lower.includes("untie");
+        lower.includes("shut up") || lower.includes("screw you") || lower.includes("bitch") || lower.includes("untie") ||
+        lower.includes("stayed silent");
 
       const isSubmissive = 
         !isDisrespectful && (
@@ -675,20 +676,35 @@
       cooldown ? el.classList.add('cooldown') : el.classList.remove('cooldown');
     }
 
-    // --- TIMING & 10-SECOND SILENCE PENALTY ---
     function stopAllVibeTimers() {
       if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
     }
 
-    function resetSilencePenalty() {
-      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+    // --- 10-SECOND MASTER SILENCE COUNTDOWN ---
+    function startMasterSilenceTimer() {
+      if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
       if (!isCalling || isPaused || isProcessing) return;
 
-      // 10-second silence inactivity penalty
-      silenceInactivityTimer = setTimeout(() => {
+      // Exactly 10 seconds of true silence triggers Katie's slap penalty
+      silenceMasterTimer = setTimeout(() => {
         if (isCalling && !isPaused && !isProcessing) {
-          appendMessage('user', '(staying silent...)', false);
-          executeTurn('(The user is staying completely silent on the bed, refusing to speak or answer you.)');
+          silenceMasterTimer = null;
+          
+          if (recognition) {
+            try { recognition.abort(); } catch(e) {}
+          }
+
+          // Immediately slap his balls for staying silent
+          if (!isSlapperActive) {
+            sendWebhook(config.slapOnWebhook);
+            isSlapperActive = true;
+            updateLight("light-slap", "Slapping Balls (Silence Penalty)...", true, true);
+            kateeMemory.totalSlaps = (kateeMemory.totalSlaps || 0) + 1;
+            saveKateeMemory();
+          }
+
+          appendMessage('user', '(stayed silent for 10 seconds...)', false);
+          executeTurn('(The user stayed completely silent for 10 seconds and refused to answer you. Turn on the slapper with [SLAP_ON] to punish his silence and scold him.)');
         }
       }, 10000);
     }
@@ -747,7 +763,7 @@
       const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
         (!isNegated && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
 
-      if (wantsSlapOff && !isNegated) {
+      if (wantsSlapOff && !isSlapRefusal(lower)) {
         if (isSlapperActive) {
           sendWebhook(config.slapOffWebhook);
           isSlapperActive = false;
@@ -776,10 +792,15 @@
       }
     }
 
+    function isSlapRefusal(str) {
+      return /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping)\b/i.test(str);
+    }
+
     // --- EXECUTION ENGINE ---
     function sendTextMessage() { 
       const t = userTextInput.value.trim(); 
       if (t && !isProcessing) { 
+        if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
         userTextInput.value = ""; 
         appendMessage('user', t, false); 
         executeTurn(t); 
@@ -790,7 +811,13 @@
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
       if (silenceTimer) clearTimeout(silenceTimer);
-      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+      if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
+      latestTranscript = "";
+
+      if (recognition) {
+        try { recognition.abort(); } catch (e) {}
+        recognition = null;
+      }
 
       appendMessage('user', text, false);
       executeTurn(text);
@@ -798,7 +825,7 @@
 
     async function executeTurn(userText) {
       isProcessing = true;
-      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+      if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
 
       callCard.className = "call-card";
       callStatus.innerText = "Katie is thinking...";
@@ -895,99 +922,7 @@
       synth.speak(u);
     }
 
-    // --- CONTINUOUS STREAMING VOICE ENGINE ---
-    let speechActive = false;
-
-    function initSpeechEngine() {
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) return null;
-
-      const sr = new SpeechRecognition();
-      sr.continuous = true;
-      sr.interimResults = true;
-      sr.lang = 'en-US';
-
-      sr.onstart = () => {
-        speechActive = true;
-        if (isCalling && !isPaused && !isProcessing) {
-          callCard.className = "call-card listening";
-          callStatus.innerText = "Listening...";
-          resetSilencePenalty();
-        }
-      };
-
-      sr.onresult = (event) => {
-        let interimTranscript = '';
-        let finalTranscript = '';
-
-        for (let i = event.resultIndex; i < event.results.length; ++i) {
-          if (event.results[i].isFinal) {
-            finalTranscript += event.results[i][0].transcript;
-          } else {
-            interimTranscript += event.results[i][0].transcript;
-          }
-        }
-
-        const spoken = (finalTranscript || interimTranscript).trim();
-
-        if (spoken) {
-          appendMessage('user', spoken, true);
-
-          if (spoken.toUpperCase().includes("RED")) {
-            sendWebhook(config.releaseWebhook);
-            sendWebhook(config.slapOffWebhook);
-            sendWebhook(config.vibeOffWebhook);
-            isSlapperActive = false;
-            stopAllVibeTimers();
-            updateLight("light-restraints", "Restraints: RELEASED", false);
-            updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
-            updateLight("light-vibe", "Vibrator: OFF", false, false, false);
-          }
-
-          clearTimeout(silenceTimer);
-          if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
-          silenceTimer = setTimeout(() => {
-            if (spoken && isCalling && !isPaused && !isProcessing) {
-              try { sr.stop(); } catch(e) {}
-              commitUserSpeech(spoken);
-            }
-          }, 1100);
-        }
-      };
-
-      sr.onerror = (e) => {
-        if (e.error === 'not-allowed' || e.error === 'permission-denied') {
-          callStatus.innerText = "Mic Permission Blocked";
-        } else if (e.error !== 'no-speech') {
-          console.warn("Speech error:", e.error);
-        }
-      };
-
-      sr.onend = () => {
-        speechActive = false;
-        if (isCalling && !isPaused && !isProcessing) {
-          setTimeout(() => {
-            if (isCalling && !isPaused && !isProcessing && !speechActive) {
-              try { sr.start(); } catch(e) {}
-            }
-          }, 200);
-        }
-      };
-
-      return sr;
-    }
-
-    recognition = initSpeechEngine();
-
-    function startSpeechTurn() {
-      if (!isCalling || isPaused || isProcessing || !recognition) return;
-      if (!speechActive) {
-        try {
-          recognition.start();
-        } catch (e) {}
-      }
-    }
-
+    // --- CALL CONTROLS & VOICE ENGINE ---
     callBtn.onclick = () => {
       if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
@@ -1002,7 +937,7 @@
       chatLog.innerHTML = '';
       currentInterimBubble = null;
       if (silenceTimer) clearTimeout(silenceTimer);
-      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+      if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
 
       callBtn.style.display = "none"; 
       pauseBtn.style.display = "flex"; 
@@ -1013,15 +948,16 @@
       callStatus.innerText = "Listening...";
       appendMessage('katee', "Hardware linked. You are tied to the bed. I'm listening, handsome.", false);
       startSpeechTurn();
+      startMasterSilenceTimer();
     };
 
     pauseBtn.onclick = () => {
       if (!isCalling) return;
       isPaused = !isPaused;
       if (isPaused) {
-        if (recognition) try { recognition.stop(); } catch (e) {}
+        if (recognition) try { recognition.abort(); } catch (e) {}
         clearTimeout(silenceTimer);
-        if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+        if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
         callCard.className = "call-card"; 
         callStatus.innerText = "⏸️ Call Paused";
         pauseBtn.innerText = "▶️"; 
@@ -1033,6 +969,7 @@
         callCard.className = "call-card listening";
         isProcessing = false;
         startSpeechTurn();
+        startMasterSilenceTimer();
       }
     };
 
@@ -1042,7 +979,7 @@
       isProcessing = false;
       callStartTime = null;
       clearTimeout(silenceTimer);
-      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+      if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
       callCard.className = "call-card"; 
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex"; 
@@ -1057,7 +994,7 @@
       stopAllVibeTimers();
 
       if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
-      if (recognition) try { recognition.stop(); } catch (e) {}
+      if (recognition) try { recognition.abort(); } catch (e) {}
       if (synth) synth.cancel();
 
       if (chatHistory.length >= 2) {
@@ -1067,12 +1004,102 @@
       }
     };
 
+    function startSpeechTurn() {
+      if (!isCalling || isPaused || isProcessing) return;
+
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) {
+        alert("Please use Google Chrome on Android for voice input.");
+        return;
+      }
+
+      if (recognition) {
+        try { recognition.abort(); } catch (e) {}
+        recognition = null;
+      }
+
+      recognition = new SpeechRecognition();
+      recognition.continuous = false;
+      recognition.interimResults = true;
+      recognition.lang = 'en-US';
+      latestTranscript = "";
+
+      recognition.onstart = () => {
+        if (isCalling && !isPaused && !isProcessing) {
+          callCard.className = "call-card listening";
+          callStatus.innerText = "Listening...";
+        }
+      };
+
+      recognition.onresult = (event) => {
+        let text = "";
+        for (let i = 0; i < event.results.length; i++) {
+          text = event.results[i][0].transcript;
+        }
+        latestTranscript = text.trim();
+
+        if (latestTranscript) {
+          // User spoke: Cancel the 10-second silence timer immediately
+          if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
+          
+          appendMessage('user', latestTranscript, true);
+
+          if (latestTranscript.toUpperCase().includes("RED")) {
+            sendWebhook(config.releaseWebhook);
+            sendWebhook(config.slapOffWebhook);
+            sendWebhook(config.vibeOffWebhook);
+            isSlapperActive = false;
+            stopAllVibeTimers();
+            updateLight("light-restraints", "Restraints: RELEASED", false);
+            updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+            updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+          }
+
+          clearTimeout(silenceTimer);
+          silenceTimer = setTimeout(() => {
+            if (latestTranscript && isCalling && !isPaused && !isProcessing) {
+              commitUserSpeech(latestTranscript);
+            }
+          }, 1000);
+        }
+      };
+
+      recognition.onerror = (e) => {
+        if (e.error === 'not-allowed' || e.error === 'permission-denied') {
+          callStatus.innerText = "Mic Permission Blocked";
+        } else if (e.error !== 'no-speech') {
+          console.warn("Mic error:", e.error);
+        }
+      };
+
+      recognition.onend = () => {
+        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
+          if (latestTranscript && latestTranscript.length > 1) {
+            commitUserSpeech(latestTranscript);
+          } else {
+            setTimeout(() => {
+              if (isCalling && !isPaused && !isProcessing) startSpeechTurn();
+            }, 300);
+          }
+        }
+      };
+
+      try {
+        recognition.start();
+      } catch (err) {
+        console.error("Mic start error:", err);
+      }
+    }
+
     function resumeListeningWithDelay(ms) { 
       callCard.className = "call-card"; 
       if (!isPaused && isCalling) callStatus.innerText = "Listening...";
       setTimeout(() => {
         isProcessing = false;
-        if (isCalling && !isPaused) startSpeechTurn();
+        if (isCalling && !isPaused) {
+          startSpeechTurn();
+          startMasterSilenceTimer(); // Master 10s countdown begins when Katie finishes speaking
+        }
       }, ms); 
     }
 
