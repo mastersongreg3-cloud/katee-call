@@ -707,6 +707,12 @@
       if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
     }
 
+// Safety alias to prevent any missing function errors
+    function triggerVibratorBurst() {
+      runVibratorAutoCycle();
+    }
+
+    
     function runVibratorAutoCycle() {
       stopAllVibeTimers();
       if (!isCalling || isPaused || !isVibeCycleRunning) return;
