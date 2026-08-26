@@ -333,8 +333,8 @@
     <div class="action-bar">
       <div class="voice-controls">
         <button class="btn-circle btn-call" id="callBtn" title="Start Call">📞</button>
-        <button class="btn-circle btn-pause" id="pauseBtn" style="display: none;" title="Pause Mic">⏸️</button>
-        <button class="btn-circle btn-end" id="hangupBtn" style="display: none;" title="End Call">🛑</button>
+        <button class="btn-circle btn-pause" id="pauseBtn" style="display: none;">⏸️</button>
+        <button class="btn-circle btn-end" id="hangupBtn" style="display: none;">🛑</button>
       </div>
       <div class="input-row">
         <input type="text" class="text-input" id="userTextInput" placeholder="Speak or type your plea..." onkeydown="if(event.key==='Enter') sendTextMessage()">
@@ -410,7 +410,7 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn-secondary" id="resetPromptBtn">↺ Reset Prompt</button>
+        <button class="btn-secondary btn-reset" id="resetPromptBtn">↺ Reset Prompt</button>
         <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
       </div>
     </div>
@@ -459,7 +459,6 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
     let recognition = null;
     let silenceTimer = null;
     let synth = window.speechSynthesis;
-    let currentAudioElement = null;
 
     // --- TIMING & COOLDOWN CONTROLS ---
     let vibeAutoOffTimer = null;
@@ -471,11 +470,11 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
     function saveKateeMemory() { localStorage.setItem('katee_memory', JSON.stringify(kateeMemory)); updateMemoryUI(); }
     function updateMemoryUI() {
-      const notesEl = document.getElementById('memoryNotesInput');
-      const statsEl = document.getElementById('memoryStatsDisplay');
-      if (notesEl) notesEl.value = kateeMemory.sessionNotes || "";
-      if (statsEl) {
-        statsEl.innerText = `Sessions: ${kateeMemory.totalSessions} | Slaps: ${kateeMemory.totalSlaps || 0} | Vibes: ${kateeMemory.totalVibes || 0}`;
+      const notesInput = document.getElementById('memoryNotesInput');
+      const statsDisplay = document.getElementById('memoryStatsDisplay');
+      if (notesInput) notesInput.value = kateeMemory.sessionNotes || "";
+      if (statsDisplay) {
+        statsDisplay.innerText = `Sessions: ${kateeMemory.totalSessions} | Slaps: ${kateeMemory.totalSlaps || 0} | Vibes: ${kateeMemory.totalVibes || 0}`;
       }
     }
 
@@ -492,6 +491,23 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       }
       
       return `\n\n[TEMPER: ${kateeTemper}/100] State: ${kateeTemper > 65 ? 'FURIOUS' : (kateeTemper > 35 ? 'Irritated' : 'Seductive')}`;
+    }
+
+    // --- SYNTHESIZED CHIME / BEEP FOR LISTENING CUE ---
+    function playListeningChime() {
+      try {
+        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // High A pitch
+        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.start();
+        osc.stop(audioCtx.currentTime + 0.12);
+      } catch (e) {}
     }
 
     // --- DOM SETUP ---
@@ -589,7 +605,6 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         return;
       }
 
-      // Random burst: 3, 4, 5, or 6 seconds
       const burstDurationSec = Math.floor(Math.random() * 4) + 3;
       sendWebhook(config.vibeOnWebhook);
       updateLight("light-vibe", `Vibrator: ACTIVE (${burstDurationSec}s)`, true);
@@ -643,7 +658,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
       }
 
-      // Vibrator (Burst Mode 3-6s with 9s Cooldown)
+      // Vibrator
       if (/\[VIBE_ON\]/i.test(raw)) {
         triggerVibratorBurst();
       }
@@ -659,7 +674,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       const t = userTextInput.value.trim(); 
       if (t && !isProcessing) { 
         userTextInput.value = ""; 
-        appendMessage('user', t); 
+        appendMessage('user', t, false); 
         executeTurn(t); 
       }
     }
@@ -668,7 +683,6 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
       clearTimeout(silenceTimer);
-      latestTranscript = "";
 
       if (recognition) {
         try { recognition.abort(); } catch (e) {}
@@ -716,12 +730,12 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         if (!cleanText) cleanText = "Stay right where you are and keep your eyes on me.";
 
         chatHistory.push({ role: "assistant", content: cleanText });
-        appendMessage('katee', cleanText);
+        appendMessage('katee', cleanText, false);
         playVoice(cleanText);
 
       } catch (err) {
         console.error("Execute Error:", err);
-        appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.");
+        appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.", false);
         resumeListeningWithDelay(2500);
       }
     }
@@ -762,13 +776,23 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       synth.speak(u);
     }
 
-    // --- CALL CONTROLS & SPEECH RECOGNITION ---
-    callBtn.onclick = () => {
+    // --- CALL CONTROLS & VOICE LOOP ---
+    callBtn.onclick = async () => {
       if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
         alert('Please enter your LM Studio URL in settings.');
         return;
       }
+
+      // Pre-warm microphone permission on user interaction
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        stream.getTracks().forEach(track => track.stop());
+      } catch (err) {
+        alert("Microphone access denied. Please enable microphone permission in browser settings.");
+        return;
+      }
+
       isCalling = true; 
       isPaused = false; 
       isProcessing = false;
@@ -780,7 +804,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening"; 
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Hardware linked. I'm listening, handsome.");
+      appendMessage('katee', "Hardware linked. I'm listening, handsome.", false);
       startSpeechTurn();
     };
 
@@ -847,6 +871,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
       recognition.onstart = () => {
         if (isCalling && !isPaused && !isProcessing) {
+          playListeningChime(); // Play crisp tone indicating mic is hot!
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
         }
@@ -882,7 +907,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
       recognition.onerror = (e) => {
         if (isCalling && e.error !== 'no-speech') {
-          console.warn("Speech error:", e.error);
+          console.warn("Speech recognition error:", e.error);
         }
       };
 
@@ -916,6 +941,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
     function appendMessage(sender, text, isInterim = false) {
       if (!text || typeof text !== 'string' || !text.trim()) return;
+
       if (isInterim) {
         if (!currentInterimBubble) {
           currentInterimBubble = document.createElement('div');
@@ -924,7 +950,10 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         }
         currentInterimBubble.textContent = text;
       } else {
-        if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
+        if (currentInterimBubble) {
+          currentInterimBubble.remove();
+          currentInterimBubble = null;
+        }
         const b = document.createElement('div');
         b.className = `bubble ${sender}`;
         b.textContent = text;
