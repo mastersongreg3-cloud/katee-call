@@ -785,26 +785,18 @@
         }
       }
 
-// 2. BALL-SLAPPER OFF (STRICT: Requires explicit positive agreement to stop)
-      const isMockingOrRefusing = 
-        raw.includes("?") ||
-        /\b(not|won't|wont|never|refuse|why would i|don't think|no way|think again|in your dreams|keep dreaming|you wish|not that easy|not a chance|take every hit|take every single hit)\b/i.test(lower);
+// 2. BALL-SLAPPER OFF (FLEXIBLE: Catches "brief break", "short break", "break from me slapping", etc.)
+      const isSlapRefusal = /\b(not\s+(going\s+to\s+|gonna\s+)?stop|won't\s+stop|wont\s+stop|never\s+stop|refuse\s+to\s+stop|keep\s+slapping|think\s+again|not\s+that\s+easy|not\s+a\s+chance|take\s+every\s+(single\s+)?hit)\b/i.test(lower);
 
       const hasExplicitAgreementToStop = 
-        lower.includes("give your balls a break") ||
-        lower.includes("give you a break") ||
-        lower.includes("giving your balls a break") ||
-        lower.includes("giving you a break") ||
-        lower.includes("i'll stop slapping") ||
-        lower.includes("i will stop slapping") ||
-        lower.includes("i'm stopping") ||
-        lower.includes("i will turn it off") ||
-        lower.includes("i'll turn it off") ||
-        lower.includes("fine, i'll stop") ||
-        lower.includes("fine, i will stop");
+        /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) ||
+        /\b(break\s+from\s+(me\s+)?slapping)\b/i.test(lower) ||
+        /\b(give|giving)\s+(your\s+balls|you|them)\s+(a\s+)?(brief\s+|short\s+|little\s+|quick\s+|temporary\s+)?break\b/i.test(lower) ||
+        /\b(i'll|i\s+will|i'm|i\s+am)\s+(stop\s+slapping|turning?\s+off\s+the\s+slapper|give\s+you\s+a\s+break)\b/i.test(lower) ||
+        /\bfine,?\s+(i'll|i\s+will)\s+stop\b/i.test(lower);
 
-      // ONLY turn off if she genuinely agreed to give you a break and is NOT mocking you!
-      const wantsSlapOff = !isMockingOrRefusing && hasExplicitAgreementToStop;
+      // ONLY turn off if she genuinely agreed to give you a break and is NOT refusing
+      const wantsSlapOff = hasExplicitAgreementToStop && !isSlapRefusal;
 
       if (wantsSlapOff) {
         if (isSlapperActive) {
