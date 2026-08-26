@@ -796,8 +796,26 @@
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
       } 
-      // 3. BALL-SLAPPER ON
-      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isNegated && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping")))) {
+// 3. BALL-SLAPPER ON (Catches tags + all natural spoken phrases about slapping your balls)
+      const wantsSlapOn = 
+        /\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || 
+        (!isSlapRefusal(lower) && (
+          lower.includes("slapper on") || 
+          lower.includes("turn on the slapper") || 
+          lower.includes("start slapping") || 
+          lower.includes("slap your balls") ||
+          lower.includes("slapping your balls") ||
+          lower.includes("punish your balls") ||
+          lower.includes("punishing your balls") ||
+          lower.includes("take these slaps") ||
+          lower.includes("give your balls a beating") ||
+          lower.includes("balls take this rhythm") ||
+          lower.includes("time to slap") ||
+          lower.includes("going to slap") ||
+          lower.includes("gonna slap")
+        ));
+
+      if (wantsSlapOn && !isSlapRefusal(lower)) {
         if (!isSlapperActive) {
           sendWebhook(config.slapOnWebhook);
           isSlapperActive = true;
