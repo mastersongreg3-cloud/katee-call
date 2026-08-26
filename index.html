@@ -410,7 +410,7 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn-secondary btn-reset" id="resetPromptBtn">↺ Reset Prompt</button>
+        <button class="btn-secondary" id="resetPromptBtn">↺ Reset Prompt</button>
         <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
       </div>
     </div>
@@ -491,23 +491,6 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       }
       
       return `\n\n[TEMPER: ${kateeTemper}/100] State: ${kateeTemper > 65 ? 'FURIOUS' : (kateeTemper > 35 ? 'Irritated' : 'Seductive')}`;
-    }
-
-    // --- SYNTHESIZED CHIME / BEEP FOR LISTENING CUE ---
-    function playListeningChime() {
-      try {
-        const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-        const osc = audioCtx.createOscillator();
-        const gain = audioCtx.createGain();
-        osc.type = "sine";
-        osc.frequency.setValueAtTime(880, audioCtx.currentTime); // High A pitch
-        gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-        osc.connect(gain);
-        gain.connect(audioCtx.destination);
-        osc.start();
-        osc.stop(audioCtx.currentTime + 0.12);
-      } catch (e) {}
     }
 
     // --- DOM SETUP ---
@@ -658,7 +641,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
       }
 
-      // Vibrator
+      // Vibrator (Burst Mode 3-6s with 9s Cooldown)
       if (/\[VIBE_ON\]/i.test(raw)) {
         triggerVibratorBurst();
       }
@@ -674,7 +657,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       const t = userTextInput.value.trim(); 
       if (t && !isProcessing) { 
         userTextInput.value = ""; 
-        appendMessage('user', t, false); 
+        appendMessage('user', t); 
         executeTurn(t); 
       }
     }
@@ -683,13 +666,14 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
       clearTimeout(silenceTimer);
+      latestTranscript = "";
 
       if (recognition) {
         try { recognition.abort(); } catch (e) {}
         recognition = null;
       }
 
-      appendMessage('user', text, false);
+      appendMessage('user', text);
       executeTurn(text);
     }
 
@@ -730,12 +714,12 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         if (!cleanText) cleanText = "Stay right where you are and keep your eyes on me.";
 
         chatHistory.push({ role: "assistant", content: cleanText });
-        appendMessage('katee', cleanText, false);
+        appendMessage('katee', cleanText);
         playVoice(cleanText);
 
       } catch (err) {
         console.error("Execute Error:", err);
-        appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.", false);
+        appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.");
         resumeListeningWithDelay(2500);
       }
     }
@@ -776,20 +760,11 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       synth.speak(u);
     }
 
-    // --- CALL CONTROLS & VOICE LOOP ---
-    callBtn.onclick = async () => {
+    // --- CALL CONTROLS & SPEECH ENGINE ---
+    callBtn.onclick = () => {
       if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
         alert('Please enter your LM Studio URL in settings.');
-        return;
-      }
-
-      // Pre-warm microphone permission on user interaction
-      try {
-        const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-        stream.getTracks().forEach(track => track.stop());
-      } catch (err) {
-        alert("Microphone access denied. Please enable microphone permission in browser settings.");
         return;
       }
 
@@ -804,7 +779,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening"; 
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Hardware linked. I'm listening, handsome.", false);
+      appendMessage('katee', "Hardware linked. I'm listening, handsome.");
       startSpeechTurn();
     };
 
@@ -829,7 +804,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
     hangupBtn.onclick = () => {
       isCalling = false; 
-      isPaused = false;
+      isPaused = false; 
       isProcessing = false;
       clearTimeout(silenceTimer);
       callCard.className = "call-card"; 
@@ -871,7 +846,6 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
       recognition.onstart = () => {
         if (isCalling && !isPaused && !isProcessing) {
-          playListeningChime(); // Play crisp tone indicating mic is hot!
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
         }
@@ -907,7 +881,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
 
       recognition.onerror = (e) => {
         if (isCalling && e.error !== 'no-speech') {
-          console.warn("Speech recognition error:", e.error);
+          console.warn("Speech error:", e.error);
         }
       };
 
