@@ -461,6 +461,8 @@
 
     // --- HARDWARE STATES ---
     let isSlapperActive = false;
+    let isVibeCycleRunning = true;
+    let vibeCycleTimeout = null;
     let vibeAutoOffTimer = null;
     let vibeCooldownUntil = 0;
 
@@ -676,27 +678,17 @@
       cooldown ? el.classList.add('cooldown') : el.classList.remove('cooldown');
     }
 
+    // --- TIMING, AUTO-VIBE CYCLE & 10-SECOND SILENCE PENALTY ---
     function stopAllVibeTimers() {
+      if (vibeCycleTimeout) { clearTimeout(vibeCycleTimeout); vibeCycleTimeout = null; }
       if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
     }
 
-  // --- TIMING, AUTO-VIBE CYCLE & 10-SECOND SILENCE PENALTY ---
-    let isVibeCycleRunning = true;
-    let vibeCycleTimeout = null;
-    let silenceInactivityTimer = null;
-    let silenceMasterTimer = null;
-
-    function stopAllVibeTimers() {
-      if (vibeCycleTimeout) { clearTimeout(vibeCycleTimeout); vibeCycleTimeout = null; }
-    }
-
-    // --- AUTOMATIC BACKGROUND VIBRATOR CYCLE (4-6s ON / 9s REST REPEATING) ---
     function runVibratorAutoCycle() {
       stopAllVibeTimers();
       if (!isCalling || isPaused || !isVibeCycleRunning) return;
 
-      // Phase 1: ON for 4 to 6 seconds
-      const burstDurationSec = Math.floor(Math.random() * 3) + 4;
+      const burstDurationSec = Math.floor(Math.random() * 3) + 4; // 4 to 6 seconds
       sendWebhook(config.vibeOnWebhook);
       updateLight("light-vibe", `⚡ VIBE: ON (${burstDurationSec}s)`, true);
       kateeMemory.totalVibes = (kateeMemory.totalVibes || 0) + 1;
@@ -705,7 +697,6 @@
       vibeCycleTimeout = setTimeout(() => {
         if (!isCalling || isPaused || !isVibeCycleRunning) return;
 
-        // Phase 2: OFF for 9 seconds of rest
         sendWebhook(config.vibeOffWebhook);
         updateLight("light-vibe", "⏳ VIBE: REST (9s)", false, false, true);
 
@@ -721,14 +712,13 @@
 
         vibeCycleTimeout = setTimeout(() => {
           if (isCalling && !isPaused && isVibeCycleRunning) {
-            runVibratorAutoCycle(); // Loops back to ON automatically!
+            runVibratorAutoCycle();
           }
         }, 9000);
 
       }, burstDurationSec * 1000);
     }
 
-    // --- 10-SECOND MASTER SILENCE PENALTY ---
     function startMasterSilenceTimer() {
       if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
       if (!isCalling || isPaused || isProcessing) return;
@@ -741,7 +731,6 @@
             try { recognition.abort(); } catch(e) {}
           }
 
-          // Immediately slap his balls for staying silent
           if (!isSlapperActive) {
             sendWebhook(config.slapOnWebhook);
             isSlapperActive = true;
@@ -756,7 +745,6 @@
       }, 10000);
     }
 
-    // --- BULLETPROOF HARDWARE ACTION PARSER ---
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
@@ -799,16 +787,16 @@
         }
       }
 
-      // 4. VIBRATOR PAUSE (Withhold pleasure when angry)
-      if (/\[?VIBE[_\s-]?PAUSE:?\]?/i.test(raw) || /\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && (lower.includes("pause the vibrator") || lower.includes("turn off the vibrator") || lower.includes("withhold the vibrator")))) {
+      // 4. VIBRATOR PAUSE
+      if (/\[?VIBE[_\s-]?PAUSE:?\]?/i.test(raw) || /\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && (lower.includes("pause the vibrator") || lower.includes("withhold the vibrator")))) {
         isVibeCycleRunning = false;
         stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
         updateLight("light-vibe", "Vibrator: PAUSED (Withheld)", false);
       }
 
-      // 5. VIBRATOR RESUME (Restart automatic pulsing when pleased)
-      if (!isNegated && (/\[?VIBE[_\s-]?RESUME:?\]?/i.test(raw) || /\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("resume the vibrator") || lower.includes("turn on the vibrator"))) {
+      // 5. VIBRATOR RESUME
+      if (!isNegated && (/\[?VIBE[_\s-]?RESUME:?\]?/i.test(raw) || /\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("resume the vibrator"))) {
         if (!isVibeCycleRunning) {
           isVibeCycleRunning = true;
           runVibratorAutoCycle();
@@ -957,7 +945,7 @@
       isCalling = true; 
       isPaused = false; 
       isProcessing = false;
-      isVibeCycleRunning = true; // Vibrator auto-cycle turns ON with call
+      isVibeCycleRunning = true;
       callStartTime = Date.now();
       chatLog.innerHTML = '';
       currentInterimBubble = null;
@@ -975,7 +963,7 @@
       
       startSpeechTurn();
       startMasterSilenceTimer();
-      runVibratorAutoCycle(); // Begins auto-pulsing 4-6s ON / 9s OFF
+      runVibratorAutoCycle();
     };
 
     pauseBtn.onclick = () => {
@@ -1130,7 +1118,7 @@
         isProcessing = false;
         if (isCalling && !isPaused) {
           startSpeechTurn();
-          startMasterSilenceTimer(); // 10s countdown starts after Katie finishes speaking
+          startMasterSilenceTimer();
         }
       }, ms); 
     }
