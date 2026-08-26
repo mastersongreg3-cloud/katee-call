@@ -785,17 +785,34 @@
         }
       }
 
-      // 2. BALL-SLAPPER OFF
-      const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
-        (!isNegated && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
+// 2. BALL-SLAPPER OFF (STRICT: Requires explicit positive agreement to stop)
+      const isMockingOrRefusing = 
+        raw.includes("?") ||
+        /\b(not|won't|wont|never|refuse|why would i|don't think|no way|think again|in your dreams|keep dreaming|you wish|not that easy|not a chance|take every hit|take every single hit)\b/i.test(lower);
 
-      if (wantsSlapOff && !isSlapRefusal(lower)) {
+      const hasExplicitAgreementToStop = 
+        lower.includes("give your balls a break") ||
+        lower.includes("give you a break") ||
+        lower.includes("giving your balls a break") ||
+        lower.includes("giving you a break") ||
+        lower.includes("i'll stop slapping") ||
+        lower.includes("i will stop slapping") ||
+        lower.includes("i'm stopping") ||
+        lower.includes("i will turn it off") ||
+        lower.includes("i'll turn it off") ||
+        lower.includes("fine, i'll stop") ||
+        lower.includes("fine, i will stop");
+
+      // ONLY turn off if she genuinely agreed to give you a break and is NOT mocking you!
+      const wantsSlapOff = !isMockingOrRefusing && hasExplicitAgreementToStop;
+
+      if (wantsSlapOff) {
         if (isSlapperActive) {
           sendWebhook(config.slapOffWebhook);
           isSlapperActive = false;
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
-      } 
+      }
 // 3. BALL-SLAPPER ON (Catches tags + all natural spoken phrases about slapping your balls)
       const wantsSlapOn = 
         /\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || 
