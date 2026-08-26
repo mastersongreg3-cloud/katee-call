@@ -896,7 +896,7 @@ function isSlapRefusal(str) {
       executeTurn(text);
     }
 
-    async function executeTurn(userText) {
+async function executeTurn(userText) {
       isProcessing = true;
       if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
 
@@ -917,7 +917,11 @@ function isSlapRefusal(str) {
 
         const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+          headers: { 
+            "Content-Type": "application/json", 
+            "ngrok-skip-browser-warning": "true",
+            "Bypass-Tunnel-Reminder": "true"
+          },
           body: JSON.stringify({
             messages: [{ role: "system", content: config.prompt + mood + hwStatus + timeDirective }, ...chatHistory],
             max_tokens: 120, 
@@ -926,21 +930,25 @@ function isSlapRefusal(str) {
           })
         });
 
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText.substring(0, 100)}`);
+        }
+
         const data = await res.json();
         if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
 
         const raw = (data.choices?.[0]?.message?.content || "").trim();
         parseHardwareActions(raw);
 
-let cleanText = raw
+        let cleanText = raw
           .replace(/\[.*?\]/g, '')
           .replace(/<think>[\s\S]*?<\/think>/gi, '')
           .replace(/\b(VIBE_ON|VIBE_OFF|VIBE_PAUSE|VIBE_RESUME|SLAP_ON|SLAP_OFF|UNTIE|VIBE ON|VIBE OFF|SLAP ON|SLAP OFF):?/gi, '')
-          // Catches "my slapper", "the slapper", "this slapper"
-          .replace(/\b(the|my|this)\s+(ball-slapper\s+machine|ball-slapper|slapper\s+machine|slapper)\b/gi, 'me slapping your balls')
+          .replace(/\bthe ball-slapper machine\b/gi, 'me slapping your balls')
+          .replace(/\bthe ball-slapper\b/gi, 'me slapping your balls')
+          .replace(/\bthe slapper\b/gi, 'me slapping your balls')
           .replace(/\ba break from the slapper\b/gi, 'a break from me slapping your balls')
-          // Fixes dangling prepositions like "discomfort with ." -> "discomfort."
-          .replace(/\s+(with|by|using|through)\s*\./gi, '.')
           .replace(/\*[^*]*\*/g, '')
           .trim();
 
@@ -955,7 +963,8 @@ let cleanText = raw
 
       } catch (err) {
         console.error("Execute Error:", err);
-        appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.", false);
+        // Displays the REAL exact error on your phone screen!
+        appendMessage('system', `Error: ${err.message}`, false);
         resumeListeningWithDelay(2500);
       }
     }
