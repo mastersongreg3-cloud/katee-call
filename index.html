@@ -424,7 +424,7 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn-secondary btn-reset" id="resetPromptBtn">↺ Reset Prompt</button>
+        <button class="btn-secondary" id="resetPromptBtn">↺ Reset Prompt</button>
         <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
       </div>
     </div>
@@ -433,7 +433,7 @@
   <audio id="audioPlayback" autoplay></audio>
 
   <!-- Load prompt from prompt.js -->
-  <script src="prompt.js?v=3"></script>
+  <script src="prompt.js?v=4"></script>
 
   <script>
     let config = {
@@ -533,21 +533,10 @@
         lower.includes("shut up") || lower.includes("screw you") || lower.includes("bitch") || lower.includes("untie") ||
         lower.includes("stayed silent");
 
-// Enhanced Submissive & Adoration Detector
       const isSubmissive = 
         !isDisrespectful && (
-          lower.includes("yes mistress") ||
-          lower.includes("please mistress") ||
-          lower.includes("sorry") ||
-          lower.includes("forgive me") ||
-          lower.includes("i beg you") ||
-          lower.includes("worship") ||
-          lower.includes("gorgeous") ||
-          lower.includes("beautiful") ||
-          lower.includes("kiss") ||
-          lower.includes("adore you")
-          lower.includes("lick your pussy")
-          lower.includes("kiss your boobs")
+          lower.includes("yes mistress") || lower.includes("please mistress") ||
+          lower.includes("sorry") || lower.includes("forgive me") || lower.includes("i beg you")
         );
 
       if (isDisrespectful) {
@@ -689,7 +678,7 @@
       cooldown ? el.classList.add('cooldown') : el.classList.remove('cooldown');
     }
 
-    // --- TIMING, AUTO-VIBE CYCLE & 10-SECOND SILENCE PENALTY ---
+    // --- TIMING & 10-SECOND SILENCE PENALTY ---
     function stopAllVibeTimers() {
       if (vibeCycleTimeout) { clearTimeout(vibeCycleTimeout); vibeCycleTimeout = null; }
       if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
@@ -819,20 +808,13 @@
       return /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping)\b/i.test(str);
     }
 
-   // --- PHONETIC SPEECH AUTO-CORRECTOR ---
+    // --- PHONETIC AUTO-CORRECTOR ---
     function correctSpeechPhonetics(rawText) {
       if (!rawText) return "";
       let text = rawText;
-
-      // Auto-correct misheard "mistress" (e.g. miss chris, mrs, ms, mister, missed us, misses)
       text = text.replace(/\b(miss chris|missed us|mrs\.?|ms\.?|mr\.?|mister|misses)\b/gi, "mistress");
-
-      // Auto-correct misheard "untie" (e.g. on tom, on time, on tie, un tie, and tie, un tight)
       text = text.replace(/\b(on tom|on time|on tie|un tie|un-tie|and tie|un tight|until me)\b/gi, "untie");
-
-      // Auto-correct misheard "Katie" (e.g. cathy, kathy, cadi, kd, k t)
       text = text.replace(/\b(kathy|cathy|cadi|k d|k t|kd)\b/gi, "Katie");
-
       return text;
     }
 
@@ -1078,7 +1060,6 @@
         if (isCalling && !isPaused && !isProcessing) {
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
-          resetSilencePenalty();
         }
       };
 
@@ -1087,8 +1068,6 @@
         for (let i = 0; i < event.results.length; i++) {
           text = event.results[i][0].transcript;
         }
-        
-        // Auto-correct phonetically in real time
         latestTranscript = correctSpeechPhonetics(text.trim());
 
         if (latestTranscript) {
@@ -1108,7 +1087,6 @@
           }
 
           clearTimeout(silenceTimer);
-          if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
           silenceTimer = setTimeout(() => {
             if (latestTranscript && isCalling && !isPaused && !isProcessing) {
               commitUserSpeech(latestTranscript);
