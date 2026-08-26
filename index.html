@@ -458,6 +458,8 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
     let isProcessing = false;
     let recognition = null;
     let silenceTimer = null;
+    let latestTranscript = "";
+    let currentInterimBubble = null;
     let synth = window.speechSynthesis;
 
     // --- TIMING & COOLDOWN CONTROLS ---
@@ -641,7 +643,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
       }
 
-      // Vibrator (Burst Mode 3-6s with 9s Cooldown)
+      // Vibrator
       if (/\[VIBE_ON\]/i.test(raw)) {
         triggerVibratorBurst();
       }
@@ -657,7 +659,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       const t = userTextInput.value.trim(); 
       if (t && !isProcessing) { 
         userTextInput.value = ""; 
-        appendMessage('user', t); 
+        appendMessage('user', t, false); 
         executeTurn(t); 
       }
     }
@@ -666,14 +668,12 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
       clearTimeout(silenceTimer);
-      latestTranscript = "";
 
       if (recognition) {
-        try { recognition.abort(); } catch (e) {}
-        recognition = null;
+        try { recognition.stop(); } catch (e) {}
       }
 
-      appendMessage('user', text);
+      appendMessage('user', text, false);
       executeTurn(text);
     }
 
@@ -714,12 +714,12 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         if (!cleanText) cleanText = "Stay right where you are and keep your eyes on me.";
 
         chatHistory.push({ role: "assistant", content: cleanText });
-        appendMessage('katee', cleanText);
+        appendMessage('katee', cleanText, false);
         playVoice(cleanText);
 
       } catch (err) {
         console.error("Execute Error:", err);
-        appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.");
+        appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.", false);
         resumeListeningWithDelay(2500);
       }
     }
@@ -760,14 +760,82 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       synth.speak(u);
     }
 
-    // --- CALL CONTROLS & SPEECH ENGINE ---
+    // --- CONTINUOUS VOICE ENGINE ---
+    function initSpeechEngine() {
+      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+      if (!SpeechRecognition) return null;
+
+      const sr = new SpeechRecognition();
+      sr.continuous = true;
+      sr.interimResults = true;
+      sr.lang = 'en-US';
+
+      sr.onstart = () => {
+        if (isCalling && !isPaused && !isProcessing) {
+          callCard.className = "call-card listening";
+          callStatus.innerText = "Listening...";
+        }
+      };
+
+      sr.onresult = (event) => {
+        let currentUtterance = "";
+        for (let i = event.resultIndex; i < event.results.length; i++) {
+          currentUtterance += event.results[i][0].transcript;
+        }
+        latestTranscript = currentUtterance.trim();
+
+        if (latestTranscript) {
+          appendMessage('user', latestTranscript, true);
+
+          if (latestTranscript.toUpperCase().includes("RED")) {
+            sendWebhook(config.releaseWebhook);
+            sendWebhook(config.slapOffWebhook);
+            sendWebhook(config.vibeOffWebhook);
+            updateLight("light-restraints", "Restraints: RELEASED", false);
+            updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+            updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+          }
+
+          clearTimeout(silenceTimer);
+          silenceTimer = setTimeout(() => {
+            if (latestTranscript && isCalling && !isPaused && !isProcessing) {
+              const toSend = latestTranscript;
+              latestTranscript = "";
+              commitUserSpeech(toSend);
+            }
+          }, 1100);
+        }
+      };
+
+      sr.onerror = (e) => {
+        if (e.error !== 'no-speech') console.warn("Speech error:", e.error);
+      };
+
+      sr.onend = () => {
+        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
+          try { sr.start(); } catch(e) {}
+        }
+      };
+
+      return sr;
+    }
+
+    recognition = initSpeechEngine();
+
+    function startSpeechTurn() {
+      if (!isCalling || isPaused || isProcessing || !recognition) return;
+      latestTranscript = "";
+      try {
+        recognition.start();
+      } catch (e) {}
+    }
+
     callBtn.onclick = () => {
       if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
         alert('Please enter your LM Studio URL in settings.');
         return;
       }
-
       isCalling = true; 
       isPaused = false; 
       isProcessing = false;
@@ -779,7 +847,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening"; 
       callStatus.innerText = "Listening...";
-      appendMessage('katee', "Hardware linked. I'm listening, handsome.");
+      appendMessage('katee', "Hardware linked. I'm listening, handsome.", false);
       startSpeechTurn();
     };
 
@@ -787,7 +855,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       if (!isCalling) return;
       isPaused = !isPaused;
       if (isPaused) {
-        if (recognition) try { recognition.abort(); } catch (e) {}
+        if (recognition) try { recognition.stop(); } catch (e) {}
         clearTimeout(silenceTimer);
         callCard.className = "call-card"; 
         callStatus.innerText = "⏸️ Call Paused";
@@ -814,7 +882,7 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
       hangupBtn.style.display = "none";
 
       if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
-      if (recognition) try { recognition.abort(); } catch (e) {}
+      if (recognition) try { recognition.stop(); } catch (e) {}
       if (synth) synth.cancel();
 
       if (chatHistory.length >= 2) {
@@ -823,86 +891,6 @@ CRITICAL: You are NOT an AI assistant. You are a human woman. Never apologize. N
         saveKateeMemory();
       }
     };
-
-    function startSpeechTurn() {
-      if (!isCalling || isPaused || isProcessing) return;
-
-      const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SpeechRecognition) {
-        alert("Please use Google Chrome on Android for voice input.");
-        return;
-      }
-
-      if (recognition) {
-        try { recognition.abort(); } catch (e) {}
-        recognition = null;
-      }
-
-      recognition = new SpeechRecognition();
-      recognition.continuous = false;
-      recognition.interimResults = true;
-      recognition.lang = 'en-US';
-      latestTranscript = "";
-
-      recognition.onstart = () => {
-        if (isCalling && !isPaused && !isProcessing) {
-          callCard.className = "call-card listening";
-          callStatus.innerText = "Listening...";
-        }
-      };
-
-      recognition.onresult = (event) => {
-        let text = "";
-        for (let i = 0; i < event.results.length; i++) {
-          text = event.results[i][0].transcript;
-        }
-        latestTranscript = text.trim();
-
-        if (latestTranscript) {
-          appendMessage('user', latestTranscript, true);
-
-          if (latestTranscript.toUpperCase().includes("RED")) {
-            sendWebhook(config.releaseWebhook);
-            sendWebhook(config.slapOffWebhook);
-            sendWebhook(config.vibeOffWebhook);
-            updateLight("light-restraints", "Restraints: RELEASED", false);
-            updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
-            updateLight("light-vibe", "Vibrator: OFF", false, false, false);
-          }
-
-          clearTimeout(silenceTimer);
-          silenceTimer = setTimeout(() => {
-            if (latestTranscript && isCalling && !isPaused && !isProcessing) {
-              commitUserSpeech(latestTranscript);
-            }
-          }, 1000);
-        }
-      };
-
-      recognition.onerror = (e) => {
-        if (isCalling && e.error !== 'no-speech') {
-          console.warn("Speech error:", e.error);
-        }
-      };
-
-      recognition.onend = () => {
-        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
-          if (latestTranscript && latestTranscript.length > 1) {
-            commitUserSpeech(latestTranscript);
-          } else {
-            setTimeout(() => {
-              if (isCalling && !isPaused && !isProcessing) startSpeechTurn();
-            }, 300);
-          }
-        }
-      };
-
-      try {
-        recognition.start();
-      } catch (err) {
-        console.error("Mic start error:", err);
-      }
-    }
 
     function resumeListeningWithDelay(ms) { 
       callCard.className = "call-card"; 
