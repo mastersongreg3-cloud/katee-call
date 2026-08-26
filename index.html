@@ -754,9 +754,10 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       settingsModal.classList.remove('open');
     };
 
-    // --- HARDWARE WEBHOOK DISPATCHER ---
+// --- HARDWARE WEBHOOK DISPATCHER ---
     function sendWebhook(url) {
       if (!url) return;
+      console.log("EXEC HARDWARE: " + url);
       try {
         fetch(url, { method: 'GET', mode: 'no-cors', cache: 'no-store' }).catch(() => {});
         const img = new Image(); img.src = url + (url.includes('?') ? '&' : '?') + 't=' + Date.now();
@@ -772,35 +773,75 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       cooldown ? el.classList.add('cooldown') : el.classList.remove('cooldown');
     }
 
-    // --- TIMING CONTROLS ---
+    // --- TIMING & COOLDOWN CONTROLS ---
+    let vibeAutoOffTimer = null;
+    let vibeActiveInterval = null;
+    let vibeCooldownInterval = null;
+    let vibeCooldownUntil = 0;
+    let silenceInactivityTimer = null;
+
     function stopAllVibeTimers() {
       if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
+      if (vibeActiveInterval) { clearInterval(vibeActiveInterval); vibeActiveInterval = null; }
+      if (vibeCooldownInterval) { clearInterval(vibeCooldownInterval); vibeCooldownInterval = null; }
     }
 
+    function resetSilencePenalty() {
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+      if (!isCalling || isPaused || isProcessing) return;
+
+      // If user stays silent on the bed for 10 seconds, Katie takes control
+      silenceInactivityTimer = setTimeout(() => {
+        if (isCalling && !isPaused && !isProcessing) {
+          appendMessage('user', '(staying silent...)', false);
+          executeTurn('(The user is staying completely silent on the bed, refusing to speak or answer you.)');
+        }
+      }, 10000);
+    }
+
+    // --- VIBRATOR BURST (3-6s) & 9s COOLDOWN ---
     function triggerVibratorBurst() {
       const now = Date.now();
-      if (now < vibeCooldownUntil) return;
+      if (now < vibeCooldownUntil) {
+        const remainingSec = Math.ceil((vibeCooldownUntil - now) / 1000);
+        console.log(`Vibrator on cooldown: ${remainingSec}s remaining`);
+        return;
+      }
+
+      stopAllVibeTimers();
 
       const burstDurationSec = Math.floor(Math.random() * 4) + 3;
+      let activeLeft = burstDurationSec;
+
       sendWebhook(config.vibeOnWebhook);
-      updateLight("light-vibe", `Vibrator: ACTIVE (${burstDurationSec}s)`, true);
+      updateLight("light-vibe", `⚡ VIBRATING: ${activeLeft}s`, true);
       kateeMemory.totalVibes = (kateeMemory.totalVibes || 0) + 1;
       saveKateeMemory();
 
-      if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
+      vibeActiveInterval = setInterval(() => {
+        activeLeft--;
+        if (activeLeft > 0) {
+          updateLight("light-vibe", `⚡ VIBRATING: ${activeLeft}s`, true);
+        } else {
+          clearInterval(vibeActiveInterval);
+          vibeActiveInterval = null;
+        }
+      }, 1000);
 
       vibeAutoOffTimer = setTimeout(() => {
+        stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
         vibeCooldownUntil = Date.now() + 9000;
-        updateLight("light-vibe", "Vibrator: COOLDOWN (9s)", false, false, true);
 
         let cdRemaining = 9;
-        const cdInterval = setInterval(() => {
+        updateLight("light-vibe", `⏳ COOLDOWN: ${cdRemaining}s`, false, false, true);
+
+        vibeCooldownInterval = setInterval(() => {
           cdRemaining--;
           if (cdRemaining > 0) {
-            updateLight("light-vibe", `Vibrator: COOLDOWN (${cdRemaining}s)`, false, false, true);
+            updateLight("light-vibe", `⏳ COOLDOWN: ${cdRemaining}s`, false, false, true);
           } else {
-            clearInterval(cdInterval);
+            stopAllVibeTimers();
             updateLight("light-vibe", "Vibrator: OFF", false, false, false);
           }
         }, 1000);
@@ -808,13 +849,13 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       }, burstDurationSec * 1000);
     }
 
-// --- BULLETPROOF ACTION PARSER (FIXED VIBRATOR NEGATION BUG) ---
+    // --- BULLETPROOF ACTION PARSER ---
     function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
 
       // 1. [UNTIE] / RELEASE / Safeword RED
-      const isUntieRefusal = /\b(not untying|won't untie|wont untie|not releasing|never untie|refuse to untie|not letting you go)\b/i.test(lower);
+      const isUntieRefusal = /\b(not untying|won't untie|wont untie|not releasing|never untie|refuse to untie)\b/i.test(lower);
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
         if (!isUntieRefusal && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
           sendWebhook(config.releaseWebhook);
@@ -828,7 +869,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         }
       }
 
-      // 2. BALL-SLAPPER OFF (Only blocked if she explicitly refuses to stop slapping)
+      // 2. BALL-SLAPPER OFF
       const isSlapRefusal = /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping)\b/i.test(lower);
       const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
         (!isSlapRefusal && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
@@ -851,8 +892,8 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         }
       }
 
-      // 4. VIBRATOR ON (Targeted Refusal: innocent words like "don't get used to it" will NEVER block it!)
-      const isVibeRefusal = /\b(not turning on the vibrator|won't turn on the vibrator|no vibrator|refuse to give you the vibrator|not giving you the vibrator|no vibration)\b/i.test(lower);
+      // 4. VIBRATOR ON
+      const isVibeRefusal = /\b(not turning on the vibrator|won't turn on the vibrator|no vibrator|refuse to give you the vibrator)\b/i.test(lower);
       const isVibeOnTrigger = /\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || 
         (!isVibeRefusal && (
           lower.includes("vibrator on") || 
@@ -861,9 +902,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
           lower.includes("turning on the vibrator") ||
           lower.includes("stimulation for your penis") ||
           lower.includes("burst for your penis") ||
-          lower.includes("reward for your penis") ||
           lower.includes("little stimulation") ||
-          lower.includes("little reward for your") ||
           lower.includes("enjoy this while it lasts") ||
           lower.includes("feel this vibration")
         ));
@@ -871,8 +910,6 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       if (isVibeOnTrigger) {
         triggerVibratorBurst();
       }
-
-      // 5. VIBRATOR OFF
       if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isVibeRefusal && lower.includes("turn off the vibrator"))) {
         stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
@@ -880,7 +917,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       }
     }
 
-    // --- EXECUTION ENGINE ---
+    // --- ENGINE ---
     function sendTextMessage() { 
       const t = userTextInput.value.trim(); 
       if (t && !isProcessing) { 
@@ -893,11 +930,13 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
     function commitUserSpeech(text) {
       if (isProcessing || isPaused || !text || !text.trim()) return;
       isProcessing = true;
-      clearTimeout(silenceTimer);
+      if (silenceTimer) clearTimeout(silenceTimer);
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
       latestTranscript = "";
 
       if (recognition) {
         try { recognition.abort(); } catch (e) {}
+        recognition = null;
       }
 
       appendMessage('user', text, false);
@@ -906,6 +945,8 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
 
     async function executeTurn(userText) {
       isProcessing = true;
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
+
       callCard.className = "call-card";
       callStatus.innerText = "Katie is thinking...";
       chatHistory.push({ role: "user", content: userText });
@@ -1001,7 +1042,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       synth.speak(u);
     }
 
-   // --- CALL CONTROLS & SPEECH ENGINE (FAIL-PROOF LOCK PROTECTION) ---
+    // --- CALL CONTROLS & SPEECH ENGINE ---
     callBtn.onclick = () => {
       if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
@@ -1013,11 +1054,11 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       isPaused = false; 
       isProcessing = false;
       callStartTime = Date.now();
-      
       chatLog.innerHTML = '';
       currentInterimBubble = null;
       latestTranscript = "";
       if (silenceTimer) clearTimeout(silenceTimer);
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
 
       callBtn.style.display = "none"; 
       pauseBtn.style.display = "flex"; 
@@ -1026,7 +1067,6 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       hangupBtn.style.display = "flex";
       callCard.className = "call-card listening"; 
       callStatus.innerText = "Listening...";
-      
       appendMessage('katee', "Hardware linked. You are tied to the bed. I'm listening, handsome.", false);
       startSpeechTurn();
     };
@@ -1037,6 +1077,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       if (isPaused) {
         if (recognition) try { recognition.abort(); } catch (e) {}
         clearTimeout(silenceTimer);
+        if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
         callCard.className = "call-card"; 
         callStatus.innerText = "⏸️ Call Paused";
         pauseBtn.innerText = "▶️"; 
@@ -1057,6 +1098,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       isProcessing = false;
       callStartTime = null;
       clearTimeout(silenceTimer);
+      if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
       callCard.className = "call-card"; 
       callStatus.innerText = "Call Ended";
       callBtn.style.display = "flex"; 
@@ -1070,15 +1112,12 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       }
       stopAllVibeTimers();
 
-      if (currentInterimBubble) { 
-        currentInterimBubble.remove(); 
-        currentInterimBubble = null; 
-      }
+      if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
       if (recognition) try { recognition.abort(); } catch (e) {}
       if (synth) synth.cancel();
 
       if (chatHistory.length >= 2) {
-        kateeMemory.totalSessions = (kateeMemory.totalSessions || 0) + 1;
+        kateeMemory.totalSessions++;
         kateeMemory.sessionNotes = `Session ${kateeMemory.totalSessions}: ${kateeTemper > 60 ? 'Ended while furious. User was defiant.' : 'Ended normally.'}`;
         saveKateeMemory();
       }
@@ -1108,6 +1147,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
         if (isCalling && !isPaused && !isProcessing) {
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
+          resetSilencePenalty(); // Starts the 10-second timer
         }
       };
 
@@ -1133,6 +1173,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
           }
 
           clearTimeout(silenceTimer);
+          if (silenceInactivityTimer) clearTimeout(silenceInactivityTimer);
           silenceTimer = setTimeout(() => {
             if (latestTranscript && isCalling && !isPaused && !isProcessing) {
               commitUserSpeech(latestTranscript);
@@ -1150,7 +1191,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       };
 
       recognition.onend = () => {
-        if (isCalling && !isPaused && !isProcessing) {
+        if (isCalling && !isPaused && !isProcessing && callStatus.innerText === "Listening...") {
           if (latestTranscript && latestTranscript.length > 1) {
             commitUserSpeech(latestTranscript);
           } else {
@@ -1172,7 +1213,7 @@ Katie: Stopping right now, baby. The restraints are released and you're complete
       callCard.className = "call-card"; 
       if (!isPaused && isCalling) callStatus.innerText = "Listening...";
       setTimeout(() => {
-        isProcessing = false; // Always unlocks the mic!
+        isProcessing = false;
         if (isCalling && !isPaused) startSpeechTurn();
       }, ms); 
     }
