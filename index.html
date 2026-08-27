@@ -817,9 +817,9 @@ function parseHardwareActions(raw) {
       // Inlined refusal check - directly defined as a variable!
       const isSlapRefusal = /\b(not\s+(going\s+to\s+|gonna\s+)?stop|won't\s+stop|wont\s+stop|never\s+stop|refuse\s+to\s+stop|keep\s+slapping|think\s+again|not\s+that\s+easy|not\s+a\s+chance|take\s+every\s+(single\s+)?hit)\b/i.test(lower);
 
-      // 1. [UNTIE] / RELEASE / Safeword RED
+// 1. [UNTIE] / RELEASE (Strictly requires 15+ minutes)
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
-        if (!isNegated && (elapsedMinutes >= 15 || lower.includes("safeword") || lower.includes("red"))) {
+        if (!isNegated && elapsedMinutes >= 15) {
           sendWebhook(config.releaseWebhook);
           sendWebhook(config.slapOffWebhook);
           sendWebhook(config.vibeOffWebhook);
@@ -1150,17 +1150,17 @@ async function executeTurn(userText) {
           if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
           appendMessage('user', latestTranscript, true);
 
-          if (latestTranscript.toUpperCase().includes("RED")) {
-            sendWebhook(config.releaseWebhook);
-            sendWebhook(config.slapOffWebhook);
-            sendWebhook(config.vibeOffWebhook);
-            isSlapperActive = false;
-            isVibeCycleRunning = false;
-            stopAllVibeTimers();
-            updateLight("light-restraints", "Restraints: RELEASED", false);
-            updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
-            updateLight("light-vibe", "Vibrator: OFF", false, false, false);
-          }
+    //      if (latestTranscript.toUpperCase().includes("RED")) {
+      //      sendWebhook(config.releaseWebhook);
+     //       sendWebhook(config.slapOffWebhook);
+      //      sendWebhook(config.vibeOffWebhook);
+     //       isSlapperActive = false;
+     //       isVibeCycleRunning = false;
+      //      stopAllVibeTimers();
+       //     updateLight("light-restraints", "Restraints: RELEASED", false);
+      //      updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+     //       updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+        //  }
 
           clearTimeout(silenceTimer);
           silenceTimer = setTimeout(() => {
