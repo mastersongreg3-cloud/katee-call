@@ -479,8 +479,11 @@
     let latestTranscript = "";
     let synth = window.speechSynthesis;
 
-    // --- HARDWARE STATES ---
+// --- HARDWARE STATES & SENSORY TRACKERS ---
     let isSlapperActive = false;
+    let slapperStartTime = null;       // Tracks continuous slap time
+    let sessionVibeBurstCount = 0;     // Tracks total bursts received
+    let grudgeTurnsRemaining = 0;      // Tracks lingering emotional grudge
     let isVibeCycleRunning = true;
     let vibeCycleTimeout = null;
     let vibeAutoOffTimer = null;
@@ -515,22 +518,52 @@
       }
     }
 
-// --- 📡 LIVE HARDWARE STATUS REPORTER ---
+// --- 📡 SENSORY PERCEPTION, NARRATIVE PACING & WHIM ENGINE ---
     function getHardwareStatusDirective() {
-      let status = "\n\n[LIVE HARDWARE STATUS IN THE ROOM]:\n";
+      let status = "\n\n[LIVE SENSORY PERCEPTION IN THE ROOM]:\n";
 
-      // Slapper live state
-      if (isSlapperActive) {
-        status += "- BALL-SLAPPER: CURRENTLY ON & ACTIVELY SLAPPING HIS BALLS. (Do NOT say you 'will turn it on'—it is ALREADY running right now. Talk about the continuous hits his balls are taking, or decide to stop with [SLAP_OFF]).\n";
+      // 1. Live Slapper Duration & Hit Count Perception
+      if (isSlapperActive && slapperStartTime) {
+        const slapSeconds = Math.floor((Date.now() - slapperStartTime) / 1000);
+        const slapMinutes = Math.floor(slapSeconds / 60);
+        const slapSecsRemaining = slapSeconds % 60;
+        const approxHits = Math.floor(slapSeconds * 1.5);
+        
+        let timeStr = slapMinutes > 0 ? `${slapMinutes}m ${slapSecsRemaining}s` : `${slapSeconds}s`;
+        status += `- BALL-SLAPPER: ON for ${timeStr} continuously (approx. ${approxHits} hits taken). (Do NOT say you 'will turn it on'—it is active right now. Remark on how sore his balls are getting, or decide to stop with [SLAP_OFF]).\n`;
       } else {
-        status += "- BALL-SLAPPER: CURRENTLY OFF/IDLE. (You can turn it on with [SLAP_ON] if he misbehaves or if you are angry).\n";
+        status += "- BALL-SLAPPER: CURRENTLY OFF/IDLE. (You can start slapping with [SLAP_ON] if he misbehaves).\n";
       }
       
-      // Vibrator live state (AWARE OF AUTO-CYCLE)
+      // 2. Live Vibrator State & Burst History
+      const now = Date.now();
       if (isVibeCycleRunning) {
-        status += "- VIBRATOR: AUTO-CYCLE IS ACTIVELY RUNNING ON HIS PENIS (Pulsing 4-6s ON, 9s OFF continuously). Do NOT say you 'will turn it on'—it is ALREADY buzzing his penis by default! Talk about the vibrations he is currently feeling, or choose to pause/withhold it with [VIBE_PAUSE] if you want to punish him.\n";
+        status += `- VIBRATOR: AUTO-CYCLE RUNNING ON HIS PENIS (He has taken ${sessionVibeBurstCount} bursts this session). (Do NOT say you 'will turn it on'—it is already pulsing. Acknowledge his sensitivity, or pause it with [VIBE_PAUSE] to deny him).\n`;
       } else {
-        status += "- VIBRATOR: CURRENTLY PAUSED / WITHHELD. You are currently denying him pleasure. (You can resume the auto-cycle with [VIBE_RESUME] when he obeys).\n";
+        status += `- VIBRATOR: PAUSED / WITHHELD. You are currently denying his penis pleasure. (Resume with [VIBE_RESUME] when he is obedient).\n`;
+      }
+
+      // 3. Narrative Story Arc (Pacing the 30-Minute Session)
+      const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
+      status += `\n[NARRATIVE STAGE OF THE 30-MINUTE SESSION - MINUTE ${elapsedMinutes}/30]:\n`;
+      if (elapsedMinutes < 5) {
+        status += `STAGE 1 (The Trap): Establish absolute control. Make sure he understands he is flat on his back, tied spread eagle, and completely helpless on the bed.`;
+      } else if (elapsedMinutes < 15) {
+        status += `STAGE 2 (Endurance Test): Test his stamina. Break down his pride with continuous slaps and vibrator teasing. Releasing him is 100% FORBIDDEN.`;
+      } else if (elapsedMinutes < 25) {
+        status += `STAGE 3 (Desperation Window): He is in the only window where early release is possible. Taunt him with the ticking clock. Demand total groveling.`;
+      } else {
+        status += `STAGE 4 (The Final Torment): The 30-minute auto-release is almost here. Push his endurance to the absolute limit before he's automatically untied.`;
+      }
+
+      // 4. Spontaneous Whim & Boredom Engine (Random ~20% chance on calm turns)
+      if (kateeTemper <= 35 && Math.random() < 0.22) {
+        status += `\n\n[INTERNAL IMPULSE / BOREDOM]: You feel a sudden spontaneous whim to torment him. `;
+        if (isVibeCycleRunning) {
+          status += `If you are bored of giving him pleasure, pause the vibrator with [VIBE_PAUSE] to make him whine, or surprise his balls with a sudden slap [SLAP_ON] just to watch him jump.`;
+        } else {
+          status += `Surprise his penis with a sudden burst [VIBE_RESUME] or start slapping his balls [SLAP_ON] just to hear him gasp.`;
+        }
       }
 
       return status;
@@ -539,9 +572,10 @@
 let consecutiveSamePhraseCount = 0;
     let lastUserSpeechText = "";
 
-    function updateKatieMood(userSpeech) {
+function updateKatieMood(userSpeech) {
       const lower = userSpeech.trim().toLowerCase();
 
+      // Check if user is repeating the exact same short phrase back-to-back
       if (lower === lastUserSpeechText && lower.length < 30) {
         consecutiveSamePhraseCount++;
       } else {
@@ -577,11 +611,16 @@ let consecutiveSamePhraseCount = 0;
           lower.includes("worship")
         );
 
-      // 3. CALCULATE HER TEMPER
+      // 3. CALCULATE HER TEMPER & ACTIVATE LINGERING GRUDGE
       if (isDisrespectful) {
         kateeMemory.disrespectCount = (kateeMemory.disrespectCount || 0) + 1;
         saveKateeMemory();
-        kateeTemper = Math.min(100, kateeTemper + 40);
+        if (lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way")) {
+          kateeTemper = Math.min(100, kateeTemper + 40);
+        } else {
+          kateeTemper = Math.min(100, kateeTemper + 25);
+        }
+        grudgeTurnsRemaining = 3; // 👈 Activates a 3-turn grudge when disrespected!
       } else if (consecutiveSamePhraseCount >= 1) {
         kateeTemper = Math.min(100, kateeTemper + 15);
       } else if (isSubmissive) {
@@ -589,7 +628,7 @@ let consecutiveSamePhraseCount = 0;
         kateeTemper = Math.max(0, kateeTemper - coolAmount);
       }
 
-      // 4. ⚡ AUTOMATIC HARDWARE ENFORCEMENT BASED ON MOOD
+      // 4. ⚡ AUTOMATIC HARDWARE ENFORCEMENT BASED ON MOOD (PRESERVED)
       if (kateeTemper > 35) {
         // AUTO-PAUSE VIBRATOR: Immediately cuts power and withholds pleasure when angry
         if (isVibeCycleRunning) {
@@ -606,7 +645,7 @@ let consecutiveSamePhraseCount = 0;
         }
       }
 
-      // 5. UPDATE VISUAL BADGE
+      // 5. UPDATE VISUAL BADGE (PRESERVED)
       const badge = document.getElementById('moodBadge');
       if (badge) {
         if (kateeTemper <= 35) { 
@@ -624,7 +663,7 @@ let consecutiveSamePhraseCount = 0;
         }
       }
 
-      // 6. INJECT HER EXACT EMOTION DIRECTIVE INTO PROMPT
+      // 6. INJECT HER EXACT EMOTION DIRECTIVE & GRUDGE INTO PROMPT
       let moodDirective = `\n\n[CURRENT TEMPER: ${kateeTemper}/100]\n`;
       if (consecutiveSamePhraseCount >= 1) {
         moodDirective += `WARNING: The user is repeating "${lower}" like a lazy broken record without thinking. Call him out for repeating himself, demand a real answer to what you said, and do NOT reward him.\n`;
@@ -632,6 +671,11 @@ let consecutiveSamePhraseCount = 0;
       
       if (kateeTemper <= 35) {
         moodDirective += `State: Seductive & Pleased. Slapper is mostly IDLE. Vibrator auto-cycle is actively running on his penis.`;
+        // 👈 Lingering grudge check: if you recently made her mad, she retains her edge for 3 turns!
+        if (grudgeTurnsRemaining > 0) {
+          moodDirective += ` (LINGERING GRUDGE: You cooled down, but you still have residual annoyance from his earlier disrespect [${grudgeTurnsRemaining} turns remaining]. Maintain a sharp, mocking edge and don't be too sweet).`;
+          grudgeTurnsRemaining--;
+        }
       } else if (kateeTemper <= 65) {
         moodDirective += `State: Irritated. Discipline him with [SLAP_ON]. Vibrator is PAUSED to withhold pleasure.`;
       } else {
@@ -831,22 +875,21 @@ function parseHardwareActions(raw) {
         }
       }
 
-      // 2. BALL-SLAPPER OFF
-      const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
-        (!isNegated && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
-
-      if (wantsSlapOff && !isSlapRefusal) {
+// 2. BALL-SLAPPER OFF
+      if (wantsSlapOff && !isSlapRefusal(lower)) {
         if (isSlapperActive) {
           sendWebhook(config.slapOffWebhook);
           isSlapperActive = false;
+          slapperStartTime = null; // 👈 Clears timestamp
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
       } 
       // 3. BALL-SLAPPER ON
-      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isSlapRefusal && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping") || lower.includes("slap your balls")))) {
+      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isNegated && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping")))) {
         if (!isSlapperActive) {
           sendWebhook(config.slapOnWebhook);
           isSlapperActive = true;
+          slapperStartTime = Date.now(); // 👈 Records start timestamp
           updateLight("light-slap", "Slapping Balls...", true, true);
           kateeMemory.totalSlaps = (kateeMemory.totalSlaps || 0) + 1;
           saveKateeMemory();
