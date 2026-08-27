@@ -372,14 +372,34 @@
         <input type="text" id="kokoroUrlInput" placeholder="https://yyyy.trycloudflare.com">
       </div>
 
-      <div class="input-group">
-        <label>Kokoro Voice Style</label>
+<div class="input-group">
+        <label>Katie's Voice Model</label>
         <select id="kokoroVoiceSelect">
-          <option value="af_bella">Bella (Warm & Seductive)</option>
-          <option value="af_sarah">Sarah (Confident & Bold)</option>
-          <option value="af_nicole">Nicole (Soft & Alluring)</option>
-          <option value="af_sky">Sky (Expressive)</option>
-          <option value="bf_emma">Emma (British)</option>
+          <!-- 🎙️ Classic Kokoro Local Voices (Including Emma) -->
+          <option value="bf_emma">Kokoro: Emma (British - Seductive & Crisp)</option>
+          <option value="af_bella">Kokoro: Bella (American - Warm & Seductive)</option>
+          <option value="af_sarah">Kokoro: Sarah (American - Confident & Bold)</option>
+          <option value="af_nicole">Kokoro: Nicole (American - Soft & Alluring)</option>
+          <option value="af_sky">Kokoro: Sky (American - Playful & Expressive)</option>
+          <option value="af_kore">Kokoro: Kore (American - Deep & Poised)</option>
+          <option value="af_heart">Kokoro: Heart (American - Smooth)</option>
+          <option value="bf_isabella">Kokoro: Isabella (British - Sophisticated)</option>
+          <option value="bf_alice">Kokoro: Alice (British - Formal)</option>
+
+          <!-- 🧪 Custom Kokoro Blends -->
+          <option value="blend_dominant">Blend: Dominant (70% Sarah + 30% Bella)</option>
+          <option value="blend_sultry">Blend: Sultry Whisper (60% Nicole + 40% Sky)</option>
+          <option value="blend_british_mistress">Blend: British Mistress (70% Emma + 30% Isabella)</option>
+          <option value="blend_alluring_deep">Blend: Alluring Deep (50% Kore + 50% Bella)</option>
+
+          <!-- 🌟 Microsoft Edge-TTS Neural Voices -->
+          <option value="edge_ava">Edge: Ava (American - Expressive & Natural)</option>
+          <option value="edge_emma">Edge: Emma (American - Assertive & Clear)</option>
+          <option value="edge_jenny">Edge: Jenny (American - Smooth Conversational)</option>
+          <option value="edge_aria">Edge: Aria (American - Confident)</option>
+          <option value="edge_sonia">Edge: Sonia (British - Authoritative)</option>
+          <option value="edge_libby">Edge: Libby (British - Soft)</option>
+          <option value="edge_natasha">Edge: Natasha (Australian)</option>
         </select>
       </div>
 
@@ -424,7 +444,7 @@
       </div>
 
       <div class="modal-actions">
-        <button class="btn-secondary btn-reset" id="resetPromptBtn">↺ Reset Prompt</button>
+        <button class="btn-secondary" id="resetPromptBtn">↺ Reset Prompt</button>
         <button class="btn-secondary" id="saveSettingsBtn">Save & Close</button>
       </div>
     </div>
@@ -433,7 +453,7 @@
   <audio id="audioPlayback" autoplay></audio>
 
   <!-- Load prompt from prompt.js -->
-  <script src="prompt.js?v=5"></script>
+  <script src="prompt.js?v=4"></script>
 
   <script>
     let config = {
@@ -459,16 +479,14 @@
     let latestTranscript = "";
     let synth = window.speechSynthesis;
 
-    // --- HARDWARE STATES & SENSORY TRACKING ---
+    // --- HARDWARE STATES ---
     let isSlapperActive = false;
-    let slapperStartTime = null;
-    let totalSlapSecondsAccumulated = 0;
     let isVibeCycleRunning = true;
     let vibeCycleTimeout = null;
     let vibeAutoOffTimer = null;
     let vibeCooldownUntil = 0;
 
-    // --- 🧠 PSYCHOLOGICAL STATE: MEMORY & RESIDUAL GRUDGE ---
+    // --- 🧠 SAFE MEMORY PARSER ---
     let kateeMemory = { totalSessions: 0, totalSlaps: 0, totalVibes: 0, disrespectCount: 0, sessionNotes: "" };
     try {
       const stored = localStorage.getItem('katee_memory');
@@ -480,7 +498,6 @@
     }
 
     let kateeTemper = 15;
-    let residualGrudgeTurns = 0; // Tracks emotional inertia when cooling down
 
     function saveKateeMemory() {
       try {
@@ -498,57 +515,30 @@
       }
     }
 
-    // --- 1. SENSORY & DURATION TRACKER ---
+// --- 📡 LIVE HARDWARE STATUS REPORTER ---
     function getHardwareStatusDirective() {
-      let status = "\n\n[LIVE ROOM PERCEPTIONS & HARDWARE STATUS]:\n";
-      
-      // Live Slapper Sensory Perception
-      if (isSlapperActive && slapperStartTime) {
-        const elapsedSlapSec = Math.floor((Date.now() - slapperStartTime) / 1000);
-        const estHits = Math.floor(elapsedSlapSec * 1.5);
-        status += `- BALL-SLAPPER: ACTIVELY RUNNING FOR ${elapsedSlapSec}s (~${estHits} continuous hits delivered). It is ALREADY slapping his balls right now. Talk about the continuous beating his balls are taking, or decide to stop with [SLAP_OFF].\n`;
+      let status = "\n\n[LIVE HARDWARE STATUS IN THE ROOM]:\n";
+
+      // Slapper live state
+      if (isSlapperActive) {
+        status += "- BALL-SLAPPER: CURRENTLY ON & ACTIVELY SLAPPING HIS BALLS. (Do NOT say you 'will turn it on'—it is ALREADY running right now. Talk about the continuous hits his balls are taking, or decide to stop with [SLAP_OFF]).\n";
       } else {
-        status += "- BALL-SLAPPER: CURRENTLY OFF/IDLE. (You can start slapping his balls with [SLAP_ON] if he misbehaves).\n";
+        status += "- BALL-SLAPPER: CURRENTLY OFF/IDLE. (You can turn it on with [SLAP_ON] if he misbehaves or if you are angry).\n";
       }
       
-      // Vibrator Live Perception
-      const now = Date.now();
-      if (now < vibeCooldownUntil) {
-        const cdLeft = Math.ceil((vibeCooldownUntil - now) / 1000);
-        status += `- VIBRATOR: COOLING DOWN (${cdLeft}s remaining). Do not turn it on until cooldown finishes.\n`;
+      // Vibrator live state (AWARE OF AUTO-CYCLE)
+      if (isVibeCycleRunning) {
+        status += "- VIBRATOR: AUTO-CYCLE IS ACTIVELY RUNNING ON HIS PENIS (Pulsing 4-6s ON, 9s OFF continuously). Do NOT say you 'will turn it on'—it is ALREADY buzzing his penis by default! Talk about the vibrations he is currently feeling, or choose to pause/withhold it with [VIBE_PAUSE] if you want to punish him.\n";
       } else {
-        status += "- VIBRATOR: READY (HIGH PRIORITY: Append [VIBE_ON] on 80-90% of turns to tease/stimulate him unless you are Furious).\n";
+        status += "- VIBRATOR: CURRENTLY PAUSED / WITHHELD. You are currently denying him pleasure. (You can resume the auto-cycle with [VIBE_RESUME] when he obeys).\n";
       }
+
       return status;
     }
 
-    // --- 2. 30-MINUTE STORY ARC & NARRATIVE STAGE PACING ---
-    function getNarrativeStageDirective(elapsedMinutes) {
-      let stage = `\n[SESSION ELAPSED TIME: ${elapsedMinutes} MINUTES / 30 MINUTES TOTAL]\n`;
-      if (elapsedMinutes < 5) {
-        stage += `[NARRATIVE STAGE 1: Settling In (0-5m)]. Establish absolute dominance, mock his helplessness tied to the bed, make him realize he has zero control.`;
-      } else if (elapsedMinutes < 15) {
-        stage += `[NARRATIVE STAGE 2: The Endurance Test (5-15m)]. Break his pride. Test his stamina with continuous slaps and vibrations. Release is 100% FORBIDDEN.`;
-      } else if (elapsedMinutes < 25) {
-        stage += `[NARRATIVE STAGE 3: The Desperation Window (15-25m)]. He has passed 15 minutes. Early release is technically possible ONLY if his begging is completely flawless. Torment him with the ticking clock.`;
-      } else {
-        stage += `[NARRATIVE STAGE 4: Final Climax (25-30m)]. The 30-minute automated hardware unlock is almost here. Push his endurance to the limit before the room automatically releases him.`;
-      }
-      return stage;
-    }
-
-    // --- 3. SPONTANEOUS WHIM / IMPULSE ENGINE ---
-    function getSpontaneousImpulseDirective() {
-      if (kateeTemper <= 35 && Math.random() < 0.20) {
-        return `\n[SPONTANEOUS IMPULSE]: You feel a sudden playful urge to torment him on a whim. Surprise him by triggering a sudden burst of the vibrator with [VIBE_ON] or a sudden slap to his balls with [SLAP_ON] just to watch him squirm.`;
-      }
-      return "";
-    }
-
-    let consecutiveSamePhraseCount = 0;
+let consecutiveSamePhraseCount = 0;
     let lastUserSpeechText = "";
 
-    // --- 4. EMOTIONAL INERTIA & TEMPER ENGINE ---
     function updateKatieMood(userSpeech) {
       const lower = userSpeech.trim().toLowerCase();
 
@@ -559,33 +549,64 @@
       }
       lastUserSpeechText = lower;
 
+      // 1. DEFIANCE, SARCASM & DISRESPECT DETECTOR
       const isDisrespectful = 
-        lower.includes("good girl") || lower.includes("good mistress") || lower.includes("no way") ||
-        lower.includes("not begging") || lower.includes("won't beg") || lower.includes("wont beg") ||
-        lower.includes("never") || lower.includes("make me") || lower.includes("refuse") ||
-        lower.includes("shut up") || lower.includes("screw you") || lower.includes("bitch") || lower.includes("untie") ||
+        lower.includes("good girl") ||
+        lower.includes("good mistress") ||
+        lower.includes("no way") ||
+        lower.includes("not begging") ||
+        lower.includes("won't beg") ||
+        lower.includes("wont beg") ||
+        lower.includes("never") ||
+        lower.includes("make me") ||
+        lower.includes("refuse") ||
+        lower.includes("shut up") ||
+        lower.includes("screw you") ||
+        lower.includes("bitch") ||
+        lower.includes("untie") ||
         lower.includes("stayed silent");
 
+      // 2. SINCERE SUBMISSION DETECTOR
       const isSubmissive = 
         !isDisrespectful && (
-          lower.includes("yes mistress") || lower.includes("please mistress") ||
-          lower.includes("sorry") || lower.includes("forgive me") || lower.includes("i beg you") ||
+          lower.includes("yes mistress") ||
+          lower.includes("please mistress") ||
+          lower.includes("sorry") ||
+          lower.includes("forgive me") ||
+          lower.includes("i beg you") ||
           lower.includes("worship")
         );
 
+      // 3. CALCULATE HER TEMPER
       if (isDisrespectful) {
         kateeMemory.disrespectCount = (kateeMemory.disrespectCount || 0) + 1;
         saveKateeMemory();
         kateeTemper = Math.min(100, kateeTemper + 40);
-        residualGrudgeTurns = 3; // Engages emotional grudge inertia
       } else if (consecutiveSamePhraseCount >= 1) {
         kateeTemper = Math.min(100, kateeTemper + 15);
       } else if (isSubmissive) {
         const coolAmount = lower.length > 20 ? 18 : 8;
         kateeTemper = Math.max(0, kateeTemper - coolAmount);
-        if (residualGrudgeTurns > 0) residualGrudgeTurns--;
       }
 
+      // 4. ⚡ AUTOMATIC HARDWARE ENFORCEMENT BASED ON MOOD
+      if (kateeTemper > 35) {
+        // AUTO-PAUSE VIBRATOR: Immediately cuts power and withholds pleasure when angry
+        if (isVibeCycleRunning) {
+          isVibeCycleRunning = false;
+          stopAllVibeTimers();
+          sendWebhook(config.vibeOffWebhook);
+          updateLight("light-vibe", "Vibrator: PAUSED (Withheld)", false);
+        }
+      } else {
+        // AUTO-RESUME VIBRATOR: Automatically starts pulsing again when she is pleased
+        if (!isVibeCycleRunning && isCalling && !isPaused) {
+          isVibeCycleRunning = true;
+          runVibratorAutoCycle();
+        }
+      }
+
+      // 5. UPDATE VISUAL BADGE
       const badge = document.getElementById('moodBadge');
       if (badge) {
         if (kateeTemper <= 35) { 
@@ -603,22 +624,18 @@
         }
       }
 
+      // 6. INJECT HER EXACT EMOTION DIRECTIVE INTO PROMPT
       let moodDirective = `\n\n[CURRENT TEMPER: ${kateeTemper}/100]\n`;
       if (consecutiveSamePhraseCount >= 1) {
         moodDirective += `WARNING: The user is repeating "${lower}" like a lazy broken record without thinking. Call him out for repeating himself, demand a real answer to what you said, and do NOT reward him.\n`;
       }
-
-      // Emotional Inertia injection
-      if (residualGrudgeTurns > 0 && kateeTemper <= 35) {
-        moodDirective += `[RESIDUAL GRUDGE]: You are pleased right now, but you haven't fully forgotten his earlier disrespect (${residualGrudgeTurns} turns remaining). Keep a sharp, teasing edge.\n`;
-      }
       
       if (kateeTemper <= 35) {
-        moodDirective += `State: Seductive & Pleased. Slapper is mostly IDLE. Use [VIBE_ON] for quick teasing bursts if he pleases you.`;
+        moodDirective += `State: Seductive & Pleased. Slapper is mostly IDLE. Vibrator auto-cycle is actively running on his penis.`;
       } else if (kateeTemper <= 65) {
-        moodDirective += `State: Irritated. Discipline him with [SLAP_ON] and let the slapper run while you talk.`;
+        moodDirective += `State: Irritated. Discipline him with [SLAP_ON]. Vibrator is PAUSED to withhold pleasure.`;
       } else {
-        moodDirective += `State: FURIOUS & RUTHLESS. You are angry. If the slapper is not on, turn it on with [SLAP_ON] and LEAVE IT SLAPPING. Refuse to turn it off until he gives thoughtful, sincere apologies.`;
+        moodDirective += `State: FURIOUS & RUTHLESS. You are angry. Turn on the slapper with [SLAP_ON] and LEAVE IT SLAPPING. Vibrator is 100% PAUSED. Refuse to give him any pleasure until he begs for mercy.`;
       }
       return moodDirective;
     }
@@ -719,9 +736,51 @@
       cooldown ? el.classList.add('cooldown') : el.classList.remove('cooldown');
     }
 
-    // --- TIMING & COOLDOWN CONTROLS ---
+    // --- TIMING & 10-SECOND SILENCE PENALTY ---
     function stopAllVibeTimers() {
+      if (vibeCycleTimeout) { clearTimeout(vibeCycleTimeout); vibeCycleTimeout = null; }
       if (vibeAutoOffTimer) { clearTimeout(vibeAutoOffTimer); vibeAutoOffTimer = null; }
+    }
+
+// Safety alias to prevent any missing function errors
+    function triggerVibratorBurst() {
+      runVibratorAutoCycle();
+    }
+
+    
+    function runVibratorAutoCycle() {
+      stopAllVibeTimers();
+      if (!isCalling || isPaused || !isVibeCycleRunning) return;
+
+      const burstDurationSec = Math.floor(Math.random() * 3) + 4; // 4 to 6 seconds
+      sendWebhook(config.vibeOnWebhook);
+      updateLight("light-vibe", `⚡ VIBE: ON (${burstDurationSec}s)`, true);
+      kateeMemory.totalVibes = (kateeMemory.totalVibes || 0) + 1;
+      saveKateeMemory();
+
+      vibeCycleTimeout = setTimeout(() => {
+        if (!isCalling || isPaused || !isVibeCycleRunning) return;
+
+        sendWebhook(config.vibeOffWebhook);
+        updateLight("light-vibe", "⏳ VIBE: REST (9s)", false, false, true);
+
+        let restRemaining = 9;
+        const restInterval = setInterval(() => {
+          restRemaining--;
+          if (restRemaining > 0 && isVibeCycleRunning) {
+            updateLight("light-vibe", `⏳ VIBE: REST (${restRemaining}s)`, false, false, true);
+          } else {
+            clearInterval(restInterval);
+          }
+        }, 1000);
+
+        vibeCycleTimeout = setTimeout(() => {
+          if (isCalling && !isPaused && isVibeCycleRunning) {
+            runVibratorAutoCycle();
+          }
+        }, 9000);
+
+      }, burstDurationSec * 1000);
     }
 
     function startMasterSilenceTimer() {
@@ -739,7 +798,6 @@
           if (!isSlapperActive) {
             sendWebhook(config.slapOnWebhook);
             isSlapperActive = true;
-            slapperStartTime = Date.now();
             updateLight("light-slap", "Slapping Balls (Silence Penalty)...", true, true);
             kateeMemory.totalSlaps = (kateeMemory.totalSlaps || 0) + 1;
             saveKateeMemory();
@@ -751,51 +809,21 @@
       }, 10000);
     }
 
-    function triggerVibratorBurst() {
-      const now = Date.now();
-      if (now < vibeCooldownUntil) return;
-
-      const burstDurationSec = Math.floor(Math.random() * 3) + 4; // 4 to 6 seconds
-      sendWebhook(config.vibeOnWebhook);
-      updateLight("light-vibe", `⚡ VIBRATING: ${burstDurationSec}s`, true);
-      kateeMemory.totalVibes = (kateeMemory.totalVibes || 0) + 1;
-      saveKateeMemory();
-
-      if (vibeAutoOffTimer) clearTimeout(vibeAutoOffTimer);
-
-      vibeAutoOffTimer = setTimeout(() => {
-        sendWebhook(config.vibeOffWebhook);
-        vibeCooldownUntil = Date.now() + 9000;
-        updateLight("light-vibe", "Vibrator: COOLDOWN (9s)", false, false, true);
-
-        let cdRemaining = 9;
-        const cdInterval = setInterval(() => {
-          cdRemaining--;
-          if (cdRemaining > 0) {
-            updateLight("light-vibe", `Vibrator: COOLDOWN (${cdRemaining}s)`, false, false, true);
-          } else {
-            clearInterval(cdInterval);
-            updateLight("light-vibe", "Vibrator: OFF", false, false, false);
-          }
-        }, 1000);
-
-      }, burstDurationSec * 1000);
-    }
-
-    // --- HARDWARE ACTION PARSER WITH STRICT ALIGNMENT ---
-    function parseHardwareActions(raw) {
+function parseHardwareActions(raw) {
       const lower = raw.toLowerCase();
       const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
       const isNegated = /\b(not|won't|wont|never|refuse|why would i|don't think|no way)\b/i.test(lower);
 
-      // 1. [UNTIE] (Strictly requires 15+ minutes)
+      // Inlined refusal check - directly defined as a variable!
+      const isSlapRefusal = /\b(not\s+(going\s+to\s+|gonna\s+)?stop|won't\s+stop|wont\s+stop|never\s+stop|refuse\s+to\s+stop|keep\s+slapping|think\s+again|not\s+that\s+easy|not\s+a\s+chance|take\s+every\s+(single\s+)?hit)\b/i.test(lower);
+
+// 1. [UNTIE] / RELEASE (Strictly requires 15+ minutes)
       if (/\[?UNTIE\]?/i.test(raw) || /\[?ACTION:\s*RELEASE\]?/i.test(raw) || lower.includes("disengage the electromagnet")) {
         if (!isNegated && elapsedMinutes >= 15) {
           sendWebhook(config.releaseWebhook);
           sendWebhook(config.slapOffWebhook);
           sendWebhook(config.vibeOffWebhook);
           isSlapperActive = false;
-          slapperStartTime = null;
           stopAllVibeTimers();
           updateLight("light-restraints", "Restraints: RELEASED", false);
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
@@ -803,46 +831,50 @@
         }
       }
 
-      // 2. BALL-SLAPPER OFF (Only stops if she genuinely agrees)
+      // 2. BALL-SLAPPER OFF
       const wantsSlapOff = /\[?SLAP[_\s-]?OFF:?\]?/i.test(raw) || 
         (!isNegated && (lower.includes("stop slapping") || lower.includes("turn off the slapper") || lower.includes("break from me slapping")));
 
-      if (wantsSlapOff && !isSlapRefusal(lower)) {
+      if (wantsSlapOff && !isSlapRefusal) {
         if (isSlapperActive) {
           sendWebhook(config.slapOffWebhook);
           isSlapperActive = false;
-          slapperStartTime = null;
           updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
         }
       } 
       // 3. BALL-SLAPPER ON
-      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isNegated && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping") || lower.includes("slap your balls")))) {
+      else if (/\[?SLAP[_\s-]?ON:?\]?/i.test(raw) || (!isSlapRefusal && (lower.includes("slapper on") || lower.includes("turn on the slapper") || lower.includes("start slapping") || lower.includes("slap your balls")))) {
         if (!isSlapperActive) {
           sendWebhook(config.slapOnWebhook);
           isSlapperActive = true;
-          slapperStartTime = Date.now();
           updateLight("light-slap", "Slapping Balls...", true, true);
           kateeMemory.totalSlaps = (kateeMemory.totalSlaps || 0) + 1;
           saveKateeMemory();
         }
       }
 
-      // 4. VIBRATOR ON / OFF
-      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on") || lower.includes("turning on the vibrator") || lower.includes("turn on the vibrator"))) {
-        triggerVibratorBurst();
+// 4. VIBRATOR RESUME / ON
+      if (!isNegated && (/\[?VIBE[_\s-]?ON:?\]?/i.test(raw) || /\[?VIBE[_\s-]?RESUME:?\]?/i.test(raw) || lower.includes("vibrator on") || lower.includes("vibe on") || lower.includes("resume the vibrator"))) {
+        if (!isVibeCycleRunning) {
+          isVibeCycleRunning = true;
+          runVibratorAutoCycle();
+        }
       }
-      if (/\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && lower.includes("vibrator off"))) {
+
+      // 5. VIBRATOR PAUSE / OFF (Withhold pleasure)
+      if (/\[?VIBE[_\s-]?PAUSE:?\]?/i.test(raw) || /\[?VIBE[_\s-]?OFF:?\]?/i.test(raw) || (!isNegated && (lower.includes("pause the vibrator") || lower.includes("turn off the vibrator") || lower.includes("withhold the vibrator")))) {
+        isVibeCycleRunning = false;
         stopAllVibeTimers();
         sendWebhook(config.vibeOffWebhook);
-        updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+        updateLight("light-vibe", "Vibrator: PAUSED (Withheld)", false);
       }
     }
 
-    function isSlapRefusal(str) {
-      return /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping)\b/i.test(str);
+function isSlapRefusal(str) {
+      return /\b(not going to stop slapping|won't stop slapping|wont stop slapping|never stop slapping|refuse to stop slapping|keep slapping|take every single hit|take every hit|until you learn|beg a whole lot harder)\b/i.test(str);
     }
 
-    // --- PHONETIC SPEECH AUTO-CORRECTOR ---
+    // --- PHONETIC AUTO-CORRECTOR ---
     function correctSpeechPhonetics(rawText) {
       if (!rawText) return "";
       let text = rawText;
@@ -880,7 +912,7 @@
       executeTurn(text);
     }
 
-    async function executeTurn(userText) {
+async function executeTurn(userText) {
       isProcessing = true;
       if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
 
@@ -897,21 +929,27 @@
         const mood = updateKatieMood(userText);
         const hwStatus = getHardwareStatusDirective();
         const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
-        const stageDirective = getNarrativeStageDirective(elapsedMinutes);
-        const impulseDirective = getSpontaneousImpulseDirective();
-
-        const fullSystemContext = config.prompt + mood + hwStatus + stageDirective + impulseDirective;
+        const timeDirective = `\n\n[SESSION ELAPSED TIME: ${elapsedMinutes} MINUTES / 30 MINUTES TOTAL]`;
 
         const res = await fetch(url, {
           method: "POST",
-          headers: { "Content-Type": "application/json", "ngrok-skip-browser-warning": "true" },
+          headers: { 
+            "Content-Type": "application/json", 
+            "ngrok-skip-browser-warning": "true",
+            "Bypass-Tunnel-Reminder": "true"
+          },
           body: JSON.stringify({
-            messages: [{ role: "system", content: fullSystemContext }, ...chatHistory],
+            messages: [{ role: "system", content: config.prompt + mood + hwStatus + timeDirective }, ...chatHistory],
             max_tokens: 120, 
             temperature: 0.7, 
             stop: ["User:", "\nUser:", "Human:"]
           })
         });
+
+        if (!res.ok) {
+          const errText = await res.text();
+          throw new Error(`HTTP ${res.status}: ${errText.substring(0, 100)}`);
+        }
 
         const data = await res.json();
         if (data.error) throw new Error(data.error.message || JSON.stringify(data.error));
@@ -922,10 +960,11 @@
         let cleanText = raw
           .replace(/\[.*?\]/g, '')
           .replace(/<think>[\s\S]*?<\/think>/gi, '')
-          .replace(/\b(VIBE_ON|VIBE_OFF|SLAP_ON|SLAP_OFF|UNTIE|VIBE ON|VIBE OFF|SLAP ON|SLAP OFF):?/gi, '')
-          .replace(/\b(the|my|this)\s+(ball-slapper\s+machine|ball-slapper|slapper\s+machine|slapper)\b/gi, 'me slapping your balls')
+          .replace(/\b(VIBE_ON|VIBE_OFF|VIBE_PAUSE|VIBE_RESUME|SLAP_ON|SLAP_OFF|UNTIE|VIBE ON|VIBE OFF|SLAP ON|SLAP OFF):?/gi, '')
+          .replace(/\bthe ball-slapper machine\b/gi, 'me slapping your balls')
+          .replace(/\bthe ball-slapper\b/gi, 'me slapping your balls')
+          .replace(/\bthe slapper\b/gi, 'me slapping your balls')
           .replace(/\ba break from the slapper\b/gi, 'a break from me slapping your balls')
-          .replace(/\s+(with|by|using|through)\s*\./gi, '.')
           .replace(/\*[^*]*\*/g, '')
           .trim();
 
@@ -940,7 +979,8 @@
 
       } catch (err) {
         console.error("Execute Error:", err);
-        appendMessage('system', "Connection Error: Check LM Studio & Cloudflare tunnel.", false);
+        // Displays the REAL exact error on your phone screen!
+        appendMessage('system', `Error: ${err.message}`, false);
         resumeListeningWithDelay(2500);
       }
     }
@@ -981,7 +1021,7 @@
       synth.speak(u);
     }
 
-    // --- CALL CONTROLS & SPEECH ENGINE ---
+    // --- CALL CONTROLS & VOICE ENGINE ---
     callBtn.onclick = () => {
       if (!config.apiOrUrl) {
         settingsModal.classList.add('open');
@@ -992,10 +1032,10 @@
       isCalling = true; 
       isPaused = false; 
       isProcessing = false;
+      isVibeCycleRunning = true;
       callStartTime = Date.now();
       chatLog.innerHTML = '';
       currentInterimBubble = null;
-      latestTranscript = "";
       if (silenceTimer) clearTimeout(silenceTimer);
       if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
 
@@ -1007,7 +1047,10 @@
       callCard.className = "call-card listening"; 
       callStatus.innerText = "Listening...";
       appendMessage('katee', "Hardware linked. You are tied to the bed. I'm listening, handsome.", false);
+      
       startSpeechTurn();
+      startMasterSilenceTimer();
+      runVibratorAutoCycle();
     };
 
     pauseBtn.onclick = () => {
@@ -1017,6 +1060,8 @@
         if (recognition) try { recognition.abort(); } catch (e) {}
         clearTimeout(silenceTimer);
         if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
+        stopAllVibeTimers();
+        sendWebhook(config.vibeOffWebhook);
         callCard.className = "call-card"; 
         callStatus.innerText = "⏸️ Call Paused";
         pauseBtn.innerText = "▶️"; 
@@ -1028,6 +1073,8 @@
         callCard.className = "call-card listening";
         isProcessing = false;
         startSpeechTurn();
+        startMasterSilenceTimer();
+        if (isVibeCycleRunning) runVibratorAutoCycle();
       }
     };
 
@@ -1035,6 +1082,7 @@
       isCalling = false; 
       isPaused = false; 
       isProcessing = false;
+      isVibeCycleRunning = false;
       callStartTime = null;
       clearTimeout(silenceTimer);
       if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
@@ -1047,10 +1095,11 @@
       if (isSlapperActive) {
         sendWebhook(config.slapOffWebhook);
         isSlapperActive = false;
-        slapperStartTime = null;
         updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
       }
       stopAllVibeTimers();
+      sendWebhook(config.vibeOffWebhook);
+      updateLight("light-vibe", "Vibrator: OFF", false, false, false);
 
       if (currentInterimBubble) { currentInterimBubble.remove(); currentInterimBubble = null; }
       if (recognition) try { recognition.abort(); } catch (e) {}
@@ -1087,7 +1136,6 @@
         if (isCalling && !isPaused && !isProcessing) {
           callCard.className = "call-card listening";
           callStatus.innerText = "Listening...";
-          startMasterSilenceTimer(); // Starts the 10-second silence timer
         }
       };
 
@@ -1096,13 +1144,23 @@
         for (let i = 0; i < event.results.length; i++) {
           text = event.results[i][0].transcript;
         }
-        
-        // Auto-correct phonetically
         latestTranscript = correctSpeechPhonetics(text.trim());
 
         if (latestTranscript) {
           if (silenceMasterTimer) clearTimeout(silenceMasterTimer);
           appendMessage('user', latestTranscript, true);
+
+    //      if (latestTranscript.toUpperCase().includes("RED")) {
+      //      sendWebhook(config.releaseWebhook);
+     //       sendWebhook(config.slapOffWebhook);
+      //      sendWebhook(config.vibeOffWebhook);
+     //       isSlapperActive = false;
+     //       isVibeCycleRunning = false;
+      //      stopAllVibeTimers();
+       //     updateLight("light-restraints", "Restraints: RELEASED", false);
+      //      updateLight("light-slap", "Ball-Slapper: IDLE", false, false);
+     //       updateLight("light-vibe", "Vibrator: OFF", false, false, false);
+        //  }
 
           clearTimeout(silenceTimer);
           silenceTimer = setTimeout(() => {
@@ -1145,7 +1203,10 @@
       if (!isPaused && isCalling) callStatus.innerText = "Listening...";
       setTimeout(() => {
         isProcessing = false;
-        if (isCalling && !isPaused) startSpeechTurn();
+        if (isCalling && !isPaused) {
+          startSpeechTurn();
+          startMasterSilenceTimer();
+        }
       }, ms); 
     }
 
