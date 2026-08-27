@@ -1026,14 +1026,12 @@ async function executeTurn(userText) {
         const raw = (data.choices?.[0]?.message?.content || "").trim();
         parseHardwareActions(raw);
 
-        let cleanText = raw
+let cleanText = raw
           .replace(/\[.*?\]/g, '')
           .replace(/<think>[\s\S]*?<\/think>/gi, '')
           .replace(/\b(VIBE_ON|VIBE_OFF|VIBE_PAUSE|VIBE_RESUME|SLAP_ON|SLAP_OFF|UNTIE|VIBE ON|VIBE OFF|SLAP ON|SLAP OFF):?/gi, '')
-          .replace(/\bthe ball-slapper machine\b/gi, 'me slapping your balls')
-          .replace(/\bthe ball-slapper\b/gi, 'me slapping your balls')
-          .replace(/\bthe slapper\b/gi, 'me slapping your balls')
-          .replace(/\ba break from the slapper\b/gi, 'a break from me slapping your balls')
+          .replace(/\b(the|my|this)\s+(ball-slapper\s+machine|ball-slapper|slapper\s+machine|slapper)\b/gi, 'me slapping your balls')
+          .replace(/\s+(with|by|using|through)\s*\./gi, '.')
           .replace(/\*[^*]*\*/g, '')
           .trim();
 
