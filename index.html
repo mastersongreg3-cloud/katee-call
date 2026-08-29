@@ -325,9 +325,12 @@
 
   <!-- Main Console -->
   <div id="main-console">
-    <div class="header">
+<div class="header">
       <span style="font-weight: 700; font-size: 12px; letter-spacing: 1px; color: #94a3b8;">MISTRESS COMMAND // BED PROTOCOL</span>
-      <button class="settings-btn" id="openSettings" aria-label="Settings">⚙️</button>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <button id="trainBtn" onclick="toggleTrainingMode()" style="background: #374151; color: #fbbf24; border: 1px solid #f59e0b; border-radius: 6px; font-size: 11px; font-weight: 700; padding: 4px 10px; cursor: pointer;">🎓 Train: OFF</button>
+        <button class="settings-btn" id="openSettings" aria-label="Settings">⚙️</button>
+      </div>
     </div>
 
     <div class="call-card" id="callCard">
@@ -468,16 +471,36 @@
       prompt: localStorage.getItem('katee_prompt') || (typeof DEFAULT_PROMPT !== 'undefined' ? DEFAULT_PROMPT : '')
     };
 
-    let chatHistory = [];
+let chatHistory = [];
     let isCalling = false;
     let isPaused = false;
     let isProcessing = false;
+    let isTrainingMode = false; // 👈 1. Adds the training state variable
     let callStartTime = null;
     let recognition = null;
     let silenceTimer = null;
     let silenceMasterTimer = null;
     let latestTranscript = "";
     let synth = window.speechSynthesis;
+
+    // 👈 2. Adds the toggle button function
+    function toggleTrainingMode() {
+      isTrainingMode = !isTrainingMode;
+      const btn = document.getElementById('trainBtn');
+      if (isTrainingMode) {
+        btn.innerText = "🎓 Train: ON";
+        btn.style.background = "#451a03";
+        btn.style.color = "#fef3c7";
+        btn.style.borderColor = "#f59e0b";
+        appendMessage('system', "🎓 TRAINING MODE ON: Webhooks are paused. You can now talk to Katie out-of-character to coach her, teach her specific reactions, and give her feedback.", false);
+      } else {
+        btn.innerText = "🎓 Train: OFF";
+        btn.style.background = "#374151";
+        btn.style.color = "#fbbf24";
+        btn.style.borderColor = "#f59e0b";
+        appendMessage('system', "🎬 ROLEPLAY MODE ON: Katie is back in character with your latest coaching applied.", false);
+      }
+    }
 
 // --- HARDWARE STATES & SENSORY TRACKERS ---
     let isSlapperActive = false;
@@ -1000,6 +1023,18 @@ async function executeTurn(userText) {
         const elapsedMinutes = callStartTime ? Math.floor((Date.now() - callStartTime) / 60000) : 0;
         const timeDirective = `\n\n[SESSION ELAPSED TIME: ${elapsedMinutes} MINUTES / 30 MINUTES TOTAL]`;
 
+// Switch her brain to coaching mode when Training is ON
+        let activeSystemPrompt = config.prompt + mood + hwStatus + timeDirective;
+
+        if (isTrainingMode) {
+          activeSystemPrompt = `[SYSTEM: YOU ARE IN TRAINING & COACHING MODE]
+You are Katie, speaking out-of-character with your director/partner for behavioral calibration and training.
+1. Be cooperative, intelligent, articulate, and receptive to feedback.
+2. The user will teach you how to respond, point out phrasing mistakes, and refine your personality.
+3. Respond in 1 to 2 conversational sentences, confirm his instructions clearly, and explain how you will adapt when the scene resumes.
+4. You may still test hardware tags ([SLAP_ON], [VIBE_ON], [UNTIE]) if he asks you to demonstrate them.`;
+        }
+
         const res = await fetch(url, {
           method: "POST",
           headers: { 
@@ -1008,7 +1043,7 @@ async function executeTurn(userText) {
             "Bypass-Tunnel-Reminder": "true"
           },
           body: JSON.stringify({
-            messages: [{ role: "system", content: config.prompt + mood + hwStatus + timeDirective }, ...chatHistory],
+            messages: [{ role: "system", content: activeSystemPrompt }, ...chatHistory],
             max_tokens: 120, 
             temperature: 0.7, 
             stop: ["User:", "\nUser:", "Human:"]
